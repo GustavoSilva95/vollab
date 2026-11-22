@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from vollab.api.schemas.collection import UnderlyingCreate, UnderlyingOut, UnderlyingUpdate
+from vollab.api.schemas.common import ProblemDetails
 from vollab.db.models import FIXED_USER_ID, Underlying
 from vollab.db.session import get_session
 
@@ -43,7 +44,7 @@ def list_underlyings(session: SessionDep) -> list[UnderlyingOut]:
     response_model=UnderlyingOut,
     status_code=status.HTTP_201_CREATED,
     summary="Cadastra um ativo (o ISIN vem do COTAHIST na próxima coleta)",
-    responses={409: {"description": "Ativo já cadastrado ou limite de 10 ativos ativos."}},
+    responses={409: {"model": ProblemDetails, "description": "Ativo já cadastrado ou limite de 10 ativos."}},
 )
 def create_underlying(body: UnderlyingCreate, session: SessionDep) -> UnderlyingOut:
     exists = session.scalar(
@@ -63,7 +64,10 @@ def create_underlying(body: UnderlyingCreate, session: SessionDep) -> Underlying
     "/{ticker}",
     response_model=UnderlyingOut,
     summary="Ativa ou desativa um ativo",
-    responses={404: {"description": "Ativo não encontrado."}, 409: {"description": "Limite de ativos."}},
+    responses={
+        404: {"model": ProblemDetails, "description": "Ativo não encontrado."},
+        409: {"model": ProblemDetails, "description": "Limite de ativos."},
+    },
 )
 def update_underlying(ticker: str, body: UnderlyingUpdate, session: SessionDep) -> UnderlyingOut:
     underlying = session.scalar(

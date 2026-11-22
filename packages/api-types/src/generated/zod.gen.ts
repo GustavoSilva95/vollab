@@ -76,7 +76,7 @@ export const zHealthResponse = z.object({
     data_source: z.enum(['live', 'fixtures']),
     database: z.enum(['ok', 'unavailable']),
     engine_version: z.string(),
-    last_collection_at: z.iso.datetime().nullish(),
+    last_collection_at: z.iso.datetime({ offset: true }).nullish(),
     status: z.enum(['ok', 'degraded'])
 });
 
@@ -150,13 +150,13 @@ export const zProgressCounts = z.object({
  */
 export const zRunSummary = z.object({
     config_version_id: z.int(),
-    created_at: z.iso.datetime(),
-    finished_at: z.iso.datetime().nullable(),
+    created_at: z.iso.datetime({ offset: true }),
+    finished_at: z.iso.datetime({ offset: true }).nullable(),
     id: z.int(),
     message: z.string().nullable(),
     origin: z.enum(['manual', 'initial_load']),
     reference_date: z.iso.date(),
-    started_at: z.iso.datetime().nullable(),
+    started_at: z.iso.datetime({ offset: true }).nullable(),
     status: z.enum([
         'queued',
         'running',

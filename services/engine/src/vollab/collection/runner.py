@@ -236,7 +236,8 @@ class Collector:
         )
         run.status = "partial" if failed else "succeeded"
         run.finished_at = func.now()
-        run.message = f"{failed} item(ns) com falha: veja o relatório de lacunas." if failed else None
+        # Sem números no texto: a interface formata contagens (PRD-UI-03) a partir do progresso.
+        run.message = "Há itens com falha: veja o relatório de lacunas." if failed else None
         self.session.commit()
         bound.info("collection.finished", status=run.status, failed=failed)
 

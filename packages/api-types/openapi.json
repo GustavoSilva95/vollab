@@ -852,6 +852,13 @@
             "description": "Successful Response"
           },
           "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
             "description": "Já existe uma coleta em andamento."
           },
           "default": {
@@ -897,6 +904,13 @@
             "description": "Successful Response"
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
             "description": "Coleta não encontrada."
           },
           "default": {
@@ -1005,7 +1019,14 @@
             "description": "Successful Response"
           },
           "409": {
-            "description": "Ativo já cadastrado ou limite de 10 ativos ativos."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo já cadastrado ou limite de 10 ativos."
           },
           "default": {
             "content": {
@@ -1060,9 +1081,23 @@
             "description": "Successful Response"
           },
           "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
             "description": "Ativo não encontrado."
           },
           "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
             "description": "Limite de ativos."
           },
           "default": {

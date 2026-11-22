@@ -524,7 +524,7 @@ export type CreateCollectionRunErrors = {
     /**
      * Já existe uma coleta em andamento.
      */
-    409: unknown;
+    409: ProblemDetails;
     /**
      * Erro (RFC 9457)
      */
@@ -558,7 +558,7 @@ export type GetCollectionRunErrors = {
     /**
      * Coleta não encontrada.
      */
-    404: unknown;
+    404: ProblemDetails;
     /**
      * Erro (RFC 9457)
      */
@@ -637,9 +637,9 @@ export type CreateUnderlyingData = {
 
 export type CreateUnderlyingErrors = {
     /**
-     * Ativo já cadastrado ou limite de 10 ativos ativos.
+     * Ativo já cadastrado ou limite de 10 ativos.
      */
-    409: unknown;
+    409: ProblemDetails;
     /**
      * Erro (RFC 9457)
      */
@@ -673,11 +673,11 @@ export type UpdateUnderlyingErrors = {
     /**
      * Ativo não encontrado.
      */
-    404: unknown;
+    404: ProblemDetails;
     /**
      * Limite de ativos.
      */
-    409: unknown;
+    409: ProblemDetails;
     /**
      * Erro (RFC 9457)
      */

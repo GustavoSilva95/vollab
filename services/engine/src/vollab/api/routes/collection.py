@@ -18,6 +18,7 @@ from vollab.api.schemas.collection import (
     ProgressCounts,
     RunSummary,
 )
+from vollab.api.schemas.common import ProblemDetails
 from vollab.collection import report
 from vollab.collection.planner import today_sao_paulo
 from vollab.collection.runner import ActiveRunError, create_run
@@ -78,7 +79,7 @@ def get_collection_pending(session: SessionDep) -> CollectionPendingResponse:
     response_model=CollectionRunResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Dispara a coleta (executada pelo worker)",
-    responses={409: {"description": "Já existe uma coleta em andamento."}},
+    responses={409: {"model": ProblemDetails, "description": "Já existe uma coleta em andamento."}},
 )
 def create_collection_run(session: SessionDep) -> CollectionRunResponse:
     try:
@@ -109,7 +110,7 @@ def _counts(g: report.GroupProgress) -> dict[str, int]:
     "/runs/{run_id}",
     response_model=CollectionRunResponse,
     summary="Progresso de uma coleta",
-    responses={404: {"description": "Coleta não encontrada."}},
+    responses={404: {"model": ProblemDetails, "description": "Coleta não encontrada."}},
 )
 def get_collection_run(run_id: int, session: SessionDep) -> CollectionRunResponse:
     run = session.get(CollectionRun, run_id)

@@ -11,7 +11,9 @@ export default defineConfig({
   plugins: [
     { name: '@hey-api/client-fetch', runtimeConfigPath: './src/runtime-config' },
     '@hey-api/typescript',
-    'zod',
+    // timestamptz chega com offset (ex.: -03:00, sessão do Postgres em America/Sao_Paulo);
+    // RFC 3339 permite offset, e o Zod padrão só aceitaria `Z`.
+    { name: 'zod', dates: { offset: true } },
     { name: '@hey-api/sdk', validator: true },
     '@tanstack/react-query',
   ],
