@@ -35,46 +35,70 @@
   opacity: 1;
 }
 
+/* O canvas é transparente: some com o fallback quando a cena WebGL estiver pronta. */
+.fallback {
+  transition: opacity 1.2s var(--ease);
+}
+
+.layer[data-ready] .fallback {
+  opacity: 0;
+}
+
 .canvas {
   width: 100%;
   height: 100%;
 }
 
-/* Vinheta para garantir contraste do texto do hero sobre a superfície. */
-.vignette {
-  position: absolute;
-  inset: 0;
-  background:
-    /* Radial ancorado à esquerda: escurece atrás do texto sem as faixas de banding de um gradiente linear. */
-    radial-gradient(
-      ellipse 70% 90% at 0% 50%,
-      rgb(13 13 18 / 0.85) 0%,
-      rgb(13 13 18 / 0.7) 35%,
-      rgb(13 13 18 / 0.35) 65%,
-      rgb(13 13 18 / 0) 100%
-    ),
-    linear-gradient(180deg, rgb(13 13 18 / 0.6) 0%, rgb(13 13 18 / 0) 22%, rgb(13 13 18 / 0) 70%, var(--bg) 100%);
+/*
+ * Vinheta para garantir contraste do texto do hero sobre a superfície.
+ * É uma máscara no canvas (e não uma camada da cor do fundo por cima): assim o
+ * fundo liso não recebe degradê nenhum. Um degradê de --bg sobre --bg gera
+ * erros de arredondamento de ±1 tom, visíveis como faixas ("ondas") em
+ * monitores que realçam os pretos.
+ * Opacidade da máscara = 1 − opacidade da antiga vinheta.
+ */
+.canvasWrap {
+  --vignette-side: radial-gradient(
+    ellipse 70% 90% at 0% 50%,
+    rgb(0 0 0 / 0.15) 0%,
+    rgb(0 0 0 / 0.3) 35%,
+    rgb(0 0 0 / 0.65) 65%,
+    #000 100%
+  );
+  --vignette-edges: linear-gradient(180deg, rgb(0 0 0 / 0.4) 0%, #000 22%, #000 70%, transparent 100%);
+  -webkit-mask-image: var(--vignette-side), var(--vignette-edges);
+  mask-image: var(--vignette-side), var(--vignette-edges);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 @media (max-width: 959.98px) {
-  .vignette {
-    background:
-      /* Em telas estreitas o texto fica embaixo: a superfície aparece livre no topo. */
-      linear-gradient(
-        180deg,
-        rgb(13 13 18 / 0.35) 0%,
-        rgb(13 13 18 / 0.1) 18%,
-        rgb(13 13 18 / 0.25) 34%,
-        rgb(13 13 18 / 0.7) 50%,
-        rgb(13 13 18 / 0.88) 70%,
-        var(--bg) 100%
-      );
+  .canvasWrap {
+    /* Em telas estreitas o texto fica embaixo: a superfície aparece livre no topo. */
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      rgb(0 0 0 / 0.65) 0%,
+      rgb(0 0 0 / 0.9) 18%,
+      rgb(0 0 0 / 0.75) 34%,
+      rgb(0 0 0 / 0.3) 50%,
+      rgb(0 0 0 / 0.12) 70%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      rgb(0 0 0 / 0.65) 0%,
+      rgb(0 0 0 / 0.9) 18%,
+      rgb(0 0 0 / 0.75) 34%,
+      rgb(0 0 0 / 0.3) 50%,
+      rgb(0 0 0 / 0.12) 70%,
+      transparent 100%
+    );
   }
 }
 
-
 @media (prefers-reduced-motion: reduce) {
-  .canvasWrap {
+  .canvasWrap,
+  .fallback {
     transition: none;
   }
 }

@@ -101,10 +101,12 @@ export default function VolSurfaceScene({
       className={styles.canvas}
       frameloop={frameloop}
       dpr={[config.render.dpr[0], dpr]}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+      // Canvas transparente: o fundo vem só do CSS (.layer), evitando diferença de cor
+      // entre WebGL e CSS em alguns navegadores/telas, que aparecia como mancha sob a vinheta.
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ fov: config.camera.fov, near: 0.1, far: 200, position: config.camera.position }}
       onCreated={({ gl }) => {
-        gl.setClearColor(config.colors.background, 1);
+        gl.setClearColor(config.colors.background, 0);
         onReady?.();
       }}
       aria-hidden="true"

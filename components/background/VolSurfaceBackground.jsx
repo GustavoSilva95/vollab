@@ -111,7 +111,6 @@ export default function VolSurfaceBackground() {
             />
           </div>
         )}
-        <div className={styles.vignette} />
       </div>
     </>
   );
