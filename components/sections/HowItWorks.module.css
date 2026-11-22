@@ -1,0 +1,45 @@
+.section {
+  position: relative;
+  z-index: 1;
+  padding-block: 96px;
+  border-top: 1px solid rgb(85 85 85 / 0.25);
+}
+
+.steps {
+  display: grid;
+  gap: 32px;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.number {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: var(--accent);
+}
+
+.stepTitle {
+  font-size: 1.25rem;
+}
+
+.stepText {
+  margin-top: 8px;
+  color: var(--fg-muted);
+}
+
+@media (min-width: 960px) {
+  .section {
+    padding-block: 128px;
+  }
+
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px;
+  }
+}

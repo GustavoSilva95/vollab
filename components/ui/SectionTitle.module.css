@@ -1,0 +1,33 @@
+.header {
+  max-width: 640px;
+  margin-bottom: 40px;
+}
+
+.center {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  margin-bottom: 12px;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.title {
+  font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+}
+
+.description {
+  margin-top: 14px;
+  color: var(--fg-muted);
+  font-size: 1.0625rem;
+}
+
+@media (min-width: 960px) {
+  .header {
+    margin-bottom: 56px;
+  }
+}

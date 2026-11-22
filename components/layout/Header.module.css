@@ -1,0 +1,180 @@
+.header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.3s var(--ease),
+    border-color 0.3s var(--ease),
+    backdrop-filter 0.3s var(--ease);
+}
+
+.header[data-solid] {
+  background: rgb(13 13 18 / 0.78);
+  border-bottom-color: rgb(85 85 85 / 0.35);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: var(--header-h);
+}
+
+.logo {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
+.logo img {
+  width: auto;
+  height: 22px;
+}
+
+.nav,
+.actions {
+  display: none;
+}
+
+.navList {
+  display: flex;
+  gap: 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.navLink {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: var(--fg-muted);
+  font-size: 0.9375rem;
+  transition: color 0.2s var(--ease);
+}
+
+.navLink:hover {
+  color: var(--fg);
+}
+
+.actions {
+  gap: 10px;
+}
+
+/* Botão hambúrguer */
+.toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.toggleBars,
+.toggleBars::before,
+.toggleBars::after {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--fg);
+  transition:
+    transform 0.25s var(--ease),
+    opacity 0.2s var(--ease);
+}
+
+.toggleBars {
+  position: relative;
+}
+
+.toggleBars::before,
+.toggleBars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+
+.toggleBars::before {
+  transform: translateY(-6px);
+}
+
+.toggleBars::after {
+  transform: translateY(6px);
+}
+
+.toggle[aria-expanded='true'] .toggleBars {
+  background: transparent;
+}
+
+.toggle[aria-expanded='true'] .toggleBars::before {
+  transform: rotate(45deg);
+}
+
+.toggle[aria-expanded='true'] .toggleBars::after {
+  transform: rotate(-45deg);
+}
+
+/* Painel do menu móvel */
+.panel {
+  height: calc(100dvh - var(--header-h));
+  overflow-y: auto;
+  padding-block: 16px 32px;
+  border-top: 1px solid rgb(85 85 85 / 0.35);
+  background: var(--bg);
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panelList {
+  padding: 0;
+  list-style: none;
+}
+
+.panelLink {
+  display: block;
+  padding: 16px 0;
+  border-bottom: 1px solid rgb(85 85 85 / 0.3);
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.panelActions {
+  display: grid;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+@media (min-width: 640px) {
+  .logo img {
+    height: 28px;
+  }
+}
+
+@media (min-width: 960px) {
+  .nav,
+  .actions {
+    display: flex;
+  }
+
+  .toggle,
+  .panel {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .toggleBars,
+  .toggleBars::before,
+  .toggleBars::after {
+    transition: none;
+  }
+}
