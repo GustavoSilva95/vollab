@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 2 — Dados (implementada; aguardando CI no GitHub e aprovação do fechamento)
+**Etapa atual:** Etapa 2 — Dados (implementada; CI verde; aguardando aprovação do fechamento)
 **Próxima etapa:** Etapa 3 — Volatilidade e eventos (bloqueada até o fechamento da Etapa 2)
 
 ## Aprovações
@@ -105,7 +105,7 @@
 
 ## Próximos passos
 
-1. CI verde no GitHub para a branch `etapa-2-dados` (PR aberto).
+1. ~~CI verde no GitHub~~: **verde** nos 6 jobs (run 45062752607, PR #2).
 2. Aprovação do usuário: fechamento da Etapa 2 e PRD 1.3.
 3. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
 4. Depois da aprovação: liberar a Etapa 3 (Volatilidade e eventos).
