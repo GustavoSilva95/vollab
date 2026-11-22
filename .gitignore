@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+.next/
 /out/
 
 # production
@@ -30,8 +31,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (PRD-NF-09: só o exemplo vai para o git)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,4 +43,19 @@ yarn-error.log*
 next-env.d.ts
 
 # Etapa 0: cadastro completo de instrumentos da B3 (18 MB) fica fora do git; o recorte versionado está ao lado
-/docs/pesquisa/fixtures/b3/instrumentos/*_completo.csv
+/services/engine/tests/fixtures/b3/instrumentos/*_completo.csv
+
+# cache bruto da coleta (ADR-06)
+/data/raw/
+
+# python
+__pycache__/
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# playwright
+/apps/web/playwright-report/
+/apps/web/test-results/
+/apps/web/blob-report/

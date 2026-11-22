@@ -2,22 +2,30 @@
   "name": "vollab",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "npm run dev -w @vollab/web",
+    "build": "npm run build -w @vollab/web",
+    "start": "npm run start -w @vollab/web",
+    "lint": "npm run lint -w @vollab/web",
+    "typecheck": "npm run typecheck -w @vollab/web",
+    "test": "npm run test -w @vollab/web",
+    "e2e": "npm run e2e -w @vollab/web",
+    "engine:up": "ENGINE_VERSION=$(git rev-parse --short HEAD) docker compose up -d --build --wait",
+    "engine:down": "docker compose down",
+    "contract:openapi": "cd services/engine && uv run --locked python -m vollab.api.export_openapi ../../packages/api-types/openapi.json",
+    "contract:generate": "npm run contract:openapi && npm run generate -w @vollab/api-types",
+    "contract:check": "./scripts/check-contract-drift.sh"
   },
-  "dependencies": {
-    "@react-three/drei": "^10.7.9",
-    "@react-three/fiber": "^9.8.2",
-    "next": "16.4.6",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "three": "^0.187.0"
-  },
-  "devDependencies": {
-    "eslint": "^9",
-    "eslint-config-next": "16.4.6"
+  "overrides": {
+    "@hey-api/json-schema-ref-parser": {
+      "js-yaml": "^4.3.2"
+    }
   }
 }

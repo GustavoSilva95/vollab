@@ -1,0 +1,158 @@
+{
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "properties": {
+          "database": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Database",
+            "type": "string"
+          },
+          "engine_version": {
+            "description": "Versão do engine (git sha do build).",
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "last_collection_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Fim da última coleta concluída. Sempre nulo até a Etapa 2 (coleta).",
+            "title": "Last Collection At"
+          },
+          "status": {
+            "description": "`degraded` quando o banco não responde.",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "engine_version",
+          "database"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "ProblemDetails": {
+        "description": "Erro no formato RFC 9457 (PRD §7).",
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Explicação específica desta ocorrência.",
+            "title": "Detail"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Erros de validação por campo (apenas em 422).",
+            "title": "Errors"
+          },
+          "instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Caminho da requisição que falhou.",
+            "title": "Instance"
+          },
+          "status": {
+            "description": "Código HTTP.",
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "description": "Resumo curto do problema, em português.",
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "about:blank",
+            "description": "URI que identifica o tipo do problema.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "status"
+        ],
+        "title": "ProblemDetails",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
+    "title": "VolLab Engine",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "get_health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Saúde do engine e do banco",
+        "tags": [
+          "saude"
+        ]
+      }
+    }
+  }
+}

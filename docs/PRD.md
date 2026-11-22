@@ -440,7 +440,7 @@ O detalhamento, com entregáveis e critérios de saída, está em [`PLANO.md`](.
 
 | ID | Questão | Quando resolver |
 |----|---------|-----------------|
-| PRD-QA-01 | O Hey API gera Zod e hooks do TanStack Query de forma estável a partir do OpenAPI do FastAPI? | Etapa 1 (senão, plano B da §3.1) |
+| PRD-QA-01 | O Hey API gera Zod e hooks do TanStack Query de forma estável a partir do OpenAPI do FastAPI? | **Resolvida na Etapa 1 (2026-11-22):** sim. `@hey-api/openapi-ts` 0.99 gera tipos, Zod, SDK com validação de resposta e `queryOptions` do TanStack Query; saída determinística (verificada pelo `contract-drift`). Plano B não usado. |
 | PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? Dados da Etapa 0: PETR4 tem 35–97 mil negócios/dia; universo inicial ≈ 10 milhões de linhas em 3 meses (ativos) + ~2 milhões (opções). | Etapa 2 |
 | PRD-QA-03 | Método do intervalo de confiança por métrica (bootstrap × analítico) | Etapa 4 (QA-07) |
 | PRD-QA-04 | O usuário deseja a superfície 3D de IV na fase 1? | Após a Etapa 3 (opcional) |

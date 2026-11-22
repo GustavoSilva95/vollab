@@ -31,7 +31,8 @@
 - Requisições a no máximo 1 req/s, `User-Agent` genérico, sem dados pessoais (PRD-NF-02). Total aproximado: 70 requisições ao `rapinegocios`, 6 arquivos COTAHIST, 1 ao SGS, 10 ao Yahoo.
 - Datas usadas: pregões de 05 a 19/11/2026 e o feriado de 20/11/2026.
 - Universo de exemplo (os 10 ativos com mais negócios em opções nos últimos 63 pregões): BOVA11, PETR4, BBAS3, VALE3, BBDC4, ITUB4, BEEF3, MGLU3, PRIO3, B3SA3. **O universo real do usuário ainda não foi informado**; os números de volume escalam com ele.
-- Scripts descartáveis em [`scripts/`](scripts/) (stdlib Python, sem dependências). Fixtures e SHA-256 em [`fixtures/MANIFEST.csv`](fixtures/MANIFEST.csv).
+- Scripts descartáveis em [`scripts/`](scripts/) (stdlib Python, sem dependências). Fixtures e SHA-256 em [`MANIFEST.csv`](../../services/engine/tests/fixtures/MANIFEST.csv).
+- **Nota (Etapa 1, 2026-11-22):** as fixtures citadas como `fixtures/...` neste relatório foram movidas para [`services/engine/tests/fixtures/`](../../services/engine/tests/fixtures/); a lista de feriados (`fixtures/calendario/feriados.csv`) foi para o seed do engine, em [`services/engine/src/vollab/db/seed/feriados.csv`](../../services/engine/src/vollab/db/seed/feriados.csv). Os SHA-256 continuam válidos e são conferidos por teste.
 - IVs desta pesquisa são **aproximadas** (BS europeu, sem dividendos, r = Selic 13,65% a.a.), usadas só para comparar candidatos entre si.
 
 ---
@@ -298,7 +299,7 @@ Lacunas do Yahoo:
 | QA-06: distribuição e limiares | ✅ |
 | RS-02: testado, lacunas listadas | ✅ (via API do Yahoo; biblioteca `yfinance` na Etapa 2) |
 | PRD-NF-04: estimativa refinada | ✅ ~12,5 h |
-| Fixtures reais salvas | ✅ `docs/pesquisa/fixtures/` (8,5 MB; mover para `services/engine/tests/fixtures/` na Etapa 1). COTAHIST anuais **não versionados** (100 MB): URL + SHA-256 abaixo |
+| Fixtures reais salvas | ✅ `services/engine/tests/fixtures/` (8,5 MB; movidas na Etapa 1). COTAHIST anuais **não versionados** (100 MB): URL + SHA-256 abaixo |
 
 COTAHIST anuais usados (baixar de novo para reproduzir `analyze.py`; o CSV filtrado é gerado por `cotahist.py`):
 
