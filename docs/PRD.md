@@ -1,10 +1,12 @@
 # PRD — Documento de Requisitos de Produto
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
-**Base:** [BRD 1.0 — Fase 1](./BRD.md) (aprovado em 2026-11-21)
-**Versão:** 1.0
-**Data:** 2026-11-21
-**Status:** Aprovado (2026-11-21)
+**Base:** [BRD 1.1 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
+**Versão:** 1.1
+**Data:** 2026-11-22
+**Status:** Aprovado (2026-11-22)
+
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos.
 
 ---
 
@@ -48,7 +50,7 @@ Regras de uso:
 └─────────────────────────────────────────────────────────────────────────────────────┘
                  │ saída de rede apenas do engine/worker
                  ▼
-   B3 (rapinegocios + fontes da Etapa 0) · Banco Central SGS (Selic) · Yahoo Finance (proventos)
+   B3 (rapinegocios + COTAHIST) · Banco Central SGS (Selic) · Yahoo Finance (proventos)
 ```
 
 Princípios de arquitetura:
@@ -105,10 +107,10 @@ apps/web/              Next.js (TS). A landing e os componentes atuais migram pa
 services/engine/       Python (uv)
   src/vollab/api/      rotas FastAPI e schemas Pydantic
   src/vollab/quant/    motor puro (sem I/O): pricing, vol, previsão, edge, sizing, risco, atribuição
-  src/vollab/data/     adaptadores de fonte (b3, bcb, yahoo), parsing, cache bruto
+  src/vollab/data/     adaptadores de fonte (b3_trades, b3_cotahist, bcb, yahoo), parsing, cache bruto
   src/vollab/jobs/     worker e fila
   src/vollab/db/       modelos SQLAlchemy e migrations Alembic
-  tests/               unit, reference, property, integration, fixtures/ (CSVs reais da B3)
+  tests/               unit, reference, property, integration, fixtures/ (ZIPs reais da B3, vindos de docs/pesquisa/fixtures/)
 packages/api-types/    código gerado do OpenAPI (versionado)
 data/raw/              cache bruto (no .gitignore)
 docs/                  BRD, PRD, pesquisa/ (relatórios da Etapa 0)
@@ -184,21 +186,22 @@ Os nomes físicos serão confirmados na Etapa 1. Todas as tabelas de usuário t�
 |--------|----------|-----|
 | `users` | usuário fixo na fase 1 | ADR-13 |
 | `underlyings` | ativos cadastrados pelo usuário (máx. 10), ativo/inativo | §5.1 |
-| `option_series` | código, ativo-objeto, vencimento, strike, call/put, estilo, fonte, vigência | RN-DAD-02 |
-| `series_adjustments` | ajustes de strike e mudanças de código por provento, com data e vínculo série antiga → nova | RN-DAD-03 |
-| `exchange_holidays` | feriados B3, com fonte | RN-PRC-05, QA-02 |
+| `option_series` | código, **ISIN do ativo-objeto**, vencimento, strike vigente, call/put, estilo + `style_source` (`inferred` \| `official`), fonte, vigência (primeiro e último pregão). **Chave natural: (código, vencimento)**, pois códigos são reutilizados | RN-DAD-02 |
+| `series_adjustments` | ajustes de strike e mudanças de código por provento, com data, strike anterior e novo (detectados no COTAHIST) e vínculo série antiga → nova | RN-DAD-03 |
+| `exchange_holidays` | feriados B3, com `source` (`b3_official` \| `national_list` \| `b3_rule`) e `confirmed`. Carga inicial: lista nacional 2001–2078 (`feriados.csv`, formato ANBIMA: `DD/MM/AAAA;;`) + regras B3 (20/11 desde 2024, 24/12, 31/12); anos não publicados pela B3 ficam provisórios | RN-PRC-05, QA-02 |
 | `risk_free_rates` | Selic diária (SGS) | RN-PRC-03 |
-| `corporate_actions` | dividendos e JCP: data ex, valor, fonte, confirmado/estimado | RN-PRC-02 |
+| `corporate_actions` | dividendos e JCP: data ex, valor, tipo, fonte (`manual` \| `yahoo` \| `b3_strike_adjustment`), confirmado/estimado | RN-PRC-02, RS-02 |
 
 ### 6.2 Mercado
 
 | Tabela | Conteúdo | BRD |
 |--------|----------|-----|
-| `raw_files` | caminho, hash sha256, ticker, data, tamanho, formato (CSV/ZIP), status de parsing | RF-DAD-03/04 |
+| `raw_files` | fonte (`b3_trades` \| `b3_cotahist`), caminho, hash sha256, ticker consultado, data consultada, momento da consulta, status HTTP, tamanho, formato, status de parsing | RF-DAD-03/04 |
 | `trades` | negócios brutos normalizados (instrumento, data, hora, preço, quantidade, ação de atualização, sessão, id do negócio). **Particionada por mês.** Chave única (instrumento, data, id do negócio). | RF-DAD-01 |
-| `daily_bars` | OHLC e volume do ativo-objeto por pregão, só negócios válidos da sessão regular | RN-DAD-01 |
-| `option_daily_quotes` | preço de referência diário por série (método da QA-04), nº de negócios, volume, flag de liquidez | QA-04, QA-06 |
-| `implied_vols` | IV por negócio ou por série/dia, com preço sincronizado do ativo e defasagem | RF-VOL-02, RN-VOL-03 |
+| `daily_bars` | OHLC, nº de negócios, quantidade e volume oficiais do ativo-objeto por pregão (COTAHIST), mais o resultado da verificação contra a reconstrução R4 quando houver negócios intradiários | RN-DAD-01 |
+| `option_daily_stats` | linha do COTAHIST por série e pregão (OHLC, médio, último, melhor oferta de compra/venda no fechamento, nº de negócios, quantidade, volume); base do pré-filtro da coleta | RF-DAD-02, QA-06 |
+| `option_daily_quotes` | **IV de referência** diária por série (mediana das IVs sincronizadas na última hora, RN-VOL-06), preço implícito, nº de negócios usados, status (`ok` \| `low_sample`), flag de liquidez | QA-04, QA-06 |
+| `implied_vols` | IV por negócio, com preço sincronizado do ativo e defasagem em ms; pares acima da janela (padrão 10 s) não geram IV e são contados | RF-VOL-02, RN-VOL-03 |
 | `atm_term_structure` | IV ATM por vencimento e IV de prazo constante (ou indisponível, com motivo) | RF-VOL-03, RN-VOL-05 |
 | `realized_vols` | RV por estimador e janela | RF-VOL-01 |
 
@@ -207,7 +210,7 @@ Os nomes físicos serão confirmados na Etapa 1. Todas as tabelas de usuário t�
 | Tabela | Conteúdo | BRD |
 |--------|----------|-----|
 | `collection_runs` | execução: origem (manual / carga inicial), início, fim, status, totais | RF-DAD-06 |
-| `collection_items` | um item por ticker × pregão: status (pendente, ok, vazio, falha), tentativas, erro, `raw_file_id` | RF-DAD-02, RF-DAD-06 |
+| `collection_items` | um item por fonte × ticker × pregão (o COTAHIST do pregão é um item próprio e vem primeiro): status (pendente, ok, vazio, falha), tentativas, erro, `raw_file_id`. ZIP só com cabeçalho → `vazio`; HTTP 404 → `falha` sem nova tentativa | RF-DAD-02, RF-DAD-06 |
 | `jobs` | fila genérica do worker (tipo, payload, status, lock) | ADR-08 |
 
 ### 6.4 Eventos, previsão e modelos
@@ -308,8 +311,8 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 
 | Módulo | Requisitos BRD | Componentes | Aceitação (resumo) |
 |--------|----------------|-------------|--------------------|
-| M1 Dados | RF-DAD-01..07, RN-DAD-01..03 | `data/` (adaptadores B3, BCB, Yahoo), `jobs/`, `/collection` | Coleta retomável e idempotente; reprocessar a partir de `data/raw/` gera o mesmo resultado; relatório de lacunas por ativo e data. |
-| M1 Vol | RF-VOL-01..05, RN-VOL-01..05 | `quant/vol`, `quant/pricing` | Estimadores e IV passam nos testes de referência (§10.2); prazo constante "indisponível" sem extrapolação. |
+| M1 Dados | RF-DAD-01..07, RN-DAD-01..03 | `data/` (adaptadores B3 negócios, B3 COTAHIST, BCB, Yahoo), `jobs/`, `/collection` | Coleta retomável e idempotente; reprocessar a partir de `data/raw/` gera o mesmo resultado; relatório de lacunas por ativo e data; R4 confere com o COTAHIST nas fixtures (OHLC e nº de negócios). |
+| M1 Vol | RF-VOL-01..05, RN-VOL-01..06 | `quant/vol`, `quant/pricing` | Estimadores e IV passam nos testes de referência (§10.2); prazo constante "indisponível" sem extrapolação. |
 | M1 Previsão | RF-PRV-01..04, RN-PRV-01/02 | `quant/forecast` | EWMA e combinação de estimadores; GARCH como candidato; avaliação apenas com janelas não sobrepostas; baselines RV C2C 20d e IV. |
 | M2 Eventos | RF-EVT-01/02, RN-EVT-01..03 | `/events`, `quant/events` | Salto pela estrutura a termo, conferido com o histórico; intervalo largo com pouco histórico. |
 | M3 Ranking | RF-RNK-01/02, RN-EDG-01..05, RN-CST-01..03 | `quant/edge`, `quant/costs`, `/ranking` | Semáforo de 3 estados com custos conservadores; limiar rotulado "não calibrado". |
@@ -331,7 +334,7 @@ Validações de consistência do diário (RS-06): quantidade resultante nunca ne
 | Camada | Ferramenta | Foco |
 |--------|-----------|------|
 | Motor quantitativo | pytest e hypothesis | Testes de referência obrigatórios, propriedades e unidades. **Maior peso.** |
-| Ingestão | pytest com **CSVs/ZIPs reais da B3** em `tests/fixtures/` | Parsing (`;`, vírgula decimal, ZIP), cancelamentos, sessões, idempotência. |
+| Ingestão | pytest com **ZIPs reais da B3** (negócios e COTAHIST) em `tests/fixtures/` | Parsing (`;`, vírgula decimal, ZIP, layout fixo do COTAHIST), regra R4 (cancelamento de 06/11/2026, negócio de D-1, sessão 6), arquivo vazio de feriado, idempotência. |
 | API | pytest com Postgres de teste (container) | Contratos, validação, gravação do retrato da decisão. |
 | Front | Vitest e Testing Library | `lib/format`, estados "dados insuficientes", "estimado" e "manual", formulários. |
 | Ponta a ponta | Playwright | 3 fluxos críticos (§10.3). |
@@ -380,7 +383,7 @@ Nenhum teste de CI acessa a B3, o BCB ou o Yahoo. As fontes externas são simula
 | PRD-NF-01 | **Execução local:** o engine e o Postgres escutam apenas em `127.0.0.1`. Sem CORS aberto. |
 | PRD-NF-02 | **Coleta educada:** ritmo de requisições configurável (padrão 1 req/s), backoff exponencial, `User-Agent` genérico, sem paralelismo agressivo (RS-08). |
 | PRD-NF-03 | **Coleta idempotente e retomável:** reexecutar não duplica negócios; uma interrupção retoma do último item pendente. |
-| PRD-NF-04 | **Estimativa de volume da carga inicial:** cerca de 2.500 requisições para o ativo-objeto (10 ativos × 252 pregões) mais cerca de 25.000 para opções (10 ativos × ~40 séries relevantes × 63 pregões). A 1 req/s, isso dá **cerca de 7–8 h**. A carga inicial precisa funcionar em várias sessões e começar pelo ativo-objeto. O número de séries depende do filtro da Etapa 0. |
+| PRD-NF-04 | **Volume da carga inicial (medido na Etapa 0, filtro padrão):** universo inicial **BOVA11, BBAS3 e PETR4** → 2 COTAHIST anuais (OHLC de 1 ano) + 63 COTAHIST diários + ~190 requisições intradiárias do ativo-objeto (3 × 63) + **~18.700 de opções** (~297 séries elegíveis por pregão: BOVA11 ~127, PETR4 ~107, BBAS3 ~64). A 1 req/s, **cerca de 5,3 h**. Coleta diária: **~300 requisições (~5 min)**. Referência para 10 ativos: ~45 mil requisições (~12,5 h). A carga roda em várias sessões e começa pelos COTAHIST e pelo ativo-objeto. |
 | PRD-NF-05 | **Segurança dos arquivos baixados:** ZIPs são tratados como entrada não confiável (limite de tamanho descompactado, sem caminhos fora do diretório de destino, só CSV aceito). Nomes de arquivo em `data/raw/` são gerados pelo engine e nunca vêm da resposta. |
 | PRD-NF-06 | **Desempenho:** ranking de 10 ativos em < 2 s depois dos recálculos pós-coleta; simulação com 10.000 caminhos em < 3 s; telas de leitura em < 1 s localmente. Recálculos pesados rodam no worker depois da coleta, não na requisição. |
 | PRD-NF-07 | **Bundle:** Plotly fora do bundle inicial; a landing não carrega código do cockpit. |
@@ -405,6 +408,8 @@ Objetivo: fechar as premissas e questões que podem mudar o escopo. Entregável:
 | QA-06 | Filtros mínimos de liquidez | Distribuição observada de negócios por série; proposta de limiares padrão. |
 | RS-02 | yfinance devolve dividendos e JCP dos ativos-alvo? | Testado; lacunas listadas. |
 | PRD-NF-04 | Volume real de séries relevantes por ativo | Estimativa refinada do tempo de carga inicial. |
+
+**Resultado (2026-11-22):** todos os itens respondidos; PM-02 validada. Relatório aprovado: [`docs/pesquisa/etapa-0.md`](./pesquisa/etapa-0.md).
 
 **Decisão de seguir ou não:** se PM-02 falhar (o endpoint não aceitar tickers de opções), o PRD e o BRD são revisados **antes** da Etapa 1.
 
@@ -436,7 +441,7 @@ O detalhamento, com entregáveis e critérios de saída, está em [`PLANO.md`](.
 | ID | Questão | Quando resolver |
 |----|---------|-----------------|
 | PRD-QA-01 | O Hey API gera Zod e hooks do TanStack Query de forma estável a partir do OpenAPI do FastAPI? | Etapa 1 (senão, plano B da §3.1) |
-| PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? | Etapa 2, com dados da Etapa 0 |
+| PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? Dados da Etapa 0: PETR4 tem 35–97 mil negócios/dia; universo inicial ≈ 10 milhões de linhas em 3 meses (ativos) + ~2 milhões (opções). | Etapa 2 |
 | PRD-QA-03 | Método do intervalo de confiança por métrica (bootstrap × analítico) | Etapa 4 (QA-07) |
 | PRD-QA-04 | O usuário deseja a superfície 3D de IV na fase 1? | Após a Etapa 3 (opcional) |
 
