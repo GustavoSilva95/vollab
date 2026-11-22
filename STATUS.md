@@ -13,6 +13,7 @@
 | Relatório da Etapa 0 ([docs/pesquisa/etapa-0.md](docs/pesquisa/etapa-0.md)) e alterações A-01..A-10 | 1.0 | Aprovado | 2026-11-22 |
 | BRD | 1.1 | Aprovado (incorpora A-01..A-10) | 2026-11-22 |
 | PRD | 1.1 | Aprovado (incorpora A-01..A-10 e universo inicial) | 2026-11-22 |
+| BRD / PRD | 1.2 | Aprovado (liquidez mínima de 20 negócios) | 2026-11-22 |
 
 ## Feito
 
@@ -41,8 +42,9 @@
 | 2026-11-22 | QA-04: IV de referência = mediana das IVs sincronizadas na última hora (mín. 3) | BRD RN-VOL-06 |
 | 2026-11-22 | QA-05: janela de sincronização de 10 s | BRD RN-VOL-03 |
 | 2026-11-22 | QA-06: padrão ≥ 10 negócios, K/S 0,9–1,1, 2 vencimentos mensais, semanais desligadas | BRD §15 |
+| 2026-11-22 | **QA-06 revista pelo usuário: mínimo de 20 negócios no dia** (−5% de séries em relação a 10; 99,8% dos negócios retidos). Avaliados também 21 e 51 (51 cortava ~10% das séries ATM do 2º vencimento). BRD e PRD → 1.2 | BRD §15, PRD-NF-04 |
 | 2026-11-22 | RS-02: Yahoo só para histórico, conferido pelo ajuste de strike; proventos futuros manuais | BRD §8 |
-| 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,9 mil req (~5,3 h); diária ≈ 300 req (~5 min) | PRD-NF-04 |
+| 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
 

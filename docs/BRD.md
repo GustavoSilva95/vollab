@@ -2,11 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
-**Versão:** 1.1 — Fase 1
+**Versão:** 1.2 — Fase 1
 **Data:** 2026-11-22
 **Status:** Aprovado (2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário.
 
 ---
 
@@ -361,7 +361,7 @@ Os critérios medem **processo, não lucro**.
 | QA-03 | Qual **prazo** da IV de prazo constante usar no ranking? | 21 dias úteis, configurável. |
 | QA-04 | Qual **preço de referência diário** de cada série para IV (último negócio, VWAP, mediana)? | **Resolvida (2026-11-22):** mediana das IVs sincronizadas na última hora (RN-VOL-06). VWAP descartado. |
 | QA-05 | Qual **janela máxima** de defasagem entre o negócio da opção e o do ativo-objeto na sincronização (RN-VOL-03)? | **Resolvida (2026-11-22):** 10 s, configurável. |
-| QA-06 | Quais são os **filtros mínimos de liquidez** (nº de negócios, quantidade, volume financeiro) por série? | **Resolvida (2026-11-22):** padrão ≥ 10 negócios no dia, K/S entre 0,9 e 1,1, 2 próximos vencimentos mensais, semanais desligadas; tudo configurável. |
+| QA-06 | Quais são os **filtros mínimos de liquidez** (nº de negócios, quantidade, volume financeiro) por série? | **Resolvida (2026-11-22):** padrão **≥ 20 negócios no dia** (elevado de 10 na versão 1.2), K/S entre 0,9 e 1,1, 2 próximos vencimentos mensais, semanais desligadas; tudo configurável. |
 | QA-07 | Qual **nível de confiança** e qual método para os intervalos? | 90%, configurável; método a definir. |
 | QA-08 | Quais as **amostras mínimas** para sair de "dados insuficientes" em cada métrica? | Definir por métrica. |
 | QA-09 | Como definir a **"perda máxima por trade"** em estruturas de perda ilimitada (straddle/strangle vendido) para aplicar o teto de 7%? | Usar a pior perda entre os cenários de stress configurados ou um percentil extremo (ex.: 99%) da distribuição simulada. |

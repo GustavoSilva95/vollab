@@ -1,12 +1,12 @@
 # PRD — Documento de Requisitos de Produto
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
-**Base:** [BRD 1.1 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
-**Versão:** 1.1
+**Base:** [BRD 1.2 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
+**Versão:** 1.2
 **Data:** 2026-11-22
 **Status:** Aprovado (2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado.
 
 ---
 
@@ -383,7 +383,7 @@ Nenhum teste de CI acessa a B3, o BCB ou o Yahoo. As fontes externas são simula
 | PRD-NF-01 | **Execução local:** o engine e o Postgres escutam apenas em `127.0.0.1`. Sem CORS aberto. |
 | PRD-NF-02 | **Coleta educada:** ritmo de requisições configurável (padrão 1 req/s), backoff exponencial, `User-Agent` genérico, sem paralelismo agressivo (RS-08). |
 | PRD-NF-03 | **Coleta idempotente e retomável:** reexecutar não duplica negócios; uma interrupção retoma do último item pendente. |
-| PRD-NF-04 | **Volume da carga inicial (medido na Etapa 0, filtro padrão):** universo inicial **BOVA11, BBAS3 e PETR4** → 2 COTAHIST anuais (OHLC de 1 ano) + 63 COTAHIST diários + ~190 requisições intradiárias do ativo-objeto (3 × 63) + **~18.700 de opções** (~297 séries elegíveis por pregão: BOVA11 ~127, PETR4 ~107, BBAS3 ~64). A 1 req/s, **cerca de 5,3 h**. Coleta diária: **~300 requisições (~5 min)**. Referência para 10 ativos: ~45 mil requisições (~12,5 h). A carga roda em várias sessões e começa pelos COTAHIST e pelo ativo-objeto. |
+| PRD-NF-04 | **Volume da carga inicial (medido na Etapa 0, filtro padrão):** universo inicial **BOVA11, BBAS3 e PETR4** → 2 COTAHIST anuais (OHLC de 1 ano) + 63 COTAHIST diários + ~190 requisições intradiárias do ativo-objeto (3 × 63) + **~17.700 de opções** (filtro: 2 mensais, K/S 0,9–1,1, ≥ 20 negócios; ~280 séries elegíveis por pregão: BOVA11 ~121, PETR4 ~100, BBAS3 ~61). A 1 req/s, **cerca de 5,0 h**. Coleta diária: **~285 requisições (~5 min)**. Comparação: ≥ 10 negócios → ~18.700 (5,3 h); ≥ 51 → ~15.100 (4,3 h, com perda nas asas e no 2º vencimento). O limiar de 20 retém 99,8% dos negócios do limiar de 10. Referência para 10 ativos: ~45 mil requisições (~12,5 h). A carga roda em várias sessões e começa pelos COTAHIST e pelo ativo-objeto. |
 | PRD-NF-05 | **Segurança dos arquivos baixados:** ZIPs são tratados como entrada não confiável (limite de tamanho descompactado, sem caminhos fora do diretório de destino, só CSV aceito). Nomes de arquivo em `data/raw/` são gerados pelo engine e nunca vêm da resposta. |
 | PRD-NF-06 | **Desempenho:** ranking de 10 ativos em < 2 s depois dos recálculos pós-coleta; simulação com 10.000 caminhos em < 3 s; telas de leitura em < 1 s localmente. Recálculos pesados rodam no worker depois da coleta, não na requisição. |
 | PRD-NF-07 | **Bundle:** Plotly fora do bundle inicial; a landing não carrega código do cockpit. |
