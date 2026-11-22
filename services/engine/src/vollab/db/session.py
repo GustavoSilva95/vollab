@@ -14,7 +14,7 @@ def make_engine(url: str) -> Engine:
 
 @lru_cache(maxsize=1)
 def get_engine() -> Engine:
-    return make_engine(str(get_settings().database_url))
+    return make_engine(get_settings().database_dsn())
 
 
 @lru_cache(maxsize=1)
