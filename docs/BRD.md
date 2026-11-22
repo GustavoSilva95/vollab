@@ -4,7 +4,7 @@
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
 **Versão:** 1.0 — Fase 1
 **Data:** 2026-11-21
-**Status:** Rascunho para validação
+**Status:** Aprovado (2026-11-21)
 
 ---
 
