@@ -65,7 +65,16 @@ def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
     # triggers, com session_replication_role = replica (exige superusuário, como no compose e no CI).
     with migrated_engine.begin() as conn:
         conn.execute(text("SET LOCAL session_replication_role = replica"))
-        conn.execute(text("TRUNCATE jobs, config_versions RESTART IDENTITY"))
+        conn.execute(
+            text(
+                "TRUNCATE jobs, config_versions, collection_items, collection_runs, trades, daily_bars, "
+                "option_daily_stats, series_adjustments, option_series, risk_free_rates, corporate_actions, "
+                "raw_files RESTART IDENTITY CASCADE"
+            )
+        )
+        # Universo inicial semeado pela migration 0003: volta ao estado original.
+        conn.execute(text("DELETE FROM underlyings WHERE ticker NOT IN ('BOVA11', 'BBAS3', 'PETR4')"))
+        conn.execute(text("UPDATE underlyings SET active = true"))
 
 
 @pytest.fixture

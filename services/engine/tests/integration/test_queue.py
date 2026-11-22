@@ -59,7 +59,7 @@ def test_failure_is_retried_with_backoff_then_fails(session: Session) -> None:
     run_one(session, worker_id="w1")
     assert _status(session, job) is JobStatus.QUEUED
     assert job.attempts == 1
-    assert job.last_error == "RuntimeError: falha simulada"
+    assert job.last_error == "RuntimeError"  # B-5: sem a mensagem
     # Backoff: ainda não está pronto para rodar de novo.
     assert run_one(session, worker_id="w1") is False
 

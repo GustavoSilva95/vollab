@@ -13,8 +13,10 @@ from types import FrameType
 import structlog
 from sqlalchemy.orm import Session, sessionmaker
 
+import vollab.collection.runner  # noqa: F401  (registra o job de coleta)
 from vollab.db.session import get_sessionmaker
 from vollab.jobs import queue
+from vollab.jobs.control import JobInterruptedError, stop_event
 from vollab.jobs.handlers import get_handler
 from vollab.log import configure_logging
 from vollab.settings import get_settings
@@ -36,9 +38,14 @@ def run_one(session: Session, *, worker_id: str) -> bool:
         return True
     try:
         handler(session, dict(job.payload))
+    except JobInterruptedError:
+        session.rollback()
+        queue.release(session, job)
+        bound.info("job.interrupted")
     except Exception as exc:  # erro do job não derruba o worker (PRD-NF-10)
         session.rollback()
-        queue.mark_failed(session, job, f"{type(exc).__name__}: {exc}")
+        # B-5: só o tipo do erro vai para `last_error` (a mensagem pode trazer dados da fonte ou do ambiente).
+        queue.mark_failed(session, job, type(exc).__name__)
         bound.exception("job.failed")
     else:
         queue.mark_succeeded(session, job)
@@ -70,7 +77,7 @@ def run_forever(make_session: sessionmaker[Session], *, stop: threading.Event) -
 def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level, json=settings.log_json)
-    stop = threading.Event()
+    stop = stop_event()
 
     def _handle(signum: int, _frame: FrameType | None) -> None:
         log.info("worker.signal", signal=signal.Signals(signum).name)
