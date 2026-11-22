@@ -186,7 +186,7 @@ Os nomes físicos serão confirmados na Etapa 1. Todas as tabelas de usuário t�
 |--------|----------|-----|
 | `users` | usuário fixo na fase 1 | ADR-13 |
 | `underlyings` | ativos cadastrados pelo usuário (máx. 10), ativo/inativo | §5.1 |
-| `option_series` | código, **ISIN do ativo-objeto**, vencimento, strike vigente, call/put, estilo + `style_source` (`inferred` \| `official`), fonte, vigência (primeiro e último pregão). **Chave natural: (código, vencimento)**, pois códigos são reutilizados | RN-DAD-02 |
+| `option_series` | código, **ISIN do ativo-objeto**, vencimento, strike vigente, call/put, estilo + `style_source` (`name_suffix` \| `official_registry`), fonte, vigência (primeiro e último pregão). **Chave natural: (código, vencimento)**, pois códigos são reutilizados | RN-DAD-02 |
 | `series_adjustments` | ajustes de strike e mudanças de código por provento, com data, strike anterior e novo (detectados no COTAHIST) e vínculo série antiga → nova | RN-DAD-03 |
 | `exchange_holidays` | feriados B3, com `source` (`b3_official` \| `national_list` \| `b3_rule`) e `confirmed`. Carga inicial: lista nacional 2001–2078 (`feriados.csv`, formato ANBIMA: `DD/MM/AAAA;;`) + regras B3 (20/11 desde 2024, 24/12, 31/12); anos não publicados pela B3 ficam provisórios | RN-PRC-05, QA-02 |
 | `risk_free_rates` | Selic diária (SGS) | RN-PRC-03 |

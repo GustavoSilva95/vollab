@@ -112,7 +112,13 @@ Código (`CODNEG`), **ISIN do ativo-objeto** (`CODISI`), strike (`PREEXE`, já a
 ### Validação
 
 - **Letra do ticker ↔ (tipo, mês de vencimento):** consistente em **25.003/25.003** séries dos 10 ativos (A–L = calls jan–dez; M–X = puts jan–dez). Amostra de 25 séries listada na saída de `analyze.py`.
-- **Estilo de exercício:** não há campo explícito. O sufixo **`E`** no `NOMRES` (`PETRE`, `VALEE`) aparece em **100% das puts** (12.431/12.431) e em parte das calls, o que é consistente com "E = europeia". **Inferência forte, ainda não confirmada em documento oficial**: tratar como `estilo_inferido` até ser conferida contra o arquivo de instrumentos (download manual) ou o layout oficial.
+- **Estilo de exercício:** não há campo explícito. O sufixo **`E`** no `NOMRES` (`PETRE`, `VALEE`) aparece em **100% das puts** (12.431/12.431) e em parte das calls, o que é consistente com "E = europeia".
+- **Confirmação oficial (adendo de 2026-11-22):** o usuário baixou manualmente o *Cadastro de Instrumentos (Listado)* de 19/11/2026 (`fixtures/b3/instrumentos/InstrumentsConsolidated_2026-11-19.csv`; CSV UTF-8 com BOM, `;`, 3 linhas de descrição antes do cabeçalho, 89.242 instrumentos, coluna **"Estilo de opção"** = `EURO`/`AMER`). Resultado:
+  - **Estilo:** sufixo `E` ⇔ `EURO` em **14.003/14.003** séries de opção negociadas em 19/11 (mercado inteiro).
+  - **Universo inicial (BOVA11, BBAS3, PETR4):** 2.307/2.307 séries negociadas conferem em **estilo, ativo-objeto, tipo, strike e vencimento**; nenhuma ausente no cadastro.
+  - Perfil do universo: puts 100% europeias; calls 2.129 americanas e 1.666 europeias.
+  - **Versionamento:** só o recorte com os instrumentos de BOVA11, BBAS3 e PETR4 (`InstrumentsConsolidated_2026-11-19_BOVA11-BBAS3-PETR4.csv`, 1,7 MB, 7.593 linhas, bytes originais preservados) entra no git. O arquivo completo (19.271.806 bytes, SHA-256 `ddbfda5f3fa3603d8264ec039773b9158c9f6f3ba761c192410ab6e6cb227600`) fica fora do git (`.gitignore`).
+  - **Conclusão:** a inferência pelo sufixo `E` está validada e pode ser usada como regra. O arquivo de instrumentos continua útil como conferência eventual (importação manual), não como dependência da coleta.
 - **O prefixo do ticker NÃO identifica o ativo-objeto:** séries `PETR*` são de **PETR3 e de PETR4**. O ativo-objeto deve vir do `CODISI`, nunca do ticker (reforça RN-DAD-02).
 - **Códigos são reutilizados** depois do vencimento, inclusive trocando de ativo-objeto (ex.: `PETRH48` venceu em 21/08/2026 como PETR3 e voltou como PETR4, vencimento 2028). **Identidade da série = (código, vencimento) com vigência**, não só o código.
 - **Ajustes por provento (RN-DAD-03):** visíveis como queda do `PREEXE` na mesma série. Ex.: em 24/08/2026, 1.865 séries de PETR4 tiveram o strike reduzido em R$ 1,19. O `NOMRES` ganha marcadores (`/EJ`, `/ED`, `/EDJ`, `/EX`, `/ER`, `/AT`…). O código da série **não muda** nesses ajustes.
@@ -271,7 +277,7 @@ Lacunas do Yahoo:
 
 | Item | Situação | Quando |
 |------|----------|--------|
-| Estilo de exercício (sufixo `E`) | Inferência forte, sem documento oficial | Confirmar com download manual do arquivo de instrumentos (o usuário baixa uma vez) ou layout oficial do COTAHIST — antes da Etapa 3 |
+| Estilo de exercício (sufixo `E`) | ✅ **Confirmado** contra o cadastro oficial (14.003/14.003) | Resolvido em 2026-11-22 |
 | Semântica de `TipoSessaoPregao = 6` | Excluído; OHLC confere sem ele | Investigar na Etapa 2 |
 | Quantidade em correções parciais (06/11) | −1,3% vs oficial | Aceito; não afeta preços |
 | Yahoo bruto × líquido | Hipótese | Etapa 2 (adaptador de proventos) |

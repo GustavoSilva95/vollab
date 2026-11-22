@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Etapa 0: cadastro completo de instrumentos da B3 (18 MB) fica fora do git; o recorte versionado está ao lado
+/docs/pesquisa/fixtures/b3/instrumentos/*_completo.csv

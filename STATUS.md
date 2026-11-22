@@ -35,6 +35,7 @@
 | 2026-11-22 | PM-02 validada: o endpoint aceita tickers de opção | etapa-0 §2 |
 | 2026-11-22 | QA-13: regra R4 (sessão 1, `DataNegocio = DataReferencia`, remove IDs cancelados, ordena por ID) | BRD RN-DAD-01 |
 | 2026-11-22 | QA-01: COTAHIST como cadastro; ativo-objeto pelo ISIN; série = (código, vencimento); estilo inferido | BRD RN-DAD-02 |
+| 2026-11-22 | Estilo de exercício pelo sufixo `E` **confirmado** contra o Cadastro de Instrumentos oficial (14.003/14.003; universo inicial 2.307/2.307 em estilo, ativo, tipo, strike e vencimento) | etapa-0 §4 |
 | 2026-11-22 | COTAHIST como segunda fonte B3 (OHLC oficial, cadastro, pré-filtro da coleta) | BRD §8, PRD §6 |
 | 2026-11-22 | QA-02: feriados pela página da B3 + lista nacional 2001–2078 fornecida pelo usuário, complementada por 20/11, 24/12 e 31/12 (conferida 100% com 2025–2026) | BRD §8, PRD §6.1 |
 | 2026-11-22 | QA-04: IV de referência = mediana das IVs sincronizadas na última hora (mín. 3) | BRD RN-VOL-06 |
@@ -45,7 +46,6 @@
 
 ## Bloqueios e riscos ativos
 
-- Estilo de exercício inferido (sufixo `E`): **o usuário fará o download manual do arquivo de instrumentos da B3** ("Cadastro de Instrumentos — Listado", área de arquivos para download do boletim diário). Colocar em `docs/pesquisa/fixtures/b3/instrumentos/`; o analista confere o estilo contra o COTAHIST. Necessário antes da Etapa 3.
 - Calendário 2027 provisório até a B3 publicar.
 - `rapinegocios` atrás do Cloudflare: monitorar bloqueios na carga inicial (1 req/s).
 - Semântica de `TipoSessaoPregao = 6` e valores do Yahoo (bruto × líquido) a investigar na Etapa 2.
