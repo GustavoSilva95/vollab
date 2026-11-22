@@ -10,5 +10,8 @@ class HealthResponse(BaseModel):
     database: Literal["ok", "unavailable"]
     last_collection_at: datetime | None = Field(
         default=None,
-        description="Fim da última coleta concluída. Sempre nulo até a Etapa 2 (coleta).",
+        description="Fim da última coleta concluída (com ou sem falhas). Nulo antes da primeira.",
+    )
+    data_source: Literal["live", "fixtures"] = Field(
+        description="`fixtures` = fonte simulada por arquivos salvos (E2E ou demonstração)."
     )

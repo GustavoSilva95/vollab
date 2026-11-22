@@ -251,7 +251,13 @@ class Collector:
         try:
             fetched, raw = self._fetch_or_reuse(item)
         except SourceNotFoundError:
-            return Outcome("failed", permanent=True, error="Não encontrado na fonte (HTTP 404).")
+            # 404 no rapinegocios = ticker inexistente (Etapa 0 §2): não adianta repetir. Nas demais
+            # fontes pode ser arquivo ainda não publicado (ex.: COTAHIST do dia, à noite).
+            permanent = item.source == "b3_trades"
+            detail = "ticker inexistente" if permanent else "arquivo ainda não publicado ou inexistente"
+            return Outcome(
+                "failed", permanent=permanent, error=f"Não encontrado na fonte (HTTP 404: {detail})."
+            )
         except TransientSourceError as exc:
             return Outcome("failed", error=f"Fonte indisponível: {exc}", transient=True)
         except SourceResponseError as exc:

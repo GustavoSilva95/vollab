@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetHealthData, GetHealthErrors, GetHealthResponses } from './types.gen';
-import { zGetHealthResponse } from './zod.gen';
+import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetHealthData, GetHealthErrors, GetHealthResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
+import { zCreateCollectionRunResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetHealthResponse, zListUnderlyingsResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -22,6 +22,62 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
+ * Relatório de falhas e lacunas
+ */
+export const getCollectionGaps = <ThrowOnError extends boolean = false>(options?: Options<GetCollectionGapsData, ThrowOnError>): RequestResult<GetCollectionGapsResponses, GetCollectionGapsErrors, ThrowOnError> => (options?.client ?? client).get<GetCollectionGapsResponses, GetCollectionGapsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zGetCollectionGapsQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetCollectionGapsResponse.parseAsync(data),
+    url: '/collection/gaps',
+    ...options
+});
+
+/**
+ * Pregões e itens pendentes
+ */
+export const getCollectionPending = <ThrowOnError extends boolean = false>(options?: Options<GetCollectionPendingData, ThrowOnError>): RequestResult<GetCollectionPendingResponses, GetCollectionPendingErrors, ThrowOnError> => (options?.client ?? client).get<GetCollectionPendingResponses, GetCollectionPendingErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetCollectionPendingResponse.parseAsync(data),
+    url: '/collection/pending',
+    ...options
+});
+
+/**
+ * Dispara a coleta (executada pelo worker)
+ */
+export const createCollectionRun = <ThrowOnError extends boolean = false>(options?: Options<CreateCollectionRunData, ThrowOnError>): RequestResult<CreateCollectionRunResponses, CreateCollectionRunErrors, ThrowOnError> => (options?.client ?? client).post<CreateCollectionRunResponses, CreateCollectionRunErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zCreateCollectionRunResponse.parseAsync(data),
+    url: '/collection/runs',
+    ...options
+});
+
+/**
+ * Progresso de uma coleta
+ */
+export const getCollectionRun = <ThrowOnError extends boolean = false>(options: Options<GetCollectionRunData, ThrowOnError>): RequestResult<GetCollectionRunResponses, GetCollectionRunErrors, ThrowOnError> => (options.client ?? client).get<GetCollectionRunResponses, GetCollectionRunErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetCollectionRunPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetCollectionRunResponse.parseAsync(data),
+    url: '/collection/runs/{run_id}',
+    ...options
+});
+
+/**
  * Saúde do engine e do banco
  */
 export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>): RequestResult<GetHealthResponses, GetHealthErrors, ThrowOnError> => (options?.client ?? client).get<GetHealthResponses, GetHealthErrors, ThrowOnError>({
@@ -33,4 +89,54 @@ export const getHealth = <ThrowOnError extends boolean = false>(options?: Option
     responseValidator: async (data) => await zGetHealthResponse.parseAsync(data),
     url: '/health',
     ...options
+});
+
+/**
+ * Ativos cadastrados
+ */
+export const listUnderlyings = <ThrowOnError extends boolean = false>(options?: Options<ListUnderlyingsData, ThrowOnError>): RequestResult<ListUnderlyingsResponses, ListUnderlyingsErrors, ThrowOnError> => (options?.client ?? client).get<ListUnderlyingsResponses, ListUnderlyingsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListUnderlyingsResponse.parseAsync(data),
+    url: '/underlyings',
+    ...options
+});
+
+/**
+ * Cadastra um ativo (o ISIN vem do COTAHIST na próxima coleta)
+ */
+export const createUnderlying = <ThrowOnError extends boolean = false>(options: Options<CreateUnderlyingData, ThrowOnError>): RequestResult<CreateUnderlyingResponses, CreateUnderlyingErrors, ThrowOnError> => (options.client ?? client).post<CreateUnderlyingResponses, CreateUnderlyingErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zCreateUnderlyingBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zCreateUnderlyingResponse.parseAsync(data),
+    url: '/underlyings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Ativa ou desativa um ativo
+ */
+export const updateUnderlying = <ThrowOnError extends boolean = false>(options: Options<UpdateUnderlyingData, ThrowOnError>): RequestResult<UpdateUnderlyingResponses, UpdateUnderlyingErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUnderlyingResponses, UpdateUnderlyingErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUpdateUnderlyingBody,
+        path: zUpdateUnderlyingPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zUpdateUnderlyingResponse.parseAsync(data),
+    url: '/underlyings/{ticker}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

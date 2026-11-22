@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -5,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
 from tests.conftest import LOCAL
-from vollab.api.app import create_app
+from vollab.api.app import API_VERSION, create_app
 from vollab.api.export_openapi import openapi_document, render
 from vollab.db.session import get_session
 
@@ -83,7 +84,8 @@ def test_openapi_contract_basics() -> None:
     assert doc["paths"]["/health"]["get"]["operationId"] == "get_health"
     assert "ProblemDetails" in doc["components"]["schemas"]
     # A versão do contrato não pode ser o git sha (mudaria a cada commit).
-    assert doc["info"]["version"] == "0.1.0"
+    assert doc["info"]["version"] == API_VERSION
+    assert re.fullmatch(r"\d+\.\d+\.\d+", API_VERSION)
 
 
 def test_rejects_foreign_host_dns_rebinding() -> None:

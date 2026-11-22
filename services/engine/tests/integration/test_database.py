@@ -1,17 +1,13 @@
-from collections.abc import Iterator
-
 import pytest
 from alembic import command
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, inspect, select, text
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from tests.conftest import LOCAL, alembic_config
-from vollab.api.app import create_app
+from tests.conftest import alembic_config
 from vollab.db.config_store import create_config_version, current_config_version
 from vollab.db.models import FIXED_USER_ID, ConfigVersion, User
-from vollab.db.session import get_session
 
 pytestmark = pytest.mark.integration
 
@@ -70,18 +66,6 @@ def test_config_versions_reject_truncate(session: Session) -> None:
         session.execute(text("TRUNCATE config_versions CASCADE"))
     session.rollback()
     assert session.scalars(select(ConfigVersion)).one().params == {"a": 1}
-
-
-@pytest.fixture
-def api_client(make_session: sessionmaker[Session]) -> Iterator[TestClient]:
-    app = create_app()
-
-    def _session() -> Iterator[Session]:
-        with make_session() as s:
-            yield s
-
-    app.dependency_overrides[get_session] = _session
-    yield TestClient(app, base_url=LOCAL)
 
 
 def test_health_ok_with_database(api_client: TestClient) -> None:
