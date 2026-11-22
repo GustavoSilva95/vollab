@@ -65,7 +65,9 @@ class RawFile(Base):
 
 # Negócios brutos normalizados (RF-DAD-01). Particionada por mês do pregão de referência
 # (PRD-QA-02). A tabela é criada por DDL na migration 0003; este objeto serve às consultas.
-# Chave: (pregão, instrumento, DataNegocio, ID, ação) — IDs reiniciam a cada pregão e a
+# Chave: (instrumento, pregão, DataNegocio, ID, ação). O instrumento vem primeiro: a leitura típica
+# é uma série numa faixa de pregões (revisão de performance da Etapa 2: 363 ms → 3 ms).
+# Antes: (pregão, instrumento, ...) — IDs reiniciam a cada pregão e a
 # linha de cancelamento repete o ID do negócio cancelado.
 trades = Table(
     "trades",
@@ -85,7 +87,7 @@ trades = Table(
     Column("r4_valid", Boolean, nullable=False),
     Column("raw_file_id", BigInteger, nullable=False),
     PrimaryKeyConstraint(
-        "reference_date", "instrument", "trade_date", "trade_id", "update_action", name="pk_trades"
+        "instrument", "reference_date", "trade_date", "trade_id", "update_action", name="pk_trades"
     ),
     postgresql_partition_by="RANGE (reference_date)",
 )

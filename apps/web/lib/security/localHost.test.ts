@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { hostnameOf, isLocalHost } from './localHost';
+import { hostnameOf, isCrossSiteWrite, isLocalHost } from './localHost';
 
 describe('isLocalHost (DNS rebinding, PRD-NF-01)', () => {
   it.each(['localhost:3000', '127.0.0.1:3000', '127.0.0.1', '[::1]:3000', 'LOCALHOST'])('aceita %s', (host) => {
@@ -24,5 +24,21 @@ describe('scripts do Next (PRD-NF-01)', () => {
 
   it.each(['dev', 'start'])('"%s" escuta só em 127.0.0.1', (name) => {
     expect(pkg.scripts[name]).toMatch(/\s-H 127\.0\.0\.1(\s|$)/);
+  });
+});
+
+describe('isCrossSiteWrite (CSRF, M-3 da Etapa 2)', () => {
+  it('recusa escrita vinda de outro site', () => {
+    expect(isCrossSiteWrite('POST', 'https://evil.example', null)).toBe(true);
+    expect(isCrossSiteWrite('POST', 'null', null)).toBe(true);
+    expect(isCrossSiteWrite('POST', null, 'cross-site')).toBe(true);
+    expect(isCrossSiteWrite('PATCH', 'http://localhost.evil.example', 'cross-site')).toBe(true);
+  });
+
+  it('aceita a própria origem, leitura e clientes sem Origin', () => {
+    expect(isCrossSiteWrite('POST', 'http://127.0.0.1:3000', 'same-origin')).toBe(false);
+    expect(isCrossSiteWrite('POST', 'http://localhost:3000', null)).toBe(false);
+    expect(isCrossSiteWrite('GET', 'https://evil.example', 'cross-site')).toBe(false);
+    expect(isCrossSiteWrite('POST', null, null)).toBe(false);
   });
 });

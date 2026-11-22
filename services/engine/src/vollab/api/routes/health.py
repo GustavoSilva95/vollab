@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from vollab.api.schemas.health import HealthResponse
 from vollab.collection.report import last_collection_at as last_collection_at_of
+from vollab.db.models import FIXED_USER_ID
 from vollab.db.session import get_session
 from vollab.settings import get_settings
 
@@ -21,7 +22,7 @@ def get_health(session: Annotated[Session, Depends(get_session)]) -> HealthRespo
     try:
         session.execute(text("SELECT 1"))
         database = "ok"
-        last_collection_at = last_collection_at_of(session)
+        last_collection_at = last_collection_at_of(session, user_id=FIXED_USER_ID)
     except SQLAlchemyError:
         log.warning("health.database_unavailable", exc_info=True)
         database = "unavailable"

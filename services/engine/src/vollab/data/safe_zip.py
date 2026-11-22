@@ -3,8 +3,11 @@
 Regras:
 - exatamente um membro, com nome simples (sem diretórios, `..`, caminho absoluto ou link);
 - só extensões de texto aceitas (`.txt`, `.csv`);
-- tamanho descompactado limitado, conferido **durante** a leitura (o tamanho declarado no
-  cabeçalho do ZIP pode mentir) e razão de compressão limitada (zip bomb);
+- tamanho descompactado limitado, conferido **durante** a leitura; a razão de compressão
+  declarada é só um filtro barato (os tamanhos declarados podem mentir: o limite real é a
+  contagem de bytes lidos); só os métodos stored e deflate;
+- linhas lidas com limite de tamanho (streaming);
+- ZIP corrompido vira `UnsafeArchiveError` com mensagem fixa (nada do arquivo no log);
 - nada é gravado no disco a partir do nome do membro: o conteúdo só é lido em memória ou
   em streaming. Os nomes em `data/raw/` são gerados pelo engine (raw_cache).
 """
@@ -12,10 +15,17 @@ Regras:
 import io
 import stat
 import zipfile
+import zlib
 from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 ALLOWED_EXTENSIONS = (".txt", ".csv")
+ALLOWED_METHODS = frozenset({zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED})
+MAX_LINE_BYTES = 4096
+# Erros de ZIP corrompido: viram UnsafeArchiveError com mensagem fixa, sem ecoar bytes do arquivo
+# (a mensagem do BadZipFile pode conter o nome do membro, controlado pela fonte).
+_ARCHIVE_ERRORS = (zipfile.BadZipFile, zlib.error, EOFError, NotImplementedError, OSError, ValueError)
 # Texto da B3 comprime ~10-25x; acima disso é suspeito.
 MAX_COMPRESSION_RATIO = 200
 _CHUNK = 1 << 20
@@ -56,6 +66,8 @@ def _single_member(archive: zipfile.ZipFile, max_bytes: int) -> zipfile.ZipInfo:
     mode = info.external_attr >> 16
     if mode and (stat.S_ISLNK(mode) or stat.S_ISDIR(mode)):
         raise UnsafeArchiveError("Links e diretórios não são aceitos dentro do ZIP.")
+    if info.compress_type not in ALLOWED_METHODS:
+        raise UnsafeArchiveError("Método de compressão não aceito (só stored e deflate).")
     if info.flag_bits & 0x1:
         raise UnsafeArchiveError("ZIP criptografado não é aceito.")
     if info.file_size > max_bytes:
@@ -65,17 +77,27 @@ def _single_member(archive: zipfile.ZipFile, max_bytes: int) -> zipfile.ZipInfo:
     return info
 
 
+@contextmanager
+def _archive_errors() -> Iterator[None]:
+    try:
+        yield
+    except UnsafeArchiveError:
+        raise
+    except _ARCHIVE_ERRORS:
+        raise UnsafeArchiveError("ZIP corrompido ou fora do formato esperado.") from None
+
+
 def _open(source: bytes | io.BufferedIOBase) -> zipfile.ZipFile:
     fh = io.BytesIO(source) if isinstance(source, bytes) else source
     try:
         return zipfile.ZipFile(fh)
-    except zipfile.BadZipFile:
+    except _ARCHIVE_ERRORS:
         raise UnsafeArchiveError("Arquivo não é um ZIP válido.") from None
 
 
 def read_single_member(content: bytes, *, max_bytes: int) -> tuple[ZipMember, bytes]:
     """Lê o único membro do ZIP para a memória, com limite real de bytes."""
-    with _open(content) as archive:
+    with _archive_errors(), _open(content) as archive:
         info = _single_member(archive, max_bytes)
         out = bytearray()
         with archive.open(info) as fh:
@@ -87,15 +109,19 @@ def read_single_member(content: bytes, *, max_bytes: int) -> tuple[ZipMember, by
 
 
 def iter_member_lines(path_or_bytes: bytes | io.BufferedIOBase, *, max_bytes: int) -> Iterator[bytes]:
-    """Lê o único membro linha a linha (streaming), para arquivos grandes como o COTAHIST anual."""
-    with _open(path_or_bytes) as archive:
+    """Lê o único membro linha a linha (streaming), para arquivos grandes como o COTAHIST anual.
+
+    Cada linha é lida com limite (`readline(MAX_LINE_BYTES + 1)`): uma linha gigante sem quebra
+    nunca é carregada inteira na memória (revisão de segurança da Etapa 2, M-1).
+    """
+    with _archive_errors(), _open(path_or_bytes) as archive:
         info = _single_member(archive, max_bytes)
         total = 0
         with archive.open(info) as fh:
-            for line in fh:
+            while line := fh.readline(MAX_LINE_BYTES + 1):
+                if len(line) > MAX_LINE_BYTES:
+                    raise UnsafeArchiveError("Linha longa demais para o formato esperado.")
                 total += len(line)
                 if total > max_bytes:
                     raise UnsafeArchiveError(f"Arquivo descompactado acima do limite ({max_bytes} bytes).")
-                if len(line) > 4096:
-                    raise UnsafeArchiveError("Linha longa demais para o formato esperado.")
                 yield line

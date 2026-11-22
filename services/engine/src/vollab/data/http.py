@@ -119,6 +119,9 @@ class PoliteClient:
             except httpx.TransportError as exc:
                 # Só o tipo do erro: a mensagem pode conter detalhes do ambiente (B-5).
                 last_error = f"erro de rede ({type(exc).__name__})"
+            except httpx.HTTPError as exc:
+                # Laço de redirects, conteúdo comprimido inválido, URL inválida: não adianta repetir.
+                raise SourceResponseError(f"resposta inválida ({type(exc).__name__})") from None
             if attempt < self._max_attempts:
                 delay = self._backoff * (2 ** (attempt - 1))
                 log.warning(

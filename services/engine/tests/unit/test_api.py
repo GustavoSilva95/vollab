@@ -106,3 +106,22 @@ def test_rejects_foreign_forwarded_host_via_next_rewrite() -> None:
 def test_accepts_local_hosts() -> None:
     for host in ("http://localhost:8000", "http://127.0.0.1", "http://[::1]:8000"):
         assert TestClient(create_app(), base_url=host).get("/health").status_code == 200
+
+
+def test_rejects_cross_site_writes_csrf() -> None:
+    """M-3 (Etapa 2): um site qualquer não dispara a coleta por POST em 127.0.0.1."""
+    client = TestClient(create_app(), base_url=LOCAL)
+    for headers in (
+        {"Origin": "https://evil.example"},
+        {"Origin": "null"},
+        {"Sec-Fetch-Site": "cross-site"},
+    ):
+        response = client.post("/collection/runs", headers=headers)
+        assert response.status_code == 403, headers
+        assert response.headers["content-type"] == "application/problem+json"
+    # Leitura continua livre (proteção é só para escrita); origem local passa da guarda.
+    assert client.get("/health", headers={"Origin": "https://evil.example"}).status_code == 200
+    local = client.post(
+        "/_nao_existe", headers={"Origin": "http://127.0.0.1:3000", "Sec-Fetch-Site": "same-origin"}
+    )
+    assert local.status_code == 404

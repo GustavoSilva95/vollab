@@ -6,23 +6,21 @@ itens (PRD-NF-04): COTAHIST anual → COTAHIST diário → Selic e proventos →
 opções. As opções de um pregão só são conhecidas depois do COTAHIST desse pregão.
 """
 
+import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.orm import Session
 
-from vollab.collection.eligibility import SeriesDay, eligible_series
 from vollab.collection.params import CollectionParams
 from vollab.db.models import (
     CollectionItem,
     DailyBar,
     ExchangeHoliday,
     OptionDailyStat,
-    OptionSeries,
     RiskFreeRate,
     Underlying,
 )
@@ -77,50 +75,82 @@ def done_keys(session: Session, *, since: date) -> set[tuple[str, str, date]]:
     return {(s, k, d) for s, k, d in session.execute(stmt)}
 
 
-def active_underlyings(session: Session) -> list[Underlying]:
+def active_underlyings(session: Session, *, user_id: uuid.UUID) -> list[Underlying]:
     return list(
-        session.scalars(select(Underlying).where(Underlying.active.is_(True)).order_by(Underlying.ticker))
+        session.scalars(
+            select(Underlying)
+            .where(Underlying.user_id == user_id, Underlying.active.is_(True))
+            .order_by(Underlying.ticker)
+        )
     )
+
+
+_ELIGIBLE_SQL = text(
+    """
+    WITH cand AS (
+        SELECT s.underlying_isin AS isin, st.trade_date AS day, s.code, s.expiry, st.strike,
+               st.trades_count, s.is_weekly
+        FROM option_daily_stats st
+        JOIN option_series s ON s.id = st.series_id
+        WHERE st.trade_date = ANY(:days) AND s.underlying_isin = ANY(:isins) AND s.expiry > st.trade_date
+    ),
+    monthly AS (
+        SELECT isin, day, expiry, dense_rank() OVER (PARTITION BY isin, day ORDER BY expiry) AS rk
+        FROM (SELECT DISTINCT isin, day, expiry FROM cand WHERE NOT is_weekly) m
+    ),
+    horizon AS (
+        SELECT isin, day, max(expiry) AS last_expiry FROM monthly WHERE rk <= :n_monthly GROUP BY isin, day
+    )
+    SELECT b.ticker, c.day, c.code
+    FROM cand c
+    JOIN horizon h ON h.isin = c.isin AND h.day = c.day
+    JOIN daily_bars b ON b.isin = c.isin AND b.trade_date = c.day AND b.ticker = ANY(:tickers)
+    LEFT JOIN monthly m ON m.isin = c.isin AND m.day = c.day AND m.expiry = c.expiry
+    WHERE b.close > 0
+      AND c.trades_count >= :min_trades
+      AND c.strike / b.close BETWEEN :k_min AND :k_max
+      AND (
+            (NOT c.is_weekly AND m.rk <= :n_monthly)
+         OR (c.is_weekly AND :weeklies AND c.expiry <= h.last_expiry)
+      )
+    ORDER BY c.day DESC, b.ticker, c.expiry, c.strike, c.code
+    """
+)
+
+
+def option_items_for_days(
+    session: Session, *, days: list[date], underlyings: list[Underlying], params: CollectionParams
+) -> list[ItemSpec]:
+    """Séries elegíveis dos pregões segundo o COTAHIST já gravado (RF-DAD-02, QA-06).
+
+    Uma consulta só, com o filtro no banco (revisão de performance da Etapa 2: o N+1 com filtro
+    em Python levava ~0,4 s por chamada de /collection/pending). A regra é a mesma de
+    `eligibility.eligible_series`, conferida por teste de integração.
+    """
+    with_isin = [u for u in underlyings if u.isin]
+    if not days or not with_isin:
+        return []
+    rules = params.liquidity
+    rows = session.execute(
+        _ELIGIBLE_SQL,
+        {
+            "days": days,
+            "isins": [u.isin for u in with_isin],
+            "tickers": [u.ticker for u in with_isin],
+            "n_monthly": rules.monthly_expiries,
+            "min_trades": rules.min_trades,
+            "k_min": rules.moneyness_min,
+            "k_max": rules.moneyness_max,
+            "weeklies": rules.include_weeklies,
+        },
+    ).all()
+    return [ItemSpec(PHASE_OPTIONS, "b3_trades", code, day, ticker) for ticker, day, code in rows]
 
 
 def option_items_for_day(
     session: Session, *, day: date, underlyings: list[Underlying], params: CollectionParams
 ) -> list[ItemSpec]:
-    """Séries elegíveis do pregão segundo o COTAHIST já gravado (RF-DAD-02)."""
-    by_isin = {u.isin: u.ticker for u in underlyings if u.isin}
-    if not by_isin:
-        return []
-    spots = dict(
-        session.execute(
-            select(DailyBar.ticker, DailyBar.close).where(
-                DailyBar.trade_date == day, DailyBar.ticker.in_(list(by_isin.values()))
-            )
-        ).all()
-    )
-    rows = session.execute(
-        select(
-            OptionSeries.underlying_isin,
-            OptionSeries.code,
-            OptionSeries.expiry,
-            OptionDailyStat.strike,
-            OptionDailyStat.trades_count,
-            OptionSeries.is_weekly,
-        )
-        .join(OptionDailyStat, OptionDailyStat.series_id == OptionSeries.id)
-        .where(OptionDailyStat.trade_date == day, OptionSeries.underlying_isin.in_(list(by_isin)))
-    )
-    candidates: dict[str, list[SeriesDay]] = defaultdict(list)
-    for isin, code, expiry, strike, count, weekly in rows:
-        candidates[isin].append(SeriesDay(code, expiry, strike, count, weekly))
-    specs: list[ItemSpec] = []
-    for isin, series in candidates.items():
-        ticker = by_isin[isin]
-        spot = spots.get(ticker)
-        if spot is None:
-            continue
-        for s in eligible_series(series, spot=Decimal(spot), trade_date=day, rules=params.liquidity):
-            specs.append(ItemSpec(PHASE_OPTIONS, "b3_trades", s.code, day, ticker))
-    return specs
+    return option_items_for_days(session, days=[day], underlyings=underlyings, params=params)
 
 
 @dataclass(frozen=True)
@@ -133,12 +163,12 @@ class Plan:
     days_without_cotahist: list[date]
 
 
-def build_plan(session: Session, *, today: date, params: CollectionParams) -> Plan:
+def build_plan(session: Session, *, user_id: uuid.UUID, today: date, params: CollectionParams) -> Plan:
     holidays = load_holidays(session)
     ref = reference_date(today, holidays)
     intraday = last_n_business_days(ref, params.window.intraday_bd, holidays)
     bar_days = last_n_business_days(ref, params.window.daily_bars_bd, holidays)
-    underlyings = active_underlyings(session)
+    underlyings = active_underlyings(session, user_id=user_id)
     tickers = [u.ticker for u in underlyings]
     done = done_keys(session, since=min(bar_days[0], date(bar_days[0].year, 1, 1)))
     items: list[ItemSpec] = []
@@ -188,11 +218,12 @@ def build_plan(session: Session, *, today: date, params: CollectionParams) -> Pl
         )
     )
     days_without: list[date] = []
+    for spec in option_items_for_days(
+        session, days=sorted(days_with_stats), underlyings=underlyings, params=params
+    ):
+        add(spec)
     for day in intraday:
-        if day in days_with_stats:
-            for spec in option_items_for_day(session, day=day, underlyings=underlyings, params=params):
-                add(spec)
-        elif (("b3_cotahist_daily", NO_KEY, day)) not in done:
+        if day not in days_with_stats and ("b3_cotahist_daily", NO_KEY, day) not in done:
             days_without.append(day)
     return Plan(ref, intraday, bar_days, items, days_without)
 

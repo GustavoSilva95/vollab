@@ -89,7 +89,13 @@ def decode_payload(content: bytes) -> str:
 
 def parse_trades(content: bytes, *, expected_instrument: str, expected_date: date) -> list[TradeRow]:
     """Lê o arquivo e valida cabeçalho, tipos e coerência com o ticker e a data consultados."""
-    text = decode_payload(content)
+    try:
+        return _parse_rows(decode_payload(content), expected_instrument, expected_date)
+    except csv.Error:
+        raise TradesParseError("CSV malformado.") from None
+
+
+def _parse_rows(text: str, expected_instrument: str, expected_date: date) -> list[TradeRow]:
     reader = csv.reader(io.StringIO(text), delimiter=";")
     header = next(reader, None)
     if header is None or tuple(h.strip() for h in header) != HEADER:
@@ -116,7 +122,7 @@ def parse_trades(content: bytes, *, expected_instrument: str, expected_date: dat
                 buyer=_optional_int(fields[9]),
                 seller=_optional_int(fields[10]),
             )
-        except (ValueError, InvalidOperation):
+        except (ValueError, InvalidOperation, OverflowError):
             raise TradesParseError(f"Linha {lineno}: valor inválido.") from None
         if row.instrument != expected_instrument or row.reference_date != expected_date:
             raise TradesParseError(f"Linha {lineno}: instrumento ou data diferente do consultado.")

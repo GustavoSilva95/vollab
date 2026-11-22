@@ -23,7 +23,7 @@ MARKET_CASH = "010"
 MARKET_CALL = "070"
 MARKET_PUT = "080"
 _WEEKLY = re.compile(r"W\d$")
-_TICKER = re.compile(r"^[A-Z0-9]{4,12}$")
+_TICKER = re.compile(r"[A-Z0-9]{4,12}")
 
 
 class CotahistParseError(ValueError):
@@ -101,7 +101,7 @@ def parse_record(line: str) -> CotahistRecord:
         )
     except ValueError:
         raise CotahistParseError("Registro com campo numérico ou data inválida.") from None
-    if not _TICKER.match(record.ticker):
+    if not _TICKER.fullmatch(record.ticker):
         raise CotahistParseError("Código de negociação inválido.")
     return record
 

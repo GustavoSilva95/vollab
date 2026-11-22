@@ -53,7 +53,7 @@ class Pending:
 
 
 def pending(session: Session, *, user_id: uuid.UUID, today: date) -> Pending:
-    plan = build_plan(session, today=today, params=current_params(session, user_id=user_id))
+    plan = build_plan(session, user_id=user_id, today=today, params=current_params(session, user_id=user_id))
     counts = dict.fromkeys(GROUPS, 0)
     days: set[date] = set()
     for spec in plan.items:
@@ -81,9 +81,11 @@ def latest_runs(session: Session, *, user_id: uuid.UUID) -> tuple[CollectionRun 
     return active, last
 
 
-def last_collection_at(session: Session) -> datetime | None:
+def last_collection_at(session: Session, *, user_id: uuid.UUID) -> datetime | None:
     return session.scalar(
-        select(func.max(CollectionRun.finished_at)).where(CollectionRun.status.in_(("succeeded", "partial")))
+        select(func.max(CollectionRun.finished_at)).where(
+            CollectionRun.user_id == user_id, CollectionRun.status.in_(("succeeded", "partial"))
+        )
     )
 
 
@@ -178,7 +180,7 @@ def gaps(session: Session, *, user_id: uuid.UUID, today: date) -> GapReport:
     ref = reference_date(today, holidays)
     bar_days = last_n_business_days(ref, params.window.daily_bars_bd, holidays)
     intraday = last_n_business_days(ref, params.window.intraday_bd, holidays)
-    tickers = [u.ticker for u in active_underlyings(session)]
+    tickers = [u.ticker for u in active_underlyings(session, user_id=user_id)]
     out: list[Gap] = []
 
     bars = {
@@ -201,7 +203,12 @@ def gaps(session: Session, *, user_id: uuid.UUID, today: date) -> GapReport:
 
     latest = (
         select(CollectionItem)
-        .where(CollectionItem.trade_date >= intraday[0], CollectionItem.status != "pending")
+        .join(CollectionRun, CollectionRun.id == CollectionItem.run_id)
+        .where(
+            CollectionRun.user_id == user_id,
+            CollectionItem.trade_date >= intraday[0],
+            CollectionItem.status != "pending",
+        )
         .ext(distinct_on(CollectionItem.source, CollectionItem.key, CollectionItem.trade_date))
         .order_by(
             CollectionItem.source, CollectionItem.key, CollectionItem.trade_date, CollectionItem.id.desc()

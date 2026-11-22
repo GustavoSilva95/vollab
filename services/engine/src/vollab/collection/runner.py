@@ -139,7 +139,12 @@ class Collector:
     # Planejamento -------------------------------------------------------------------------
 
     def plan(self, run: CollectionRun, params: CollectionParams) -> None:
-        plan = build_plan(self.session, today=run.reference_date, params=params)
+        plan = build_plan(self.session, user_id=run.user_id, today=run.reference_date, params=params)
+        # Partições de `trades` criadas aqui, numa transação curta, e não dentro de cada item: criar
+        # partição trava o pai até o commit (revisão de performance da Etapa 2).
+        for month in sorted({d.replace(day=1) for d in plan.intraday_days}):
+            ingest.ensure_trades_partition(self.session, month)
+        self.session.commit()
         self._insert_items(run.id, plan.items)
         self.session.commit()
         log.info(
@@ -201,7 +206,7 @@ class Collector:
             item.rows = outcome.rows
             item.raw_file_id = outcome.raw_file_id
             if item.source == "b3_cotahist_daily" and outcome.status == "ok":
-                underlyings = active_underlyings(self.session)
+                underlyings = active_underlyings(self.session, user_id=run.user_id)
                 self._insert_items(
                     run.id,
                     option_items_for_day(
@@ -263,6 +268,10 @@ class Collector:
             return Outcome("failed", error=f"Fonte indisponível: {exc}", transient=True)
         except SourceResponseError as exc:
             return Outcome("failed", error=f"Resposta inesperada da fonte: {exc}")
+        except Exception as exc:  # disco cheio, cache com hash divergente etc.: falha do item (PRD-NF-10)
+            log.error("collection.fetch_error", source=item.source, key=item.key, error=type(exc).__name__)
+            self.session.rollback()
+            return Outcome("failed", error=f"Erro ao obter o arquivo ({type(exc).__name__}).")
         try:
             with self.session.begin_nested():
                 result = self._ingest(item, fetched.content, raw.id)
@@ -271,7 +280,8 @@ class Collector:
             raw.parse_error = str(exc)[:500]
             return Outcome("failed", error=f"Arquivo inválido: {exc}", raw_file_id=raw.id)
         except Exception as exc:  # erro inesperado de um item não derruba a coleta (PRD-NF-10)
-            log.exception("collection.item_error", source=item.source, key=item.key)
+            # Só o tipo: a mensagem e o traceback podem ecoar conteúdo da fonte (B-5).
+            log.error("collection.item_error", source=item.source, key=item.key, error=type(exc).__name__)
             raw.parse_status = "error"
             raw.parse_error = type(exc).__name__
             return Outcome(

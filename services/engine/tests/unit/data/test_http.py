@@ -98,3 +98,13 @@ def test_redirect_to_unknown_host_is_blocked() -> None:
 
     with pytest.raises(SourceResponseError):
         _client(handler, FakeClock()).get(URL, max_bytes=10)
+
+
+def test_redirect_loop_is_an_item_failure_not_a_crash() -> None:
+    """M-2 (Etapa 2): erros httpx fora de TransportError viram SourceResponseError."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(302, headers={"location": URL})
+
+    with pytest.raises(SourceResponseError, match="TooManyRedirects"):
+        _client(handler, FakeClock(), requests_per_second=1000).get(URL, max_bytes=10)

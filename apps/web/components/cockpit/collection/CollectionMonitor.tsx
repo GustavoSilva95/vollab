@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CollectionGapsResponse, CollectionRunResponse, RunSummary } from '@vollab/api-types';
 import {
@@ -28,7 +28,8 @@ export default function CollectionMonitor() {
   const queryClient = useQueryClient();
   const pending = useQuery({
     ...getCollectionPendingOptions(),
-    refetchInterval: (query) => (isActive(query.state.data?.active_run) ? 5_000 : false),
+    // O progresso vem de /runs/{id} a cada 2 s; /pending (replaneja) só de vez em quando.
+    refetchInterval: (query) => (isActive(query.state.data?.active_run) ? 30_000 : false),
   });
   const [startedId, setStartedId] = useState<number | null>(null);
   const runSummary: RunSummary | null = pending.data?.active_run ?? pending.data?.last_run ?? null;
@@ -184,7 +185,8 @@ function RunProgress({ data }: { data: CollectionRunResponse }) {
   );
 }
 
-function GapReport() {
+// memo: não re-renderiza as ~600 linhas a cada atualização do progresso (2 s).
+const GapReport = memo(function GapReport() {
   const { data, isError, isPending } = useQuery(getCollectionGapsOptions({ query: { limit: 300 } }));
   return (
     <section className={styles.card} aria-labelledby="gaps-title" aria-busy={isPending}>
@@ -195,7 +197,7 @@ function GapReport() {
       {data && <GapBody data={data} />}
     </section>
   );
-}
+});
 
 function GapBody({ data }: { data: CollectionGapsResponse }) {
   if (data.gaps_total === 0 && data.failures_total === 0) {

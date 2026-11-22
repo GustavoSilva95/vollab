@@ -15,6 +15,8 @@ from zoneinfo import ZoneInfo
 
 SAO_PAULO = ZoneInfo("America/Sao_Paulo")
 MAX_BYTES = 5_000_000
+# 1990-01-01 a 2100-01-01 (UTC): evita overflow em datetime.fromtimestamp.
+_MIN_TS, _MAX_TS = 631_152_000, 4_102_444_800
 
 
 class YahooParseError(ValueError):
@@ -34,12 +36,14 @@ def parse_dividends(content: bytes, *, expected_symbol: str) -> list[DividendPoi
         payload = json.loads(content)
         result = payload["chart"]["result"][0]
         symbol = result["meta"]["symbol"]
-    except (json.JSONDecodeError, UnicodeDecodeError, KeyError, IndexError, TypeError):
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError, KeyError, IndexError, TypeError):
         raise YahooParseError("Resposta do Yahoo fora do formato esperado.") from None
     if symbol != f"{expected_symbol}.SA":
         raise YahooParseError("A resposta do Yahoo é de outro ativo.")
-    events = result.get("events") or {}
-    dividends = events.get("dividends") or {}
+    events = result.get("events") if isinstance(result, dict) else None
+    dividends = events.get("dividends") if isinstance(events, dict) else None
+    if dividends is None:
+        dividends = {}
     if not isinstance(dividends, dict):
         raise YahooParseError("Bloco de dividendos inválido.")
     points: dict[date, DividendPoint] = {}
@@ -49,6 +53,8 @@ def parse_dividends(content: bytes, *, expected_symbol: str) -> list[DividendPoi
             amount = Decimal(str(item["amount"]))
         except (KeyError, TypeError, ValueError, InvalidOperation):
             raise YahooParseError("Dividendo com data ou valor inválido.") from None
+        if not _MIN_TS <= ts <= _MAX_TS:
+            raise YahooParseError("Data de dividendo fora do intervalo plausível.")
         if not amount.is_finite() or amount <= 0 or amount > 1000:
             raise YahooParseError("Valor de dividendo fora do intervalo plausível.")
         ex_date = datetime.fromtimestamp(ts, tz=UTC).astimezone(SAO_PAULO).date()

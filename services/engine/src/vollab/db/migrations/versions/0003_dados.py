@@ -105,7 +105,7 @@ def upgrade() -> None:
         sa.Column("r4_valid", sa.Boolean(), nullable=False),
         sa.Column("raw_file_id", sa.BigInteger(), nullable=False),
         sa.PrimaryKeyConstraint(
-            "reference_date", "instrument", "trade_date", "trade_id", "update_action", name="pk_trades"
+            "instrument", "reference_date", "trade_date", "trade_id", "update_action", name="pk_trades"
         ),
         postgresql_partition_by="RANGE (reference_date)",
     )
@@ -302,7 +302,7 @@ def upgrade() -> None:
     op.create_index(
         "ix_collection_items_next",
         "collection_items",
-        ["run_id", "phase", "id"],
+        ["run_id", "phase", sa.text("trade_date DESC"), "id"],
         unique=False,
         postgresql_where=sa.text("status = 'pending'"),
     )

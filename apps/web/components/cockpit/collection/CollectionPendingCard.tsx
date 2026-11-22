@@ -15,7 +15,7 @@ export default function CollectionPendingCard() {
   const router = useRouter();
   const { data, isError, isPending } = useQuery({
     ...getCollectionPendingOptions(),
-    refetchInterval: (query) => (isActive(query.state.data?.active_run) ? 5_000 : 60_000),
+    refetchInterval: (query) => (isActive(query.state.data?.active_run) ? 30_000 : 60_000),
   });
   const { start, isStarting, errorMessage } = useStartCollection(() => router.push('/app/coleta'));
 

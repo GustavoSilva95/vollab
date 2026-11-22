@@ -73,7 +73,12 @@ class CollectionItem(Base):
         CheckConstraint(f"source IN {ITEM_SOURCES}", name="source"),
         Index("uq_collection_items_run_key", "run_id", "source", "key", "trade_date", unique=True),
         Index(
-            "ix_collection_items_next", "run_id", "phase", "id", postgresql_where=text("status = 'pending'")
+            "ix_collection_items_next",
+            "run_id",
+            "phase",
+            text("trade_date DESC"),
+            "id",
+            postgresql_where=text("status = 'pending'"),
         ),
         Index(
             "ix_collection_items_done",

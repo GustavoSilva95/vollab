@@ -3,12 +3,13 @@
 O caminho é gerado pelo engine a partir do SHA-256 do conteúdo:
 `{fonte}/{sha[:2]}/{sha}.{ext}`. Nada da resposta (nome do arquivo no ZIP, cabeçalhos)
 entra no caminho. Conteúdo idêntico é gravado uma vez só; um arquivo existente nunca é
-sobrescrito (gravação atômica com `O_EXCL` num temporário + rename).
+sobrescrito (gravação atômica num temporário único + rename).
 """
 
 import hashlib
 import os
 import re
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -39,9 +40,10 @@ class RawCache:
         sha = hashlib.sha256(content).hexdigest()
         target = self._target(source, sha, ext)
         if not target.exists():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            tmp = target.with_name(f".{sha}.{os.getpid()}.tmp")
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o640)
+            target.parent.mkdir(mode=0o750, parents=True, exist_ok=True)
+            # Nome temporário único (mkstemp): um .tmp órfão de um crash não bloqueia a próxima gravação.
+            fd, tmp_name = tempfile.mkstemp(prefix=f".{sha}.", suffix=".tmp", dir=target.parent)
+            tmp = Path(tmp_name)
             try:
                 with os.fdopen(fd, "wb") as fh:
                     fh.write(content)

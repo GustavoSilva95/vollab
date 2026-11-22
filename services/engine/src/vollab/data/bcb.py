@@ -28,7 +28,7 @@ def parse_sgs(content: bytes) -> list[RatePoint]:
         raise SgsParseError("Resposta do SGS acima do limite.")
     try:
         payload = json.loads(content)
-    except (json.JSONDecodeError, UnicodeDecodeError):
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError):
         raise SgsParseError("Resposta do SGS não é JSON.") from None
     if not isinstance(payload, list):
         raise SgsParseError("Resposta do SGS não é uma lista.")

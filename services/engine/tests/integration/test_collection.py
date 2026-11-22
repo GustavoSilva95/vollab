@@ -283,3 +283,45 @@ def test_holiday_empty_file_is_recorded_as_empty(session: Session, tmp_path: Pat
         is_underlying=True,
     )
     assert result.empty and result.rows == 0
+
+
+@pytest.mark.parametrize(
+    "rules",
+    [
+        {},
+        {"min_trades": 1, "moneyness_min": "0.8", "moneyness_max": "1.2", "monthly_expiries": 3},
+        {"include_weeklies": True, "monthly_expiries": 1},
+    ],
+)
+def test_sql_eligibility_matches_pure_rule(
+    session: Session, tmp_path: Path, rules: dict[str, object]
+) -> None:
+    """O filtro no banco (planner) segue a mesma regra de `eligible_series` (QA-06)."""
+    from vollab.collection.eligibility import SeriesDay, eligible_series
+    from vollab.collection.params import CollectionParams, LiquidityFilter
+    from vollab.collection.planner import active_underlyings, option_items_for_days
+    from vollab.db.models import OptionDailyStat
+
+    _run(session, tmp_path)
+    params = CollectionParams(liquidity=LiquidityFilter.model_validate(rules))
+    underlyings = active_underlyings(session, user_id=FIXED_USER_ID)
+    days = [date(2026, 11, 17), date(2026, 11, 18), date(2026, 11, 19)]
+    got = {(s.underlying, s.trade_date, s.key) for s in option_items_for_days(
+        session, days=days, underlyings=underlyings, params=params
+    )}  # fmt: skip
+    expected = set()
+    for u in underlyings:
+        for day in days:
+            bar = session.get(DailyBar, (u.ticker, day))
+            assert bar is not None
+            rows = session.execute(
+                select(OptionSeries.code, OptionSeries.expiry, OptionDailyStat.strike,
+                       OptionDailyStat.trades_count, OptionSeries.is_weekly)
+                .join(OptionDailyStat, OptionDailyStat.series_id == OptionSeries.id)
+                .where(OptionDailyStat.trade_date == day, OptionSeries.underlying_isin == u.isin)
+            ).all()  # fmt: skip
+            series = [SeriesDay(*r) for r in rows]
+            for s in eligible_series(series, spot=bar.close, trade_date=day, rules=params.liquidity):
+                expected.add((u.ticker, day, s.code))
+    assert got == expected
+    assert len(got) > 100

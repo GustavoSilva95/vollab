@@ -80,3 +80,22 @@ def test_business_days_november_2026() -> None:
     days = list(business_days(date(2026, 11, 1), date(2026, 11, 30), holidays))
     assert date(2026, 11, 2) not in days and date(2026, 11, 20) not in days
     assert len(days) == 19
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        b'{"chart":{"result":[{"meta":{"symbol":"PETR4.SA"},"events":{"dividends":{"1":{"date":1e30,"amount":1}}}}]}}',
+        b'{"chart":{"result":[{"meta":{"symbol":"PETR4.SA"},"events":{"dividends":[1]}}]}}',
+        b"[" * 100_000,
+    ],
+)
+def test_yahoo_malformed_raises_parse_error(content: bytes) -> None:
+    """B-4 (Etapa 2): nada escapa do parser como exceção genérica."""
+    with pytest.raises(YahooParseError):
+        parse_dividends(content, expected_symbol="PETR4")
+
+
+def test_sgs_deeply_nested_json() -> None:
+    with pytest.raises(SgsParseError):
+        parse_sgs(b"[" * 100_000)

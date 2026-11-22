@@ -14,7 +14,7 @@ from typing import Protocol
 from vollab.data.http import PoliteClient, SourceNotFoundError
 from vollab.settings import Settings
 
-_TICKER = re.compile(r"^[A-Z0-9]{4,12}$")
+_TICKER = re.compile(r"[A-Z0-9]{4,12}")
 
 # Limites do corpo compactado (o descompactado é limitado no parsing).
 MAX_TRADES_BYTES = 50_000_000
@@ -31,7 +31,7 @@ class Fetched:
 
 
 def _ticker(value: str) -> str:
-    if not _TICKER.match(value):
+    if not _TICKER.fullmatch(value):
         raise ValueError("Ticker inválido.")
     return value
 

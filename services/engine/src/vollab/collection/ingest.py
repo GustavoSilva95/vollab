@@ -37,6 +37,9 @@ from vollab.db.models import (
     trades,
 )
 
+# Linhas por INSERT: mantém o número de parâmetros bem abaixo do limite do Postgres (65.535).
+_BATCH = 2000
+
 _TRADE_COLUMNS = (
     "reference_date",
     "instrument",
@@ -72,6 +75,8 @@ class UniverseRef:
 
 
 def load_universe(session: Session, *, active_only: bool = False) -> UniverseRef:
+    """Ativos de todos os usuários: dados de mercado são compartilhados (PRD §6), então o COTAHIST
+    grava OHLC e séries de qualquer ativo cadastrado."""
     stmt = select(Underlying.ticker, Underlying.isin)
     if active_only:
         stmt = stmt.where(Underlying.active.is_(True))
@@ -107,8 +112,9 @@ def ingest_cotahist(
         underlying_tickers=universe.isin_by_ticker.keys(), underlying_isins=universe.isins, options=not annual
     )
     parsed = read_cotahist(content, keep=keep, annual=annual)
-    bars = [r for r in parsed.records if not r.is_option]
-    options = [r for r in parsed.records if r.is_option]
+    # Sem duplicatas na mesma instrução (ON CONFLICT não aceita a mesma chave duas vezes).
+    bars = list({(r.ticker, r.trade_date): r for r in parsed.records if not r.is_option}.values())
+    options = list({(r.ticker, r.expiry, r.trade_date): r for r in parsed.records if r.is_option}.values())
 
     # Completa o ISIN de ativos cadastrados sem ele (RN-DAD-02: séries pelo ISIN).
     for rec in bars:
@@ -120,8 +126,10 @@ def ingest_cotahist(
             )
 
     source = "b3_cotahist_annual" if annual else "b3_cotahist_daily"
-    if bars:
-        stmt = insert(DailyBar).values([_bar_values(r, source=source, raw_file_id=raw_file_id) for r in bars])
+    for start in range(0, len(bars), _BATCH):
+        stmt = insert(DailyBar).values(
+            [_bar_values(r, source=source, raw_file_id=raw_file_id) for r in bars[start : start + _BATCH]]
+        )
         if annual:
             # O diário do mesmo pregão prevalece (é o que a coleta intradiária verifica).
             stmt = stmt.on_conflict_do_nothing(index_elements=["ticker", "trade_date"])
@@ -152,6 +160,17 @@ def _expiry(rec: CotahistRecord) -> date:
 
 
 def _upsert_series(session: Session, options: Sequence[CotahistRecord]) -> dict[tuple[str, date], int]:
+    latest: dict[tuple[str, date], CotahistRecord] = {}
+    for rec in sorted(options, key=lambda r: r.trade_date):
+        latest[(rec.ticker, _expiry(rec))] = rec
+    ids: dict[tuple[str, date], int] = {}
+    unique = list(latest.values())
+    for start in range(0, len(unique), _BATCH):
+        ids.update(_upsert_series_batch(session, unique[start : start + _BATCH]))
+    return ids
+
+
+def _upsert_series_batch(session: Session, options: Sequence[CotahistRecord]) -> dict[tuple[str, date], int]:
     values = []
     for rec in options:
         values.append(
@@ -210,8 +229,8 @@ def _upsert_option_stats(
                 "raw_file_id": raw_file_id,
             }
         )
-    for start in range(0, len(values), 2000):
-        chunk = values[start : start + 2000]
+    for start in range(0, len(values), _BATCH):
+        chunk = values[start : start + _BATCH]
         stmt = insert(OptionDailyStat).values(chunk)
         stmt = stmt.on_conflict_do_update(
             index_elements=["series_id", "trade_date"],
