@@ -6,7 +6,7 @@
 type Vec3 = [number, number, number];
 type Range = [number, number];
 
-export type Density = 'desktop' | 'mobile' | 'low';
+export type Density = 'desktop' | 'mobile';
 
 export interface Oscillation {
   center: number;
@@ -20,8 +20,6 @@ const volSurfaceConfig = {
   grid: {
     desktop: { strikes: 80, expiries: 50 },
     mobile: { strikes: 48, expiries: 30 },
-    /** Usado quando o PerformanceMonitor detecta queda de FPS. */
-    low: { strikes: 40, expiries: 24 },
   },
 
   /** Breakpoint (px) abaixo do qual usamos a densidade "mobile". */
@@ -83,7 +81,7 @@ const volSurfaceConfig = {
   },
 
   stars: {
-    count: { desktop: 1200, mobile: 600, low: 450 },
+    count: { desktop: 1200, mobile: 600 },
     radius: 40, // raio interno da casca esférica
     thickness: 25, // espessura da casca
     size: 1.6,

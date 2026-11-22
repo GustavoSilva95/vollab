@@ -109,14 +109,13 @@ export default function VolSurfaceScene({
 }: VolSurfaceSceneProps) {
   const timeRef = useRef<number>(animate ? 0 : config.motion.staticTime);
   const [dpr, setDpr] = useState(config.render.dpr[1]);
-  const [degraded, setDegraded] = useState(false);
 
-  const density: Density = degraded ? 'low' : isMobile ? 'mobile' : 'desktop';
+  // A densidade da grade depende só do tipo de tela e nunca muda durante a animação:
+  // trocar a grade fazia os "quadradinhos" crescerem depois de uma queda de FPS.
+  const density: Density = isMobile ? 'mobile' : 'desktop';
 
-  const degrade = () => {
-    setDpr(config.render.lowDpr);
-    setDegraded(true);
-  };
+  // Com FPS baixo, reduz só a resolução (DPR); o desenho da grade fica igual.
+  const degrade = () => setDpr(config.render.lowDpr);
 
   return (
     <Canvas
@@ -136,8 +135,7 @@ export default function VolSurfaceScene({
     >
       {animate && (
         <PerformanceMonitor
-          // Recupera o DPR quando o FPS volta, mas mantém a grade reduzida
-          // (trocar a densidade várias vezes causaria "piscadas").
+          // Recupera o DPR quando o FPS volta; flipflops limita as oscilações.
           onIncline={() => setDpr(config.render.dpr[1])}
           onDecline={degrade}
           flipflops={3}
