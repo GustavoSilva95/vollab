@@ -77,6 +77,16 @@ def mark_failed(session: Session, job: Job, error: str) -> None:
     session.commit()
 
 
+def release(session: Session, job: Job) -> None:
+    """Devolve à fila um job interrompido pelo worker, sem consumir a tentativa (JobInterruptedError)."""
+    job.status = JobStatus.QUEUED
+    job.attempts = max(job.attempts - 1, 0)
+    job.locked_by = None
+    job.locked_at = None
+    job.run_after = func.now()
+    session.commit()
+
+
 def requeue_stale(session: Session, *, older_than: timedelta) -> int:
     """Devolve à fila os jobs `running` cujo lock é mais antigo que `older_than`.
 

@@ -18,9 +18,15 @@ describe('AppNav', () => {
 
   it('telas de etapas futuras aparecem desabilitadas, sem link', () => {
     render(<AppNav />);
-    expect(screen.queryByRole('link', { name: /Coleta/ })).not.toBeInTheDocument();
-    const coleta = screen.getByText('Coleta').closest('[aria-disabled]');
-    expect(coleta).toHaveAttribute('title', 'Disponível na Etapa 2');
+    expect(screen.queryByRole('link', { name: /Ranking/ })).not.toBeInTheDocument();
+    const ranking = screen.getByText('Ranking').closest('[aria-disabled]');
+    expect(ranking).toHaveAttribute('title', 'Disponível na Etapa 5');
+  });
+
+  it('Coleta (Etapa 2) já é um link', () => {
+    pathname.current = '/app/coleta';
+    render(<AppNav />);
+    expect(screen.getByRole('link', { name: 'Coleta' })).toHaveAttribute('aria-current', 'page');
   });
 });
 

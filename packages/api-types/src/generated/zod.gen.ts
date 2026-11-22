@@ -3,13 +3,121 @@
 import * as z from 'zod';
 
 /**
+ * GapOut
+ */
+export const zGapOut = z.object({
+    count: z.int(),
+    detail: z.string(),
+    kind: z.enum([
+        'missing_bar',
+        'r4_diverged',
+        'calendar_alert',
+        'cotahist_failed',
+        'underlying_trades_failed',
+        'options_failed'
+    ]),
+    trade_date: z.iso.date(),
+    underlying: z.string().nullable()
+});
+
+/**
+ * GapSummary
+ */
+export const zGapSummary = z.object({
+    count: z.int(),
+    kind: z.enum([
+        'missing_bar',
+        'r4_diverged',
+        'calendar_alert',
+        'cotahist_failed',
+        'underlying_trades_failed',
+        'options_failed'
+    ])
+});
+
+/**
+ * GroupCount
+ */
+export const zGroupCount = z.object({
+    count: z.int(),
+    group: z.enum([
+        'cotahist_annual',
+        'cotahist_daily',
+        'selic',
+        'dividends',
+        'underlying_trades',
+        'option_trades'
+    ])
+});
+
+/**
+ * GroupProgressOut
+ */
+export const zGroupProgressOut = z.object({
+    empty: z.int(),
+    failed: z.int(),
+    group: z.enum([
+        'cotahist_annual',
+        'cotahist_daily',
+        'selic',
+        'dividends',
+        'underlying_trades',
+        'option_trades'
+    ]),
+    ok: z.int(),
+    pending: z.int(),
+    total: z.int()
+});
+
+/**
  * HealthResponse
  */
 export const zHealthResponse = z.object({
+    data_source: z.enum(['live', 'fixtures']),
     database: z.enum(['ok', 'unavailable']),
     engine_version: z.string(),
-    last_collection_at: z.iso.datetime().nullish(),
+    last_collection_at: z.iso.datetime({ offset: true }).nullish(),
     status: z.enum(['ok', 'degraded'])
+});
+
+/**
+ * ItemOut
+ */
+export const zItemOut = z.object({
+    error: z.string().nullable(),
+    group: z.enum([
+        'cotahist_annual',
+        'cotahist_daily',
+        'selic',
+        'dividends',
+        'underlying_trades',
+        'option_trades'
+    ]),
+    key: z.string(),
+    permanent: z.boolean(),
+    source: z.string(),
+    status: z.enum([
+        'pending',
+        'ok',
+        'empty',
+        'failed'
+    ]),
+    trade_date: z.iso.date(),
+    underlying: z.string().nullable()
+});
+
+/**
+ * CollectionGapsResponse
+ */
+export const zCollectionGapsResponse = z.object({
+    bars_start: z.iso.date(),
+    failures: z.array(zItemOut),
+    failures_total: z.int(),
+    gaps: z.array(zGapOut),
+    gaps_total: z.int(),
+    intraday_start: z.iso.date(),
+    reference_date: z.iso.date(),
+    summary: z.array(zGapSummary)
 });
 
 /**
@@ -27,6 +135,146 @@ export const zProblemDetails = z.object({
 });
 
 /**
+ * ProgressCounts
+ */
+export const zProgressCounts = z.object({
+    empty: z.int(),
+    failed: z.int(),
+    ok: z.int(),
+    pending: z.int(),
+    total: z.int()
+});
+
+/**
+ * RunSummary
+ */
+export const zRunSummary = z.object({
+    config_version_id: z.int(),
+    created_at: z.iso.datetime({ offset: true }),
+    finished_at: z.iso.datetime({ offset: true }).nullable(),
+    id: z.int(),
+    message: z.string().nullable(),
+    origin: z.enum(['manual', 'initial_load']),
+    reference_date: z.iso.date(),
+    started_at: z.iso.datetime({ offset: true }).nullable(),
+    status: z.enum([
+        'queued',
+        'running',
+        'succeeded',
+        'partial',
+        'interrupted',
+        'failed'
+    ])
+});
+
+/**
+ * CollectionPendingResponse
+ */
+export const zCollectionPendingResponse = z.object({
+    active_run: zRunSummary.nullable(),
+    bars_start: z.iso.date(),
+    counts: z.array(zGroupCount),
+    data_source: z.enum(['live', 'fixtures']),
+    days_awaiting_cotahist: z.int(),
+    estimated_seconds: z.int(),
+    intraday_start: z.iso.date(),
+    is_initial_load: z.boolean(),
+    known_requests: z.int(),
+    last_run: zRunSummary.nullable(),
+    pending_days: z.array(z.iso.date()),
+    reference_date: z.iso.date(),
+    requests_per_second: z.number()
+});
+
+/**
+ * CollectionRunResponse
+ */
+export const zCollectionRunResponse = z.object({
+    current: zItemOut.nullable(),
+    estimated_seconds_remaining: z.int(),
+    groups: z.array(zGroupProgressOut),
+    recent_failures: z.array(zItemOut),
+    run: zRunSummary,
+    totals: zProgressCounts
+});
+
+/**
+ * UnderlyingCreate
+ */
+export const zUnderlyingCreate = z.object({
+    ticker: z.string().regex(/^[A-Z0-9]{4,12}$/)
+});
+
+/**
+ * UnderlyingOut
+ */
+export const zUnderlyingOut = z.object({
+    active: z.boolean(),
+    isin: z.string().nullable(),
+    ticker: z.string()
+});
+
+/**
+ * UnderlyingUpdate
+ */
+export const zUnderlyingUpdate = z.object({
+    active: z.boolean()
+});
+
+export const zGetCollectionGapsQuery = z.object({
+    limit: z.int().gte(1).lte(2000).optional().default(300)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetCollectionGapsResponse = zCollectionGapsResponse;
+
+/**
+ * Successful Response
+ */
+export const zGetCollectionPendingResponse = zCollectionPendingResponse;
+
+/**
+ * Successful Response
+ */
+export const zCreateCollectionRunResponse = zCollectionRunResponse;
+
+export const zGetCollectionRunPath = z.object({
+    run_id: z.int()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetCollectionRunResponse = zCollectionRunResponse;
+
+/**
  * Successful Response
  */
 export const zGetHealthResponse = zHealthResponse;
+
+/**
+ * Response List Underlyings
+ *
+ * Successful Response
+ */
+export const zListUnderlyingsResponse = z.array(zUnderlyingOut);
+
+export const zCreateUnderlyingBody = zUnderlyingCreate;
+
+/**
+ * Successful Response
+ */
+export const zCreateUnderlyingResponse = zUnderlyingOut;
+
+export const zUpdateUnderlyingBody = zUnderlyingUpdate;
+
+export const zUpdateUnderlyingPath = z.object({
+    ticker: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateUnderlyingResponse = zUnderlyingOut;

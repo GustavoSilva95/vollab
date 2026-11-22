@@ -9,9 +9,11 @@ import {
   formatCalendarDays,
   formatDate,
   formatDateTime,
+  formatDuration,
   formatMoney,
   formatNumber,
   formatRate,
+  formatShare,
   formatVol,
   formatVolPoints,
 } from './index';
@@ -138,5 +140,28 @@ describe('datas', () => {
 
   it('rejeita instante inválido', () => {
     expect(() => formatDateTime('ontem')).toThrow(RangeError);
+  });
+});
+
+describe('formatDuration', () => {
+  it('segundos, minutos e horas', () => {
+    expect(formatDuration(45)).toBe('45 s');
+    expect(formatDuration(290)).toBe('5 min');
+    expect(formatDuration(18_000)).toBe('5 h 00 min');
+    expect(formatDuration(18_130)).toBe('5 h 02 min');
+    expect(formatDuration(null)).toBe(EMPTY);
+  });
+
+  it('rejeita negativo e não finito', () => {
+    expect(() => formatDuration(-1)).toThrow(RangeError);
+    expect(() => formatDuration(Number.NaN)).toThrow(RangeError);
+  });
+});
+
+describe('formatShare', () => {
+  it('proporção em percentual inteiro', () => {
+    expect(formatShare(40, 100)).toMatch(/^40\s?%$/);
+    expect(formatShare(0, 0)).toBe(EMPTY);
+    expect(() => formatShare(5, 4)).toThrow(RangeError);
   });
 });

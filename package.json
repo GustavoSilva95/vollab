@@ -19,6 +19,8 @@
     "e2e": "npm run e2e -w @vollab/web",
     "engine:up": "ENGINE_VERSION=$(git rev-parse --short HEAD) docker compose up -d --build --wait",
     "engine:down": "docker compose down",
+    "engine:up:e2e": "ENGINE_VERSION=$(git rev-parse --short HEAD) docker compose -p vollab-e2e -f docker-compose.yml -f docker-compose.e2e.yml up -d --build --wait",
+    "engine:down:e2e": "docker compose -p vollab-e2e -f docker-compose.yml -f docker-compose.e2e.yml down -v",
     "contract:openapi": "cd services/engine && uv run --locked python -m vollab.api.export_openapi ../../packages/api-types/openapi.json",
     "contract:generate": "npm run contract:openapi && npm run generate -w @vollab/api-types",
     "contract:check": "./scripts/check-contract-drift.sh"

@@ -20,7 +20,7 @@ def _database_url() -> str:
         return explicit
     from vollab.settings import get_settings
 
-    return str(get_settings().database_url)
+    return get_settings().database_dsn()
 
 
 def run_migrations_offline() -> None:

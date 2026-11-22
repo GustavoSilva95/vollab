@@ -5,9 +5,233 @@ export type ClientOptions = {
 };
 
 /**
+ * CollectionGapsResponse
+ */
+export type CollectionGapsResponse = {
+    /**
+     * Bars Start
+     */
+    bars_start: string;
+    /**
+     * Failures
+     *
+     * Último estado de cada item com falha (até `limit`).
+     */
+    failures: Array<ItemOut>;
+    /**
+     * Failures Total
+     */
+    failures_total: number;
+    /**
+     * Gaps
+     *
+     * Lacunas por ativo e data, mais recentes primeiro (até `limit`).
+     */
+    gaps: Array<GapOut>;
+    /**
+     * Gaps Total
+     */
+    gaps_total: number;
+    /**
+     * Intraday Start
+     */
+    intraday_start: string;
+    /**
+     * Reference Date
+     */
+    reference_date: string;
+    /**
+     * Summary
+     */
+    summary: Array<GapSummary>;
+};
+
+/**
+ * CollectionPendingResponse
+ */
+export type CollectionPendingResponse = {
+    active_run: RunSummary | null;
+    /**
+     * Bars Start
+     *
+     * Primeiro pregão da janela de OHLC oficial.
+     */
+    bars_start: string;
+    /**
+     * Counts
+     */
+    counts: Array<GroupCount>;
+    /**
+     * Data Source
+     *
+     * `fixtures` = fonte simulada (E2E ou demonstração).
+     */
+    data_source: 'live' | 'fixtures';
+    /**
+     * Days Awaiting Cotahist
+     *
+     * Pregões sem COTAHIST baixado: as séries de opção deles são definidas depois dele.
+     */
+    days_awaiting_cotahist: number;
+    /**
+     * Estimated Seconds
+     *
+     * Tempo estimado das requisições conhecidas, no ritmo configurado.
+     */
+    estimated_seconds: number;
+    /**
+     * Intraday Start
+     *
+     * Primeiro pregão da janela de negócios intradiários.
+     */
+    intraday_start: string;
+    /**
+     * Is Initial Load
+     */
+    is_initial_load: boolean;
+    /**
+     * Known Requests
+     *
+     * Requisições já conhecidas (sem as opções a determinar).
+     */
+    known_requests: number;
+    last_run: RunSummary | null;
+    /**
+     * Pending Days
+     *
+     * Pregões com algum item pendente, em ordem crescente.
+     */
+    pending_days: Array<string>;
+    /**
+     * Reference Date
+     *
+     * Último pregão a coletar (D-1).
+     */
+    reference_date: string;
+    /**
+     * Requests Per Second
+     */
+    requests_per_second: number;
+};
+
+/**
+ * CollectionRunResponse
+ */
+export type CollectionRunResponse = {
+    /**
+     * Próximo item a processar (coleta em andamento).
+     */
+    current: ItemOut | null;
+    /**
+     * Estimated Seconds Remaining
+     */
+    estimated_seconds_remaining: number;
+    /**
+     * Groups
+     */
+    groups: Array<GroupProgressOut>;
+    /**
+     * Recent Failures
+     */
+    recent_failures: Array<ItemOut>;
+    run: RunSummary;
+    totals: ProgressCounts;
+};
+
+/**
+ * GapOut
+ */
+export type GapOut = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Detail
+     */
+    detail: string;
+    /**
+     * Kind
+     */
+    kind: 'missing_bar' | 'r4_diverged' | 'calendar_alert' | 'cotahist_failed' | 'underlying_trades_failed' | 'options_failed';
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+    /**
+     * Underlying
+     */
+    underlying: string | null;
+};
+
+/**
+ * GapSummary
+ */
+export type GapSummary = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Kind
+     */
+    kind: 'missing_bar' | 'r4_diverged' | 'calendar_alert' | 'cotahist_failed' | 'underlying_trades_failed' | 'options_failed';
+};
+
+/**
+ * GroupCount
+ */
+export type GroupCount = {
+    /**
+     * Count
+     */
+    count: number;
+    /**
+     * Group
+     */
+    group: 'cotahist_annual' | 'cotahist_daily' | 'selic' | 'dividends' | 'underlying_trades' | 'option_trades';
+};
+
+/**
+ * GroupProgressOut
+ */
+export type GroupProgressOut = {
+    /**
+     * Empty
+     */
+    empty: number;
+    /**
+     * Failed
+     */
+    failed: number;
+    /**
+     * Group
+     */
+    group: 'cotahist_annual' | 'cotahist_daily' | 'selic' | 'dividends' | 'underlying_trades' | 'option_trades';
+    /**
+     * Ok
+     */
+    ok: number;
+    /**
+     * Pending
+     */
+    pending: number;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
  * HealthResponse
  */
 export type HealthResponse = {
+    /**
+     * Data Source
+     *
+     * `fixtures` = fonte simulada por arquivos salvos (E2E ou demonstração).
+     */
+    data_source: 'live' | 'fixtures';
     /**
      * Database
      */
@@ -21,7 +245,7 @@ export type HealthResponse = {
     /**
      * Last Collection At
      *
-     * Fim da última coleta concluída. Sempre nulo até a Etapa 2 (coleta).
+     * Fim da última coleta concluída (com ou sem falhas). Nulo antes da primeira.
      */
     last_collection_at?: string | null;
     /**
@@ -30,6 +254,48 @@ export type HealthResponse = {
      * `degraded` quando o banco não responde.
      */
     status: 'ok' | 'degraded';
+};
+
+/**
+ * ItemOut
+ */
+export type ItemOut = {
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Group
+     */
+    group: 'cotahist_annual' | 'cotahist_daily' | 'selic' | 'dividends' | 'underlying_trades' | 'option_trades';
+    /**
+     * Key
+     *
+     * Ticker, ano (COTAHIST anual) ou `-`.
+     */
+    key: string;
+    /**
+     * Permanent
+     *
+     * Falha definitiva (HTTP 404 de ticker): não será tentada de novo.
+     */
+    permanent: boolean;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Status
+     */
+    status: 'pending' | 'ok' | 'empty' | 'failed';
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+    /**
+     * Underlying
+     */
+    underlying: string | null;
 };
 
 /**
@@ -78,6 +344,238 @@ export type ProblemDetails = {
     type?: string;
 };
 
+/**
+ * ProgressCounts
+ */
+export type ProgressCounts = {
+    /**
+     * Empty
+     */
+    empty: number;
+    /**
+     * Failed
+     */
+    failed: number;
+    /**
+     * Ok
+     */
+    ok: number;
+    /**
+     * Pending
+     */
+    pending: number;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * RunSummary
+ */
+export type RunSummary = {
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Finished At
+     */
+    finished_at: string | null;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Message
+     */
+    message: string | null;
+    /**
+     * Origin
+     *
+     * `initial_load` = primeira coleta (carga inicial).
+     */
+    origin: 'manual' | 'initial_load';
+    /**
+     * Reference Date
+     *
+     * Data em que a coleta foi disparada; coleta-se até o pregão anterior.
+     */
+    reference_date: string;
+    /**
+     * Started At
+     */
+    started_at: string | null;
+    /**
+     * Status
+     */
+    status: 'queued' | 'running' | 'succeeded' | 'partial' | 'interrupted' | 'failed';
+};
+
+/**
+ * UnderlyingCreate
+ */
+export type UnderlyingCreate = {
+    /**
+     * Ticker
+     *
+     * Código de negociação, ex.: PETR4.
+     */
+    ticker: string;
+};
+
+/**
+ * UnderlyingOut
+ */
+export type UnderlyingOut = {
+    /**
+     * Active
+     */
+    active: boolean;
+    /**
+     * Isin
+     *
+     * ISIN do ativo; identifica as séries de opção (RN-DAD-02).
+     */
+    isin: string | null;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * UnderlyingUpdate
+ */
+export type UnderlyingUpdate = {
+    /**
+     * Active
+     */
+    active: boolean;
+};
+
+export type GetCollectionGapsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/collection/gaps';
+};
+
+export type GetCollectionGapsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetCollectionGapsError = GetCollectionGapsErrors[keyof GetCollectionGapsErrors];
+
+export type GetCollectionGapsResponses = {
+    /**
+     * Successful Response
+     */
+    200: CollectionGapsResponse;
+};
+
+export type GetCollectionGapsResponse = GetCollectionGapsResponses[keyof GetCollectionGapsResponses];
+
+export type GetCollectionPendingData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/collection/pending';
+};
+
+export type GetCollectionPendingErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetCollectionPendingError = GetCollectionPendingErrors[keyof GetCollectionPendingErrors];
+
+export type GetCollectionPendingResponses = {
+    /**
+     * Successful Response
+     */
+    200: CollectionPendingResponse;
+};
+
+export type GetCollectionPendingResponse = GetCollectionPendingResponses[keyof GetCollectionPendingResponses];
+
+export type CreateCollectionRunData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/collection/runs';
+};
+
+export type CreateCollectionRunErrors = {
+    /**
+     * Já existe uma coleta em andamento.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type CreateCollectionRunError = CreateCollectionRunErrors[keyof CreateCollectionRunErrors];
+
+export type CreateCollectionRunResponses = {
+    /**
+     * Successful Response
+     */
+    202: CollectionRunResponse;
+};
+
+export type CreateCollectionRunResponse = CreateCollectionRunResponses[keyof CreateCollectionRunResponses];
+
+export type GetCollectionRunData = {
+    body?: never;
+    path: {
+        /**
+         * Run Id
+         */
+        run_id: number;
+    };
+    query?: never;
+    url: '/collection/runs/{run_id}';
+};
+
+export type GetCollectionRunErrors = {
+    /**
+     * Coleta não encontrada.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetCollectionRunError = GetCollectionRunErrors[keyof GetCollectionRunErrors];
+
+export type GetCollectionRunResponses = {
+    /**
+     * Successful Response
+     */
+    200: CollectionRunResponse;
+};
+
+export type GetCollectionRunResponse = GetCollectionRunResponses[keyof GetCollectionRunResponses];
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -102,3 +600,97 @@ export type GetHealthResponses = {
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type ListUnderlyingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/underlyings';
+};
+
+export type ListUnderlyingsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type ListUnderlyingsError = ListUnderlyingsErrors[keyof ListUnderlyingsErrors];
+
+export type ListUnderlyingsResponses = {
+    /**
+     * Response List Underlyings
+     *
+     * Successful Response
+     */
+    200: Array<UnderlyingOut>;
+};
+
+export type ListUnderlyingsResponse = ListUnderlyingsResponses[keyof ListUnderlyingsResponses];
+
+export type CreateUnderlyingData = {
+    body: UnderlyingCreate;
+    path?: never;
+    query?: never;
+    url: '/underlyings';
+};
+
+export type CreateUnderlyingErrors = {
+    /**
+     * Ativo já cadastrado ou limite de 10 ativos.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type CreateUnderlyingError = CreateUnderlyingErrors[keyof CreateUnderlyingErrors];
+
+export type CreateUnderlyingResponses = {
+    /**
+     * Successful Response
+     */
+    201: UnderlyingOut;
+};
+
+export type CreateUnderlyingResponse = CreateUnderlyingResponses[keyof CreateUnderlyingResponses];
+
+export type UpdateUnderlyingData = {
+    body: UnderlyingUpdate;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: never;
+    url: '/underlyings/{ticker}';
+};
+
+export type UpdateUnderlyingErrors = {
+    /**
+     * Ativo não encontrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Limite de ativos.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type UpdateUnderlyingError = UpdateUnderlyingErrors[keyof UpdateUnderlyingErrors];
+
+export type UpdateUnderlyingResponses = {
+    /**
+     * Successful Response
+     */
+    200: UnderlyingOut;
+};
+
+export type UpdateUnderlyingResponse = UpdateUnderlyingResponses[keyof UpdateUnderlyingResponses];

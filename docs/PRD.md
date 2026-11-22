@@ -2,11 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base:** [BRD 1.2 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
-**Versão:** 1.2
+**Versão:** 1.3
 **Data:** 2026-11-22
-**Status:** Aprovado (2026-11-22)
+**Status:** Aprovado (1.3, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3).
 
 ---
 
@@ -87,7 +87,7 @@ Princípios de arquitetura:
 
 | Camada | Bibliotecas |
 |--------|-------------|
-| Engine | FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2, Alembic, psycopg 3, httpx, numpy, pandas, scipy, arch, yfinance, structlog |
+| Engine | FastAPI, Pydantic v2, pydantic-settings, SQLAlchemy 2, Alembic, psycopg 3, httpx, numpy, pandas, scipy, arch, structlog. **Yahoo:** httpx direto na API de gráficos (`/v8/finance/chart`, o mesmo backend do yfinance), atrás do mesmo cliente educado, cache bruto e fixtures das outras fontes; `yfinance` não é usado (decisão de 2026-11-22). |
 | Qualidade Python | pytest, hypothesis, ruff, mypy (modo estrito no pacote `quant`) |
 | Web | Next.js 16, React 19, TypeScript, Radix UI, TanStack Table, TanStack Query, React Hook Form, Zod, Plotly.js (pacote parcial) |
 | Geração do contrato | Hey API (`@hey-api/openapi-ts`) com plugins de tipos, Zod e TanStack Query. **Validar na Etapa 1**; plano B: `openapi-typescript` mais esquemas Zod escritos à mão para os formulários. |
@@ -178,7 +178,14 @@ Ao registrar uma entrada, o engine grava um retrato imutável (JSONB) com: semá
 
 ## 6. Modelo de dados (lógico)
 
-Os nomes físicos serão confirmados na Etapa 1. Todas as tabelas de usuário têm `user_id`.
+Os nomes físicos foram confirmados nas Etapas 1 (`users`, `config_versions`, `jobs`) e 2 (tabelas de dados: migration `0003`). Todas as tabelas de usuário têm `user_id`; os dados de mercado (`option_series`, `trades`, `daily_bars` etc.) são compartilhados e não têm.
+
+Detalhes confirmados na Etapa 2:
+- `trades`: chave (pregão de referência, instrumento, `DataNegocio`, ID, ação de atualização). **A B3 reinicia os IDs a cada pregão** e o negócio de D-1 reapresentado pode repetir o ID de um negócio do dia (PETR4, 18/11/2026, ID 353710); a linha de cancelamento repete o ID do negócio cancelado. A R4 é calculada na gravação (`r4_valid`).
+- `raw_files`: uma linha por consulta (`source`, `query_key`, `query_date`); o arquivo em disco é endereçado pelo SHA-256 (`{fonte}/{sha[:2]}/{sha}.{ext}`), então conteúdo idêntico é gravado uma vez.
+- `collection_items`: `key` = ticker, ano (COTAHIST anual) ou `-`; `phase` define a ordem (COTAHIST anual → diário → Selic e proventos → ativo-objeto → opções). HTTP 404 é falha definitiva só para negócios (ticker inexistente); nas demais fontes pode ser arquivo ainda não publicado e é tentado de novo.
+- `corporate_actions`: o ajuste de strike do COTAHIST gera um provento oficial implícito (`source = b3_strike_adjustment`, a redução mais frequente do dia, com ao menos 3 séries) para conferir o Yahoo (RS-02).
+- Parâmetros da coleta (filtro de liquidez e janelas) ficam em `config_versions.params.collection`; a primeira coleta cria a versão inicial com os padrões do QA-06.
 
 ### 6.1 Referência
 
@@ -357,7 +364,7 @@ No lugar de uma meta de cobertura percentual, **a etapa não fecha sem estes tes
 
 ### 10.3 Fluxos ponta a ponta (Playwright)
 
-1. **Coleta:** painel mostra pregões pendentes → disparar coleta (fonte simulada por fixture) → progresso → relatório de lacunas.
+1. **Coleta:** painel mostra pregões pendentes → disparar coleta (fonte simulada por fixture) → progresso → relatório de lacunas. Roda numa stack própria (`docker-compose.e2e.yml`, projeto `vollab-e2e`: banco e cache bruto separados, `DATA_SOURCE=fixtures`, "hoje" fixo em 20/11/2026). Contra um engine com fonte real o teste é pulado, para nunca disparar downloads da B3.
 2. **Decisão de entrada:** ranking → ativo → simulador com preço manual → dimensionamento → registrar entrada → o retrato gravado contém semáforo, configuração e modelo.
 3. **Vida da operação:** lançar hedge → marcação D-1 → atribuição com resíduo visível → alerta de banda de delta.
 
@@ -441,7 +448,7 @@ O detalhamento, com entregáveis e critérios de saída, está em [`PLANO.md`](.
 | ID | Questão | Quando resolver |
 |----|---------|-----------------|
 | PRD-QA-01 | O Hey API gera Zod e hooks do TanStack Query de forma estável a partir do OpenAPI do FastAPI? | **Resolvida na Etapa 1 (2026-11-22):** sim. `@hey-api/openapi-ts` 0.99 gera tipos, Zod, SDK com validação de resposta e `queryOptions` do TanStack Query; saída determinística (verificada pelo `contract-drift`). Plano B não usado. |
-| PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? Dados da Etapa 0: PETR4 tem 35–97 mil negócios/dia; universo inicial ≈ 10 milhões de linhas em 3 meses (ativos) + ~2 milhões (opções). | Etapa 2 |
+| PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? Dados da Etapa 0: PETR4 tem 35–97 mil negócios/dia; universo inicial ≈ 10 milhões de linhas em 3 meses (ativos) + ~2 milhões (opções). | **Resolvida na Etapa 2 (2026-11-22):** sim. Medido com 10,08 milhões de linhas sintéticas em 63 pregões: ~174 B/linha (1,05 GB de dados + 0,69 GB de índices), ~3,4 milhões de linhas e ~580 MB por mês; pruning por pregão funciona (DELETE por pregão × ticker em 24 ms, COPY de 97 mil linhas em ~0,3 s). O que importa é a **ordem da chave**: instrumento primeiro (leitura de uma série em 63 pregões: 363 ms → 3 ms). Ler negócios brutos de um ativo inteiro (4,4 milhões de linhas, ~1,2 s) não cabe numa requisição: a Etapa 3 grava agregados no worker após a coleta (PRD-NF-06). Sem retenção definida: ~8 GB/ano com 3 ativos; partições mensais permitem `DROP` barato quando ela for decidida. |
 | PRD-QA-03 | Método do intervalo de confiança por métrica (bootstrap × analítico) | Etapa 4 (QA-07) |
 | PRD-QA-04 | O usuário deseja a superfície 3D de IV na fase 1? | Após a Etapa 3 (opcional) |
 

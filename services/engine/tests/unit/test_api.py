@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterator
 from typing import Any
 
@@ -5,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
 from tests.conftest import LOCAL
-from vollab.api.app import create_app
+from vollab.api.app import API_VERSION, create_app
 from vollab.api.export_openapi import openapi_document, render
 from vollab.db.session import get_session
 
@@ -83,7 +84,8 @@ def test_openapi_contract_basics() -> None:
     assert doc["paths"]["/health"]["get"]["operationId"] == "get_health"
     assert "ProblemDetails" in doc["components"]["schemas"]
     # A versão do contrato não pode ser o git sha (mudaria a cada commit).
-    assert doc["info"]["version"] == "0.1.0"
+    assert doc["info"]["version"] == API_VERSION
+    assert re.fullmatch(r"\d+\.\d+\.\d+", API_VERSION)
 
 
 def test_rejects_foreign_host_dns_rebinding() -> None:
@@ -104,3 +106,22 @@ def test_rejects_foreign_forwarded_host_via_next_rewrite() -> None:
 def test_accepts_local_hosts() -> None:
     for host in ("http://localhost:8000", "http://127.0.0.1", "http://[::1]:8000"):
         assert TestClient(create_app(), base_url=host).get("/health").status_code == 200
+
+
+def test_rejects_cross_site_writes_csrf() -> None:
+    """M-3 (Etapa 2): um site qualquer não dispara a coleta por POST em 127.0.0.1."""
+    client = TestClient(create_app(), base_url=LOCAL)
+    for headers in (
+        {"Origin": "https://evil.example"},
+        {"Origin": "null"},
+        {"Sec-Fetch-Site": "cross-site"},
+    ):
+        response = client.post("/collection/runs", headers=headers)
+        assert response.status_code == 403, headers
+        assert response.headers["content-type"] == "application/problem+json"
+    # Leitura continua livre (proteção é só para escrita); origem local passa da guarda.
+    assert client.get("/health", headers={"Origin": "https://evil.example"}).status_code == 200
+    local = client.post(
+        "/_nao_existe", headers={"Origin": "http://127.0.0.1:3000", "Sec-Fetch-Site": "same-origin"}
+    )
+    assert local.status_code == 404

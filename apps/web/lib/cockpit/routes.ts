@@ -12,7 +12,7 @@ export interface CockpitRoute {
 
 export const COCKPIT_ROUTES: readonly CockpitRoute[] = [
   { href: '/app', label: 'Painel', stage: 1, available: true },
-  { href: '/app/coleta', label: 'Coleta', stage: 2, available: false },
+  { href: '/app/coleta', label: 'Coleta', stage: 2, available: true },
   { href: '/app/ranking', label: 'Ranking', stage: 5, available: false },
   { href: '/app/simulador', label: 'Simulador', stage: 6, available: false },
   { href: '/app/carteira', label: 'Carteira', stage: 7, available: false },

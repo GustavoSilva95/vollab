@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 import EngineStatus from '@/components/cockpit/EngineStatus';
+import CollectionPendingCard from '@/components/cockpit/collection/CollectionPendingCard';
 import styles from './page.module.css';
 
 export const metadata: Metadata = { title: 'Painel' };
 
 const UPCOMING = [
-  { title: 'Pendências de coleta', text: 'Pregões ainda não coletados e botão para coletar.', stage: 2 },
   { title: 'Alertas', text: 'Hedge, saída, rolagem, limites e proventos com posição aberta.', stage: 8 },
   { title: 'Resumo da carteira', text: 'Greeks agregados e exposição por vencimento.', stage: 7 },
 ];
 
-/** Painel (PRD §8.1). Na Etapa 1 mostra só o estado do engine. */
+/** Painel (PRD §8.1): estado do engine e pendências de coleta (Etapa 2). */
 export default function DashboardPage() {
   return (
     <>
@@ -20,6 +20,7 @@ export default function DashboardPage() {
       </header>
 
       <div className={styles.grid}>
+        <CollectionPendingCard />
         <EngineStatus />
         {UPCOMING.map((item) => (
           <section key={item.title} className={styles.placeholder} aria-label={item.title}>

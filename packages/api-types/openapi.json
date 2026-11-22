@@ -1,8 +1,382 @@
 {
   "components": {
     "schemas": {
+      "CollectionGapsResponse": {
+        "properties": {
+          "bars_start": {
+            "format": "date",
+            "title": "Bars Start",
+            "type": "string"
+          },
+          "failures": {
+            "description": "Último estado de cada item com falha (até `limit`).",
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "title": "Failures",
+            "type": "array"
+          },
+          "failures_total": {
+            "title": "Failures Total",
+            "type": "integer"
+          },
+          "gaps": {
+            "description": "Lacunas por ativo e data, mais recentes primeiro (até `limit`).",
+            "items": {
+              "$ref": "#/components/schemas/GapOut"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "gaps_total": {
+            "title": "Gaps Total",
+            "type": "integer"
+          },
+          "intraday_start": {
+            "format": "date",
+            "title": "Intraday Start",
+            "type": "string"
+          },
+          "reference_date": {
+            "format": "date",
+            "title": "Reference Date",
+            "type": "string"
+          },
+          "summary": {
+            "items": {
+              "$ref": "#/components/schemas/GapSummary"
+            },
+            "title": "Summary",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reference_date",
+          "bars_start",
+          "intraday_start",
+          "summary",
+          "gaps",
+          "gaps_total",
+          "failures",
+          "failures_total"
+        ],
+        "title": "CollectionGapsResponse",
+        "type": "object"
+      },
+      "CollectionPendingResponse": {
+        "properties": {
+          "active_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bars_start": {
+            "description": "Primeiro pregão da janela de OHLC oficial.",
+            "format": "date",
+            "title": "Bars Start",
+            "type": "string"
+          },
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCount"
+            },
+            "title": "Counts",
+            "type": "array"
+          },
+          "data_source": {
+            "description": "`fixtures` = fonte simulada (E2E ou demonstração).",
+            "enum": [
+              "live",
+              "fixtures"
+            ],
+            "title": "Data Source",
+            "type": "string"
+          },
+          "days_awaiting_cotahist": {
+            "description": "Pregões sem COTAHIST baixado: as séries de opção deles são definidas depois dele.",
+            "title": "Days Awaiting Cotahist",
+            "type": "integer"
+          },
+          "estimated_seconds": {
+            "description": "Tempo estimado das requisições conhecidas, no ritmo configurado.",
+            "title": "Estimated Seconds",
+            "type": "integer"
+          },
+          "intraday_start": {
+            "description": "Primeiro pregão da janela de negócios intradiários.",
+            "format": "date",
+            "title": "Intraday Start",
+            "type": "string"
+          },
+          "is_initial_load": {
+            "title": "Is Initial Load",
+            "type": "boolean"
+          },
+          "known_requests": {
+            "description": "Requisições já conhecidas (sem as opções a determinar).",
+            "title": "Known Requests",
+            "type": "integer"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pending_days": {
+            "description": "Pregões com algum item pendente, em ordem crescente.",
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Pending Days",
+            "type": "array"
+          },
+          "reference_date": {
+            "description": "Último pregão a coletar (D-1).",
+            "format": "date",
+            "title": "Reference Date",
+            "type": "string"
+          },
+          "requests_per_second": {
+            "title": "Requests Per Second",
+            "type": "number"
+          }
+        },
+        "required": [
+          "reference_date",
+          "intraday_start",
+          "bars_start",
+          "is_initial_load",
+          "pending_days",
+          "counts",
+          "known_requests",
+          "days_awaiting_cotahist",
+          "estimated_seconds",
+          "requests_per_second",
+          "data_source",
+          "active_run",
+          "last_run"
+        ],
+        "title": "CollectionPendingResponse",
+        "type": "object"
+      },
+      "CollectionRunResponse": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Próximo item a processar (coleta em andamento)."
+          },
+          "estimated_seconds_remaining": {
+            "title": "Estimated Seconds Remaining",
+            "type": "integer"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupProgressOut"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "recent_failures": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "title": "Recent Failures",
+            "type": "array"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ProgressCounts"
+          }
+        },
+        "required": [
+          "run",
+          "totals",
+          "groups",
+          "current",
+          "estimated_seconds_remaining",
+          "recent_failures"
+        ],
+        "title": "CollectionRunResponse",
+        "type": "object"
+      },
+      "GapOut": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "missing_bar",
+              "r4_diverged",
+              "calendar_alert",
+              "cotahist_failed",
+              "underlying_trades_failed",
+              "options_failed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "underlying": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Underlying"
+          }
+        },
+        "required": [
+          "underlying",
+          "trade_date",
+          "kind",
+          "detail",
+          "count"
+        ],
+        "title": "GapOut",
+        "type": "object"
+      },
+      "GapSummary": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "missing_bar",
+              "r4_diverged",
+              "calendar_alert",
+              "cotahist_failed",
+              "underlying_trades_failed",
+              "options_failed"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "count"
+        ],
+        "title": "GapSummary",
+        "type": "object"
+      },
+      "GroupCount": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "group": {
+            "enum": [
+              "cotahist_annual",
+              "cotahist_daily",
+              "selic",
+              "dividends",
+              "underlying_trades",
+              "option_trades"
+            ],
+            "title": "Group",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group",
+          "count"
+        ],
+        "title": "GroupCount",
+        "type": "object"
+      },
+      "GroupProgressOut": {
+        "properties": {
+          "empty": {
+            "title": "Empty",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "group": {
+            "enum": [
+              "cotahist_annual",
+              "cotahist_daily",
+              "selic",
+              "dividends",
+              "underlying_trades",
+              "option_trades"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "pending",
+          "ok",
+          "empty",
+          "failed",
+          "group"
+        ],
+        "title": "GroupProgressOut",
+        "type": "object"
+      },
       "HealthResponse": {
         "properties": {
+          "data_source": {
+            "description": "`fixtures` = fonte simulada por arquivos salvos (E2E ou demonstração).",
+            "enum": [
+              "live",
+              "fixtures"
+            ],
+            "title": "Data Source",
+            "type": "string"
+          },
           "database": {
             "enum": [
               "ok",
@@ -26,7 +400,7 @@
                 "type": "null"
               }
             ],
-            "description": "Fim da última coleta concluída. Sempre nulo até a Etapa 2 (coleta).",
+            "description": "Fim da última coleta concluída (com ou sem falhas). Nulo antes da primeira.",
             "title": "Last Collection At"
           },
           "status": {
@@ -42,9 +416,89 @@
         "required": [
           "status",
           "engine_version",
-          "database"
+          "database",
+          "data_source"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "ItemOut": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "group": {
+            "enum": [
+              "cotahist_annual",
+              "cotahist_daily",
+              "selic",
+              "dividends",
+              "underlying_trades",
+              "option_trades"
+            ],
+            "title": "Group",
+            "type": "string"
+          },
+          "key": {
+            "description": "Ticker, ano (COTAHIST anual) ou `-`.",
+            "title": "Key",
+            "type": "string"
+          },
+          "permanent": {
+            "description": "Falha definitiva (HTTP 404 de ticker): não será tentada de novo.",
+            "title": "Permanent",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "ok",
+              "empty",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "underlying": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Underlying"
+          }
+        },
+        "required": [
+          "source",
+          "group",
+          "key",
+          "trade_date",
+          "underlying",
+          "status",
+          "permanent",
+          "error"
+        ],
+        "title": "ItemOut",
         "type": "object"
       },
       "ProblemDetails": {
@@ -113,16 +567,369 @@
         ],
         "title": "ProblemDetails",
         "type": "object"
+      },
+      "ProgressCounts": {
+        "properties": {
+          "empty": {
+            "title": "Empty",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "pending",
+          "ok",
+          "empty",
+          "failed"
+        ],
+        "title": "ProgressCounts",
+        "type": "object"
+      },
+      "RunSummary": {
+        "properties": {
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "origin": {
+            "description": "`initial_load` = primeira coleta (carga inicial).",
+            "enum": [
+              "manual",
+              "initial_load"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "reference_date": {
+            "description": "Data em que a coleta foi disparada; coleta-se até o pregão anterior.",
+            "format": "date",
+            "title": "Reference Date",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "partial",
+              "interrupted",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "origin",
+          "reference_date",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "message",
+          "config_version_id"
+        ],
+        "title": "RunSummary",
+        "type": "object"
+      },
+      "UnderlyingCreate": {
+        "properties": {
+          "ticker": {
+            "description": "Código de negociação, ex.: PETR4.",
+            "pattern": "^[A-Z0-9]{4,12}$",
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker"
+        ],
+        "title": "UnderlyingCreate",
+        "type": "object"
+      },
+      "UnderlyingOut": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "isin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISIN do ativo; identifica as séries de opção (RN-DAD-02).",
+            "title": "Isin"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "isin",
+          "active"
+        ],
+        "title": "UnderlyingOut",
+        "type": "object"
+      },
+      "UnderlyingUpdate": {
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active"
+        ],
+        "title": "UnderlyingUpdate",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/collection/gaps": {
+      "get": {
+        "operationId": "get_collection_gaps",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 300,
+              "maximum": 2000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionGapsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Relatório de falhas e lacunas",
+        "tags": [
+          "coleta"
+        ]
+      }
+    },
+    "/collection/pending": {
+      "get": {
+        "operationId": "get_collection_pending",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPendingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Pregões e itens pendentes",
+        "tags": [
+          "coleta"
+        ]
+      }
+    },
+    "/collection/runs": {
+      "post": {
+        "operationId": "create_collection_run",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Já existe uma coleta em andamento."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Dispara a coleta (executada pelo worker)",
+        "tags": [
+          "coleta"
+        ]
+      }
+    },
+    "/collection/runs/{run_id}": {
+      "get": {
+        "operationId": "get_collection_run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Coleta não encontrada."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Progresso de uma coleta",
+        "tags": [
+          "coleta"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "get_health",
@@ -151,6 +958,162 @@
         "summary": "Saúde do engine e do banco",
         "tags": [
           "saude"
+        ]
+      }
+    },
+    "/underlyings": {
+      "get": {
+        "operationId": "list_underlyings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnderlyingOut"
+                  },
+                  "title": "Response List Underlyings",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Ativos cadastrados",
+        "tags": [
+          "ativos"
+        ]
+      },
+      "post": {
+        "operationId": "create_underlying",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnderlyingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnderlyingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo já cadastrado ou limite de 10 ativos."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Cadastra um ativo (o ISIN vem do COTAHIST na próxima coleta)",
+        "tags": [
+          "ativos"
+        ]
+      }
+    },
+    "/underlyings/{ticker}": {
+      "patch": {
+        "operationId": "update_underlying",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "title": "Ticker",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnderlyingUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnderlyingOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não encontrado."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Limite de ativos."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Ativa ou desativa um ativo",
+        "tags": [
+          "ativos"
         ]
       }
     }

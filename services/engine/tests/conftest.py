@@ -8,12 +8,16 @@ Nenhum teste acessa a rede externa (B3, BCB, Yahoo).
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import Engine, make_url, text
 from sqlalchemy.orm import Session, sessionmaker
+
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
 # Unitários não tocam o banco, mas Settings exige DATABASE_URL: um valor inválido de propósito.
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://unit:unit@127.0.0.1:9/unit-tests-sem-banco")
@@ -65,10 +69,50 @@ def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
     # triggers, com session_replication_role = replica (exige superusuário, como no compose e no CI).
     with migrated_engine.begin() as conn:
         conn.execute(text("SET LOCAL session_replication_role = replica"))
-        conn.execute(text("TRUNCATE jobs, config_versions RESTART IDENTITY"))
+        conn.execute(
+            text(
+                "TRUNCATE jobs, config_versions, collection_items, collection_runs, trades, daily_bars, "
+                "option_daily_stats, series_adjustments, option_series, risk_free_rates, corporate_actions, "
+                "raw_files RESTART IDENTITY CASCADE"
+            )
+        )
+        # Universo inicial semeado pela migration 0003: volta ao estado original.
+        conn.execute(text("DELETE FROM underlyings WHERE ticker NOT IN ('BOVA11', 'BBAS3', 'PETR4')"))
+        conn.execute(text("UPDATE underlyings SET active = true"))
 
 
 @pytest.fixture
 def session(make_session: sessionmaker[Session]) -> Iterator[Session]:
     with make_session() as s:
         yield s
+
+
+@pytest.fixture
+def api_client(make_session: sessionmaker[Session]) -> Iterator["TestClient"]:
+    from fastapi.testclient import TestClient
+
+    from vollab.api.app import create_app
+    from vollab.db.session import get_session
+
+    app = create_app()
+
+    def _session() -> Iterator[Session]:
+        with make_session() as s:
+            yield s
+
+    app.dependency_overrides[get_session] = _session
+    yield TestClient(app, base_url=LOCAL)
+
+
+@pytest.fixture
+def fixture_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Iterator[None]:
+    """Engine em modo de fixtures, com "hoje" = 20/11/2026 (D-1 = 19/11, último pregão das fixtures)."""
+    from vollab.settings import get_settings
+
+    monkeypatch.setenv("DATA_SOURCE", "fixtures")
+    monkeypatch.setenv("FIXTURES_DIR", str(FIXTURES))
+    monkeypatch.setenv("COLLECTION_TODAY", "2026-11-20")
+    monkeypatch.setenv("RAW_DATA_DIR", str(tmp_path / "raw"))
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()

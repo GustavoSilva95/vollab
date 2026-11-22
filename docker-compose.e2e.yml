@@ -1,0 +1,25 @@
+# Stack do E2E (PRD §10.3, §10.4): o mesmo compose com a fonte de dados SIMULADA.
+# Uso: npm run engine:up:e2e  (projeto separado: banco e cache bruto próprios; nunca toca a B3).
+# Nenhum teste de CI acessa a B3, o BCB ou o Yahoo: o engine lê as fixtures reais salvas.
+
+x-e2e-env: &e2e-env
+  DATA_SOURCE: fixtures
+  FIXTURES_DIR: /fixtures
+  # "Hoje" fixo: D-1 = 19/11/2026, último pregão das fixtures. Só aceito com DATA_SOURCE=fixtures.
+  COLLECTION_TODAY: "2026-11-20"
+
+services:
+  engine-api:
+    environment: *e2e-env
+    volumes:
+      - ./services/engine/tests/fixtures:/fixtures:ro
+      - raw-e2e:/app/data/raw
+
+  engine-worker:
+    environment: *e2e-env
+    volumes:
+      - ./services/engine/tests/fixtures:/fixtures:ro
+      - raw-e2e:/app/data/raw
+
+volumes:
+  raw-e2e:

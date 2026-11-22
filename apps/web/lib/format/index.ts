@@ -161,3 +161,29 @@ export function formatDateTime(isoDateTime: Maybe<string>): string {
   }
   return dateTimeFormat.format(date).replace(', ', ' ');
 }
+
+/**
+ * Duração estimada em segundos → `≈ 5 h 02 min`, `12 min`, `45 s`. Para estimativas de
+ * tempo (coleta), arredonda para minutos acima de 1 minuto.
+ */
+export function formatDuration(seconds: Maybe<number>): string {
+  if (seconds == null) return EMPTY;
+  assertFinite(seconds, 'formatDuration');
+  if (seconds < 0) throw new RangeError(`formatDuration: duração negativa (${String(seconds)}).`);
+  const total = Math.round(seconds);
+  if (total < 60) return `${total} s`;
+  const minutes = Math.round(total / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return `${numberFormat({ maximumFractionDigits: 0 }).format(hours)} h ${String(rest).padStart(2, '0')} min`;
+}
+
+/** Parte de um total → `40%` (progresso). Total zero → `EMPTY`. */
+export function formatShare(part: Maybe<number>, total: Maybe<number>): string {
+  if (part == null || total == null || total === 0) return EMPTY;
+  assertFinite(part, 'formatShare');
+  assertFinite(total, 'formatShare');
+  if (part < 0 || part > total) throw new RangeError(`formatShare: ${String(part)} fora de 0..${String(total)}.`);
+  return numberFormat({ style: 'percent', maximumFractionDigits: 0 }).format(part / total);
+}

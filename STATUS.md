@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 2 — Dados (liberada, não iniciada)
-**Próxima etapa:** Etapa 3 — Volatilidade e eventos (bloqueada até o fechamento da Etapa 2)
+**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada, não iniciada)
+**Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (bloqueada até o fechamento da Etapa 3)
 
 ## Aprovações
 
@@ -15,6 +15,8 @@
 | PRD | 1.1 | Aprovado (incorpora A-01..A-10 e universo inicial) | 2026-11-22 |
 | BRD / PRD | 1.2 | Aprovado (liquidez mínima de 20 negócios) | 2026-11-22 |
 | Fechamento da Etapa 1 (Fundação): CI verde (run 45054728296) e revisão de segurança com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
+| PRD | 1.3 | Aprovado (Yahoo por httpx, nomes físicos, stack do E2E, PRD-QA-02) | 2026-11-22 |
+| Fechamento da Etapa 2 (Dados): CI verde (run 45062752607), revisões de segurança e performance com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 
 ## Feito
 
@@ -43,6 +45,17 @@
     - M-2 (a) — migration `0002`: `TRUNCATE` em `config_versions` também é bloqueado.
     - B-1 — pytest só aceita `TEST_DATABASE_URL` terminado em `_test`. B-3 — compose mantém `${VAR:?}` no engine-api. B-4 — `.dockerignore` com `.env*`.
 
+- **Etapa 2 concluída e aprovada (2026-11-22)**, branch `etapa-2-dados`, PR #2:
+  - Migration `0003`: `underlyings` (universo inicial semeado), `option_series`, `series_adjustments`, `exchange_holidays` (1.147 dias: lista nacional + regras B3; 2025–2026 confirmados), `risk_free_rates`, `corporate_actions`, `raw_files`, `trades` (particionada por mês, chave com o instrumento primeiro), `daily_bars`, `option_daily_stats`, `collection_runs`, `collection_items` (PRD §6).
+  - Fontes isoladas em `data/` (RF-DAD-07): B3 negócios e COTAHIST diário/anual, BCB SGS, Yahoo (httpx). Cliente educado (1 req/s, backoff, UA genérico, só HTTPS para hosts conhecidos, corpo limitado), ZIP seguro, cache bruto por SHA-256 (PRD-NF-02/05, ADR-06).
+  - Ingestão idempotente: OHLC oficial, séries pelo ISIN com estilo inferido, ajustes de strike recalculados (com provento oficial implícito para conferir o Yahoo), negócios via COPY com R4 e verificação contra o COTAHIST, Selic em decimal, proventos do Yahoo como estimados (RN-DAD-01..03, RS-02).
+  - Coleta sob demanda no worker: planejamento sem agendador, pré-filtro de séries pelo COTAHIST (QA-06) em uma consulta SQL, commit por item, retomada após parada do worker, interrupção após 5 falhas transitórias seguidas, heartbeat do lock (ADR-07, PRD-NF-03/10).
+  - API: `/collection/pending`, `/collection/runs`, `/collection/runs/{id}`, `/collection/gaps`, `/underlyings` (GET/POST/PATCH, limite de 10); `/health` com a última coleta e a fonte; contrato 0.2.0.
+  - Telas: card de pendências no `/app` e `/app/coleta` (progresso ao vivo, relatório de lacunas por ativo e data).
+  - Testes: engine 101 (unit, integração com fixtures reais: R4 = OHLC oficial em 41/41 pares, idempotência, reprocessamento a partir de `data/raw/` com estado idêntico, retomada, equivalência do filtro SQL × regra pura); web 53; Playwright 4 (inclui o **fluxo 1**), numa stack própria com fonte simulada (`docker-compose.e2e.yml`). `next build` ok.
+  - Revisão de segurança: **aprovada com ressalvas**. Bloqueantes corrigidos com teste: M-1 (linha sem quebra lida inteira na memória) e M-2 (exceções não classificadas derrubavam a coleta e ecoavam conteúdo no log, B-5 do backlog da Etapa 1). Corrigidos também M-3 (CSRF no POST da coleta: `proxy.ts` e engine recusam escrita de outra origem), M-4 (consultas de dados do usuário por `user_id`), B-1 (temporário do cache com `mkstemp`), B-2 (só stored/deflate), B-3 (`fullmatch` no ticker), B-4 (parser do Yahoo), B-5 (upserts em lotes, sem duplicatas).
+  - Revisão de performance: bloqueantes corrigidos: ordem da chave de `trades` (instrumento primeiro; série em 63 pregões 363 ms → 3 ms) e `/collection/pending` (consulta única com filtro no banco; 26 ms após a coleta das fixtures; polling reduzido a 30 s com coleta ativa). Também: partições criadas no planejamento (fora da transação do item), índice do próximo item com `trade_date DESC`, `React.memo` no relatório. Carga inicial estimada em ~5,0 h, como no PRD-NF-04.
+
 ## Decisões registradas
 
 | Data | Decisão | Onde |
@@ -67,6 +80,14 @@
 | 2026-11-22 | TypeScript fixado em 6.0 (o 7 não expõe a API do compilador, usada pelo typescript-eslint e pelo Hey API) | — |
 | 2026-11-22 | A tabela `exchange_holidays` e a carga do `feriados.csv` entram na Etapa 2, junto com o adaptador de feriados; na Etapa 1 o arquivo só foi movido para o seed do engine | PLANO |
 | 2026-11-22 | `js-yaml` forçado para ≥ 4.3.2 via `overrides` (o Hey API fixa 4.2.0, com 3 alertas altos de CPU); `npm audit` zerado | — |
+| 2026-11-22 | **Yahoo por httpx direto na API de gráficos, sem `yfinance`** (decisão do usuário; mesmo cliente, cache e fixtures das outras fontes) | PRD 1.3 §3.1 |
+| 2026-11-22 | **IDs de negócio reiniciam a cada pregão**: identidade = (DataNegocio, ID); a R4 e a chave de `trades` usam os dois (PETR4 18/11, ID 353710 em D-1 e no dia) | PRD 1.3 §6 |
+| 2026-11-22 | **PRD-QA-02 resolvida**: partição mensal basta; a chave de `trades` começa pelo instrumento | PRD §14 |
+| 2026-11-22 | `TipoSessaoPregao = 6`: nas fixtures, 154 negócios entre 19:25 e 19:37 (após o fechamento), preços perto do fechamento: compatível com sessão estendida pós-fechamento; a R4 os exclui e o OHLC confere. Semântica oficial ainda sem documento da B3 | RN-DAD-01 |
+| 2026-11-22 | HTTP 404 é falha definitiva só no `rapinegocios` (ticker inexistente); COTAHIST/SGS/Yahoo podem não ter publicado ainda e são tentados de novo | PRD 1.3 §6 |
+| 2026-11-22 | Parâmetros da coleta (filtro QA-06 e janelas 63/252 pregões) em `config_versions.params.collection`; a primeira coleta cria a versão inicial | PRD §5.3 |
+| 2026-11-22 | E2E numa stack separada (`vollab-e2e`, fonte simulada, hoje = 20/11/2026); o fluxo de coleta se pula contra fonte real | PRD 1.3 §10.3 |
+| 2026-11-22 | `GET /underlyings/{t}/series` fica para a Etapa 3, com a tela do ativo | PLANO |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -75,13 +96,17 @@
 - Backlog de segurança (revisão da Etapa 1, não bloqueante):
   - M-2 (b): separar papéis do Postgres (dono das migrations × aplicação sem DDL/UPDATE/DELETE nas tabelas imutáveis) — junto com as decisões gravadas, Etapa 6.
   - B-2: fixar ações do CI por SHA (com Dependabot) e imagens por digest/versão completa (`uv:0.13.9`).
-  - B-5: DSN com `SecretStr`; higienizar `jobs.last_error` e logs quando entrarem os adaptadores da Etapa 2.
+  - ~~B-5~~: resolvido na Etapa 2 (DSN com `SecretStr`; `last_error`, erros de item e logs só com o tipo do erro).
   - B-6: `ENGINE_URL` do rewrite é fixado no `next build` (documentar ou mover para `proxy.ts`).
 - Antes de hospedar (ADR-14): autenticação no `proxy.ts`/Route Handlers com lista de rotas permitidas; desligar `/docs` e `/openapi.json`; TLS até banco e engine; CSP, CSRF e rate limit; gerenciador de segredos; rever o que o `/health` expõe.
 - `rapinegocios` atrás do Cloudflare: monitorar bloqueios na carga inicial (1 req/s).
-- Semântica de `TipoSessaoPregao = 6` e valores do Yahoo (bruto × líquido) a investigar na Etapa 2.
+- Yahoo bruto × líquido: não confirmável sem dados novos; o Yahoo segue como `estimado` e o ajuste de strike do COTAHIST é a referência oficial (`b3_strike_adjustment`).
+- Backlog da revisão de segurança da Etapa 2 (não bloqueante): B-6 (gravar a fonte `live`/`fixtures` em `collection_runs`/`raw_files` e impedir misturar no mesmo banco), B-7 (prazo total de download e pico de memória do COTAHIST anual, ~2× o arquivo), B-8 (corrida no limite de 10 ativos). Ao hospedar: rever o que `/health` e `/collection/pending` expõem.
+- Backlog da revisão de performance da Etapa 2 (não bloqueante): `executemany` nos upserts do COTAHIST (compilação do SQLAlchemy domina ~0,6 s por pregão); `r4_mask` calculado duas vezes por arquivo do ativo; evitar a cópia `bytes(body)` no download. Para a Etapa 3: não agregar negócios brutos na requisição (PETR4 em 63 pregões = 4,4 milhões de linhas, ~1,2 s); gravar agregados no worker após a coleta.
+- Retenção de `trades` não definida (~8 GB/ano com 3 ativos).
 
 ## Próximos passos
 
-1. Mesclar o PR da Etapa 1 (`etapa-1-fundacao` → `main`).
-2. Iniciar a Etapa 2 (Dados) conforme o PLANO; tratar junto o item B-5 do backlog de segurança (higienizar `last_error` e logs dos adaptadores).
+1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
+2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
+3. Iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO: incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
