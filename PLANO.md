@@ -53,6 +53,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Critérios de saída:** `docker compose up` mais `npm run dev` sobem tudo; CI verde; contrato gerado e versionado.
 **Revisões:** segurança (bind local, segredos, CORS).
+**Gate:** ✅ **Concluída em 2026-11-22** (CI verde; revisão de segurança aprovada com ressalvas, bloqueantes corrigidos; fechamento aprovado pelo usuário).
 
 ---
 

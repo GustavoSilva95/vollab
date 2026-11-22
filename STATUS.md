@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 1 — Fundação (CI verde e revisão de segurança feita; aguardando aprovação do usuário para fechar)
-**Próxima etapa:** Etapa 2 — Dados (bloqueada até o fechamento da Etapa 1)
+**Etapa atual:** Etapa 2 — Dados (liberada, não iniciada)
+**Próxima etapa:** Etapa 3 — Volatilidade e eventos (bloqueada até o fechamento da Etapa 2)
 
 ## Aprovações
 
@@ -14,6 +14,7 @@
 | BRD | 1.1 | Aprovado (incorpora A-01..A-10) | 2026-11-22 |
 | PRD | 1.1 | Aprovado (incorpora A-01..A-10 e universo inicial) | 2026-11-22 |
 | BRD / PRD | 1.2 | Aprovado (liquidez mínima de 20 negócios) | 2026-11-22 |
+| Fechamento da Etapa 1 (Fundação): CI verde (run 45054728296) e revisão de segurança com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 
 ## Feito
 
@@ -24,7 +25,7 @@
 - Ambiente do projeto criado: `AGENTS.md` (contexto e regras), `CLAUDE.md`, papéis em `.claude/agents/`, `PLANO.md` e este arquivo.
 - BRD e PRD atualizados para 1.1 com os resultados da Etapa 0; PLANO ajustado (fixtures na Etapa 1, COTAHIST na Etapa 2).
 - **Etapa 0 concluída (2026-11-22):** relatório em `docs/pesquisa/etapa-0.md`; fixtures reais (8,5 MB, com SHA-256), hoje em `services/engine/tests/fixtures/`; scripts exploratórios em `docs/pesquisa/scripts/`.
-- **Etapa 1 implementada (2026-11-22):**
+- **Etapa 1 concluída e aprovada (2026-11-22):**
   - Monorepo com npm workspaces: `apps/web`, `services/engine`, `packages/api-types`; `data/raw/` no `.gitignore` (ADR-15).
   - Landing migrada para TypeScript (strict), visual e comportamento iguais; mesmas versões de three/fiber/drei/next/react (ADR-01).
   - `/entrar` → 307 para `/app`; `/cadastro` "em breve"; casca do `/app` com navegação (telas futuras desabilitadas, com a etapa) e painel com o estado do engine (ADR-13, PRD §8.1).
@@ -82,6 +83,5 @@
 
 ## Próximos passos
 
-1. Push das correções da revisão e CI verde de novo.
-2. Aprovação do usuário para fechar a Etapa 1 (e decidir o merge de `etapa-1-fundacao` na `main`).
-3. Liberar a Etapa 2 (Dados).
+1. Mesclar o PR da Etapa 1 (`etapa-1-fundacao` → `main`).
+2. Iniciar a Etapa 2 (Dados) conforme o PLANO; tratar junto o item B-5 do backlog de segurança (higienizar `last_error` e logs dos adaptadores).
