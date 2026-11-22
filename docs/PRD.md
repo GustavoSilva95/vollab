@@ -1,12 +1,12 @@
 # PRD — Documento de Requisitos de Produto
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
-**Base:** [BRD 1.2 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
-**Versão:** 1.3
+**Base:** [BRD 1.3 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
+**Versão:** 1.4
 **Data:** 2026-11-22
-**Status:** Aprovado (1.3, 2026-11-22)
+**Status:** Aprovado (1.4, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3).
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9).
 
 ---
 
@@ -174,6 +174,25 @@ EstimatedValue {
 
 Ao registrar uma entrada, o engine grava um retrato imutável (JSONB) com: semáforo, edge e intervalo, IV, RV prevista, modelo, custos discriminados, distribuição simulada resumida, Kelly, teto e qual dos dois prevaleceu, tamanho sugerido × executado, `config_version_id`, `engine_version` (git sha) e as entradas manuais usadas.
 
+### 5.5 Estimadores de volatilidade realizada (RF-VOL-01, RN-VOL-07..09)
+
+Notação por pregão *t*: O, H, L, C oficiais (COTAHIST), C₋₁ = fechamento anterior **ajustado por proventos** (RN-VOL-07); logs naturais. Janela de *n* pregões; variância anualizada × 252 (RN-VOL-01); a vol é a raiz.
+
+| Estimador | Variância diária (média na janela) | Hipóteses / uso |
+|-----------|------------------------------------|-----------------|
+| Close-to-close | variância amostral de ln(Cₜ/C₋₁), com média subtraída, divisor *n* − 1 | baseline do RF-PRV-03 (20 pregões) |
+| Parkinson | ln(H/L)² / (4 ln 2) | drift zero, sem gap de abertura |
+| Garman-Klass | ½ ln(H/L)² − (2 ln 2 − 1) ln(C/O)² | drift zero, sem gap de abertura |
+| Rogers-Satchell | ln(H/C)·ln(H/O) + ln(L/C)·ln(L/O) | aceita drift; ignora o overnight |
+| Yang-Zhang | σ²ₒ + k·σ²ᶜ + (1 − k)·σ²_RS, com σ²ₒ = variância de ln(O/C₋₁), σ²ᶜ = variância de ln(C/O), k = 0,34 / (1,34 + (*n* + 1)/(*n* − 1)) | aceita drift e gap |
+| Intradiária (5 min) | Σ ln(Pᵢ/Pᵢ₋₁)² nas barras de 5 min + ln(O/C₋₁)² | RN-VOL-08; só onde há negócios intradiários |
+
+Regras:
+- **Barras de 5 min** (`intraday_bars`): grade fixa no relógio de Brasília (10:00, 10:05, …), preço da barra = último negócio válido pela R4 dentro dela; barra sem negócio repete o último preço e conta como vazia para a cobertura. O primeiro retorno intradiário parte da abertura oficial; o último termina no fechamento oficial.
+- Janelas padrão: **20 e 60 pregões**, configuráveis (`config_versions`). Janela com pregões faltando, incompletos ou sem OHLC → `insufficient_data` com o motivo (PR-03).
+- Tudo é calculado **no worker depois da coleta** (PRD-NF-06) e gravado; as telas só leem. Negócios brutos nunca são agregados dentro de uma requisição.
+- Saída em `EstimatedValue` (§5.2), `origin = estimated`; o intervalo de confiança segue o método do QA-07 (Etapa 4).
+
 ---
 
 ## 6. Modelo de dados (lógico)
@@ -210,7 +229,8 @@ Detalhes confirmados na Etapa 2:
 | `option_daily_quotes` | **IV de referência** diária por série (mediana das IVs sincronizadas na última hora, RN-VOL-06), preço implícito, nº de negócios usados, status (`ok` \| `low_sample`), flag de liquidez | QA-04, QA-06 |
 | `implied_vols` | IV por negócio, com preço sincronizado do ativo e defasagem em ms; pares acima da janela (padrão 10 s) não geram IV e são contados | RF-VOL-02, RN-VOL-03 |
 | `atm_term_structure` | IV ATM por vencimento e IV de prazo constante (ou indisponível, com motivo) | RF-VOL-03, RN-VOL-05 |
-| `realized_vols` | RV por estimador e janela | RF-VOL-01 |
+| `intraday_bars` | barras de 5 min do ativo-objeto por pregão (início, último preço, nº de negócios, quantidade), a partir dos negócios válidos pela R4, e a cobertura do pregão (% de barras com negócio, completo/incompleto) | RN-VOL-08 |
+| `realized_vols` | RV por ativo, pregão de referência, **estimador** (`close_to_close`, `parkinson`, `garman_klass`, `rogers_satchell`, `yang_zhang`, `intraday_5m`) e janela (`window_bd`): valor, nº de pregões usados, status (`ok` \| `insufficient_data`) e motivo | RF-VOL-01 |
 
 ### 6.3 Coleta
 
@@ -319,8 +339,8 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | Módulo | Requisitos BRD | Componentes | Aceitação (resumo) |
 |--------|----------------|-------------|--------------------|
 | M1 Dados | RF-DAD-01..07, RN-DAD-01..03 | `data/` (adaptadores B3 negócios, B3 COTAHIST, BCB, Yahoo), `jobs/`, `/collection` | Coleta retomável e idempotente; reprocessar a partir de `data/raw/` gera o mesmo resultado; relatório de lacunas por ativo e data; R4 confere com o COTAHIST nas fixtures (OHLC e nº de negócios). |
-| M1 Vol | RF-VOL-01..05, RN-VOL-01..06 | `quant/vol`, `quant/pricing` | Estimadores e IV passam nos testes de referência (§10.2); prazo constante "indisponível" sem extrapolação. |
-| M1 Previsão | RF-PRV-01..04, RN-PRV-01/02 | `quant/forecast` | EWMA e combinação de estimadores; GARCH como candidato; avaliação apenas com janelas não sobrepostas; baselines RV C2C 20d e IV. |
+| M1 Vol | RF-VOL-01..05, RN-VOL-01..09 | `quant/vol`, `quant/pricing`, `jobs/` (recálculo pós-coleta) | Os 6 estimadores (§5.5) e a IV passam nos testes de referência (§10.2); retornos ajustados por proventos; pregão intradiário incompleto fora da janela; prazo constante "indisponível" sem extrapolação. |
+| M1 Previsão | RF-PRV-01..04, RN-PRV-01/02 | `quant/forecast` | EWMA, combinação de estimadores e **GARCH(1,1)** (biblioteca `arch`, retornos diários ajustados, previsão agregada no horizonte); avaliação apenas com janelas não sobrepostas; baselines RV C2C 20d e IV; GARCH instável ou sem convergência → "indisponível" com motivo (LC-04). |
 | M2 Eventos | RF-EVT-01/02, RN-EVT-01..03 | `/events`, `quant/events` | Salto pela estrutura a termo, conferido com o histórico; intervalo largo com pouco histórico. |
 | M3 Ranking | RF-RNK-01/02, RN-EDG-01..05, RN-CST-01..03 | `quant/edge`, `quant/costs`, `/ranking` | Semáforo de 3 estados com custos conservadores; limiar rotulado "não calibrado". |
 | M4 Simulador | RF-SIM-01..05 | `quant/simulation`, `/simulations` | Payoff, Greeks e custos para as 3 estruturas; distribuição por bootstrap considerando a regra de hedge (QA-10). |
@@ -356,7 +376,7 @@ No lugar de uma meta de cobertura percentual, **a etapa não fecha sem estes tes
 | T-REF-02 | **Ida e volta da IV**: preço(σ) → IV → σ, em grade de moneyness, prazos e vols (hypothesis) | erro < 1e-6 onde a vega é relevante; falha explícita (sem número) onde não há solução |
 | T-REF-03 | **Paridade put-call** com dividendos discretos | resíduo < 1e-8 |
 | T-REF-04 | **Greeks contra diferenças finitas** (delta, gamma, theta, vega) | tolerância relativa por Greek, documentada |
-| T-REF-05 | **Estimadores de vol (close-to-close, Yang-Zhang) contra cálculo independente**: implementação ingênua em loop e planilha de referência | erro < 1e-10 |
+| T-REF-05 | **Estimadores de vol (os 6 do §5.5) contra cálculo independente**: implementação ingênua em loop e planilha de referência; mais propriedade em série sintética (movimento browniano geométrico com σ conhecido, sem drift e sem gap): todos convergem para σ dentro de tolerância estatística documentada | erro < 1e-10 (referência); tolerância documentada (sintético) |
 | T-REF-06 | **Unidades e escalas**: vol decimal × %, dias úteis × corridos, anualização 252, taxa exponencial; nenhuma função aceita ou devolve % | testes dedicados no engine e no `lib/format` |
 | T-REF-07 | **Kelly e teto** em casos montados à mão (prevalece Kelly; prevalece teto; zero sem edge) | igualdade exata |
 | T-REF-08 | **Atribuição de P&L**: em série sintética gerada pelo próprio modelo, o resíduo tende a zero | resíduo < limite |
@@ -433,7 +453,7 @@ O detalhamento, com entregáveis e critérios de saída, está em [`PLANO.md`](.
 | 0 | Pesquisa e validação (§12) |
 | 1 | Fundação: monorepo, migração para TS, compose, esqueleto do engine, banco, contrato gerado, CI, `lib/format`, `/entrar` e `/cadastro` |
 | 2 | Dados: coleta sob demanda, cache bruto, séries, OHLC, Selic, feriados, proventos, relatório de lacunas |
-| 3 | Volatilidade: RV, IV, smile, estrutura a termo, prazo constante, eventos e salto, tela do ativo |
+| 3 | Volatilidade: RV (6 estimadores, barras de 5 min), IV, smile, estrutura a termo, prazo constante, eventos e salto, tela do ativo |
 | 4 | Previsão de RV e avaliação de modelos |
 | 5 | Custos, edge, semáforo, ranking, configuração versionada |
 | 6 | Simulador e dimensionamento |

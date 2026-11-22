@@ -2,11 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
-**Versão:** 1.2 — Fase 1
+**Versão:** 1.3 — Fase 1
 **Data:** 2026-11-22
-**Status:** Aprovado (2026-11-22)
+**Status:** Aprovado (1.3, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário.
 
 ---
 
@@ -134,7 +134,10 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 
 | ID | Requisito |
 |----|-----------|
-| RF-VOL-01 | Calcular RV com múltiplos estimadores, no mínimo **close-to-close** e **Yang-Zhang**. |
+| RF-VOL-01 | Calcular RV com os estimadores do livro-base: **close-to-close**, **Parkinson**, **Garman-Klass**, **Rogers-Satchell**, **Yang-Zhang** (com OHLC oficial diário) e **variância realizada intradiária** (alta frequência, RN-VOL-08). Todos em janelas configuráveis de pregões, exibidos lado a lado. |
+| RN-VOL-07 | Retornos usados na RV são **ajustados por proventos** (RN-PRC-02): na data ex, o fechamento anterior é reduzido pelo valor do provento antes de calcular retornos overnight e close-to-close. Sem o ajuste, a queda "ex" entra como volatilidade. |
+| RN-VOL-08 | **Variância realizada intradiária:** soma dos quadrados dos retornos logarítmicos de **barras de 5 minutos** da sessão regular (negócios válidos pela R4), **mais o retorno overnight ao quadrado** (fechamento anterior ajustado → abertura oficial). Um pregão com menos de **80%** das barras com negócio é marcado **incompleto** e não entra na janela. Janela sem pregões suficientes → **"dados insuficientes"**. |
+| RN-VOL-09 | Os estimadores de range (Parkinson, Garman-Klass) **supõem drift zero e ausência de gap de abertura** e por isso tendem a subestimar a vol em ativos com gap overnight; a interface informa a hipótese de cada estimador. O que alimenta o edge é sempre a **previsão** escolhida (RF-PRV-04), nunca um estimador cru. |
 | RN-VOL-01 | Anualização em **252 dias úteis**. |
 | RN-VOL-02 | Rankings e percentis de volatilidade (ex.: IV rank, percentil de RV) são rotulados como **"relativos ao último ano"**. |
 
@@ -156,7 +159,7 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 | ID | Requisito |
 |----|-----------|
 | RF-PRV-01 | Prever a RV com **horizonte igual à vida da opção** analisada. |
-| RF-PRV-02 | Modelos iniciais: médias ponderadas/**EWMA** e **combinação de estimadores** (close-to-close, Yang-Zhang). Candidatos: **GARCH** e outros. |
+| RF-PRV-02 | Modelos iniciais: médias ponderadas/**EWMA**, **combinação de estimadores** (os de RF-VOL-01) e **GARCH(1,1)**. Um modelo só pode ser escolhido para o edge se a avaliação (RF-PRV-03) estiver disponível; abaixo da amostra mínima ele aparece como "dados insuficientes" (RN-PRV-02). Outros modelos ficam como candidatos. |
 | RF-PRV-03 | Medir o **erro de previsão** de cada modelo, comparando com dois baselines: **RV close-to-close de 20 dias** e a **própria IV**. |
 | RN-PRV-01 | A avaliação dos modelos usa **apenas observações não sobrepostas**. |
 | RN-PRV-02 | Modelos sem amostra mínima de avaliação são exibidos como **"dados insuficientes"**. |
@@ -336,6 +339,7 @@ Os critérios medem **processo, não lucro**.
 | LC-06 | Margem não é calculada pela plataforma (CORE B3 não é replicável com dados públicos). |
 | LC-07 | O cenário de crise histórica é paramétrico, não uma reprodução da cadeia de opções da época. |
 | LC-08 | Ajustes por proventos e eventos de exercício ou designação dependem de lançamento manual na fase 1. |
+| LC-09 | A RV intradiária só existe para os pregões com negócios intradiários coletados (3 meses na carga inicial, crescendo diariamente); por muito tempo não haverá amostra para **avaliar previsões** feitas com ela. Só há negócios (sem bid/ask): barras de 5 min reduzem, mas não eliminam, o ruído de microestrutura (bid-ask bounce). |
 
 ## 14. Riscos
 

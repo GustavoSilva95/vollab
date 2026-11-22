@@ -76,19 +76,21 @@ Situação atual: [STATUS.md](STATUS.md).
 ## Etapa 3 — Volatilidade e eventos
 
 **Entregáveis**
-- `quant/pricing` (BS europeu com dividendos discretos), `quant/vol` (C2C, Yang-Zhang, IV com sincronização temporal).
+- `quant/pricing` (BS europeu com dividendos discretos), `quant/vol` (close-to-close, Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang, RV intradiária de 5 min com overnight; IV com sincronização temporal) — BRD 1.3 RF-VOL-01, RN-VOL-07..09; PRD 1.4 §5.5.
+- Barras de 5 min (`intraday_bars`) e RV por estimador e janela (`realized_vols`) calculadas **no worker após a coleta**; retornos ajustados por proventos.
+- `GET /underlyings/{t}/series` (adiado da Etapa 2).
 - Smile, estrutura a termo, IV de prazo constante (QA-03; indisponível sem dois vencimentos).
 - Calendário de eventos (CRUD) e salto de evento (RN-EVT-01..03).
-- Tela `/app/ativos/[ticker]` e `/app/eventos`, com Plotly (pacote parcial, bandas e lacunas).
+- Tela `/app/ativos/[ticker]` (inclui a comparação dos estimadores lado a lado, com a hipótese de cada um) e `/app/eventos`, com Plotly (pacote parcial, bandas e lacunas).
 
-**Critérios de saída:** T-REF-01 a T-REF-05 passando.
-**Revisões:** performance (cálculo de IV vetorizado; bundle do Plotly).
+**Critérios de saída:** T-REF-01 a T-REF-05 passando (T-REF-05 com os 6 estimadores).
+**Revisões:** performance (cálculo de IV vetorizado; barras de 5 min e RV no worker; bundle do Plotly).
 
 ---
 
 ## Etapa 4 — Previsão de RV e avaliação de modelos
 
-**Entregáveis:** EWMA e combinação de estimadores (GARCH como candidato); horizonte igual à vida da opção; avaliação com janelas não sobrepostas contra os baselines; método dos intervalos (QA-07, QA-08); tela `/app/modelos`.
+**Entregáveis:** EWMA, combinação de estimadores e GARCH(1,1) explícito (BRD 1.3 RF-PRV-02); horizonte igual à vida da opção; avaliação com janelas não sobrepostas contra os baselines; método dos intervalos (QA-07, QA-08); tela `/app/modelos`.
 **Critérios de saída:** T-REF-09; "dados insuficientes" funcionando; CS-03 verificável.
 
 ---

@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada, não iniciada)
+**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada; **não iniciar até o usuário pedir**)
 **Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (bloqueada até o fechamento da Etapa 3)
 
 ## Aprovações
@@ -17,6 +17,7 @@
 | Fechamento da Etapa 1 (Fundação): CI verde (run 45054728296) e revisão de segurança com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 | PRD | 1.3 | Aprovado (Yahoo por httpx, nomes físicos, stack do E2E, PRD-QA-02) | 2026-11-22 |
 | Fechamento da Etapa 2 (Dados): CI verde (run 45062752607), revisões de segurança e performance com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
+| BRD 1.3 / PRD 1.4 / PLANO: estimadores do livro-base (Parkinson, Garman-Klass, Rogers-Satchell, intradiária 5 min + overnight) e GARCH(1,1) explícito | 1.3 / 1.4 | Aprovado (janelas padrão 20 e 60 pregões; cobertura mínima de 80%) | 2026-11-22 |
 
 ## Feito
 
@@ -88,6 +89,7 @@
 | 2026-11-22 | Parâmetros da coleta (filtro QA-06 e janelas 63/252 pregões) em `config_versions.params.collection`; a primeira coleta cria a versão inicial | PRD §5.3 |
 | 2026-11-22 | E2E numa stack separada (`vollab-e2e`, fonte simulada, hoje = 20/11/2026); o fluxo de coleta se pula contra fonte real | PRD 1.3 §10.3 |
 | 2026-11-22 | `GET /underlyings/{t}/series` fica para a Etapa 3, com a tela do ativo | PLANO |
+| 2026-11-22 | Adicionar os estimadores do livro-base: barras de **5 min** e **overnight somado** à RV intradiária (decisão do usuário; proposta em BRD 1.3 / PRD 1.4) | BRD RF-VOL-01, RN-VOL-08 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -109,4 +111,4 @@
 
 1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
-3. Iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO: incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
+3. Quando o usuário pedir, iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO e o BRD 1.3 / PRD 1.4: incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
