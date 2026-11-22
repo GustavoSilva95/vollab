@@ -4,9 +4,9 @@
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
 **Versão:** 1.3 — Fase 1
 **Data:** 2026-11-22
-**Status:** 1.2 aprovado (2026-11-22); **1.3 em aprovação** (proposta de 2026-11-22)
+**Status:** Aprovado (1.3, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (proposta, 2026-11-22): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário.
 
 ---
 
