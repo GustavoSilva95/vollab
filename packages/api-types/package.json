@@ -1,0 +1,24 @@
+{
+  "name": "@vollab/api-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Contrato gerado a partir do OpenAPI do engine (ADR-10). Não edite src/generated à mão: rode `npm run contract:generate` na raiz.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./zod": "./src/zod.ts",
+    "./react-query": "./src/react-query.ts"
+  },
+  "scripts": {
+    "generate": "openapi-ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.108.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@types/node": "^24.19.2",
+    "typescript": "~6.0.3"
+  }
+}

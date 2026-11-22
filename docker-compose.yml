@@ -1,0 +1,77 @@
+# VolLab — ambiente local (PRD §2, ADR-05, ADR-08, ADR-14).
+# Todas as portas publicadas só em 127.0.0.1 (PRD-NF-01). Variáveis em .env (copie de .env.example).
+
+name: vollab
+
+x-engine-env: &engine-env
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?defina no .env}:${POSTGRES_PASSWORD:?defina no .env}@postgres:5432/${POSTGRES_DB:?defina no .env}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: "true"
+
+x-engine: &engine
+  build:
+    context: ./services/engine
+    args:
+      ENGINE_VERSION: ${ENGINE_VERSION:-dev}
+  image: vollab-engine:local
+  environment: *engine-env
+  volumes:
+    - ./data/raw:/app/data/raw
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?defina no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env}
+      POSTGRES_DB: ${POSTGRES_DB:?defina no .env}
+      TZ: America/Sao_Paulo
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./services/engine/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  engine-migrate:
+    <<: *engine
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  engine-api:
+    <<: *engine
+    environment:
+      <<: *engine-env
+      # Dentro do container precisa ouvir em todas as interfaces; para o host,
+      # a porta só é publicada em 127.0.0.1 (abaixo).
+      ENGINE_HOST: 0.0.0.0
+    command: ["python", "-m", "vollab.api"]
+    ports:
+      - "127.0.0.1:${ENGINE_PORT:-8000}:8000"
+    depends_on:
+      engine-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  engine-worker:
+    <<: *engine
+    command: ["python", "-m", "vollab.jobs.worker"]
+    depends_on:
+      engine-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  pgdata:

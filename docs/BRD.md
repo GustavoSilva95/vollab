@@ -2,9 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
-**Versão:** 1.0 — Fase 1
-**Data:** 2026-11-21
-**Status:** Aprovado (2026-11-21)
+**Versão:** 1.2 — Fase 1
+**Data:** 2026-11-22
+**Status:** Aprovado (2026-11-22)
+
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário.
 
 ---
 
@@ -113,10 +115,10 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 | ID | Requisito |
 |----|-----------|
 | RF-DAD-01 | Coletar diariamente os negócios do dia útil anterior para cada ativo-objeto cadastrado e cada série de opção relevante. |
-| RF-DAD-02 | Gerar uma requisição por combinação **ativo × dia útil**, respeitando o calendário de pregões da B3. |
-| RF-DAD-03 | Aceitar resposta em **CSV direto ou ZIP contendo CSV**; separador `;`; decimal possivelmente com vírgula. |
+| RF-DAD-02 | Gerar uma requisição de negócios por combinação **ticker × dia útil**, respeitando o calendário de pregões da B3. Para opções, só são pedidas as séries **elegíveis** (filtro de liquidez, §7.11) segundo o arquivo COTAHIST do mesmo pregão, que é baixado antes (1 requisição por pregão para o mercado inteiro). |
+| RF-DAD-03 | Aceitar resposta em **CSV direto ou ZIP contendo um único arquivo de texto delimitado**; separador `;`; decimal com vírgula. ZIP só com cabeçalho = pregão **sem negócios** (status `vazio`); HTTP 404 = ticker inexistente. |
 | RF-DAD-04 | Armazenar localmente todo dado baixado (cache), evitando repetir requisições e preservando o histórico caso a fonte mude ou seja descontinuada. |
-| RF-DAD-05 | Carga inicial: **1 ano** de negócios do ativo-objeto e **3 meses** das séries de opções; daí em diante, acumular diariamente. |
+| RF-DAD-05 | Carga inicial: **1 ano** de OHLC oficial do ativo-objeto (COTAHIST anual) e **3 meses** de negócios intradiários do ativo-objeto e das séries de opções elegíveis; daí em diante, acumular diariamente. |
 | RF-DAD-06 | Rotina de carga disparada manualmente ou agendada localmente, com **relatório de falhas e lacunas** por ativo e data. |
 | RF-DAD-07 | Cada fonte de dados fica isolada e substituível, sem afetar as regras de negócio. |
 
@@ -124,9 +126,9 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 
 | ID | Requisito |
 |----|-----------|
-| RN-DAD-01 | O OHLC diário do ativo-objeto é montado a partir dos negócios do dia (abertura = primeiro negócio, máxima, mínima, fechamento = último negócio), considerando apenas negócios válidos da sessão regular. O tratamento de `AcaoAtualizacao` (ex.: cancelamentos) e `TipoSessaoPregao` deve ser validado contra dados reais. |
-| RN-DAD-02 | O cadastro de séries (código, ativo-objeto, vencimento, strike, tipo call/put, estilo de exercício) deve vir de fonte oficial da B3. A inferência pelo código do ticker só pode ser usada depois de validada contra dados reais e nunca como fonte definitiva. |
-| RN-DAD-03 | **Ajustes de strike e mudanças de código por proventos** (dividendos, JCP, bonificações etc.) devem ser refletidos no cadastro das séries e no histórico de cada uma. |
+| RN-DAD-01 | O OHLC diário do ativo-objeto vem do **COTAHIST oficial da B3**. Os negócios intradiários (ativo-objeto e opções) são considerados válidos pela **regra R4**: (1) apenas `DataNegocio = DataReferencia` e `TipoSessaoPregao = 1` (sessão regular); (2) todo `CodigoIdentificadorNegocio` que tenha uma linha com `AcaoAtualizacao ≠ 0` (cancelamento) é removido, inclusive a própria linha de cancelamento; (3) a ordem dos negócios é dada pelo `CodigoIdentificadorNegocio`, não pelo horário (negócios reemitidos levam o horário da correção). O OHLC reconstruído pela R4 é comparado com o oficial como **verificação de qualidade**; divergência de preço ou de nº de negócios gera alerta. (Validação: Etapa 0, 33/33 pares.) |
+| RN-DAD-02 | O cadastro de séries (código, ativo-objeto, vencimento, strike, tipo call/put, estilo de exercício) vem do **COTAHIST** (fonte oficial da B3), que lista as séries negociadas em cada pregão. O **ativo-objeto é identificado pelo ISIN** (`CODISI`), nunca pelo prefixo do ticker (ex.: `PETR*` mistura PETR3 e PETR4). A **identidade de uma série é (código, vencimento)** com vigência, pois a B3 reutiliza códigos após o vencimento. O **estilo de exercício** é derivado do sufixo `E` do nome resumido (europeia); regra validada contra o Cadastro de Instrumentos oficial da B3 em 14.003/14.003 séries (Etapa 0). O cadastro oficial pode ser importado manualmente para conferência. |
+| RN-DAD-03 | **Ajustes de strike e mudanças de código por proventos** (dividendos, JCP, bonificações etc.) devem ser refletidos no cadastro das séries e no histórico de cada uma. O ajuste é detectado pela mudança do strike da mesma série (código, vencimento) entre pregões no COTAHIST. |
 
 **Volatilidade realizada**
 
@@ -141,7 +143,8 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 | ID | Requisito |
 |----|-----------|
 | RF-VOL-02 | Calcular a IV de cada negócio de opção com o modelo definido em RN-PRC-01. |
-| RN-VOL-03 | **Sincronização temporal:** a IV de um negócio de opção usa o preço do ativo-objeto **no horário mais próximo** do negócio da opção (campo `HoraFechamento`), e não o fechamento do dia. |
+| RN-VOL-03 | **Sincronização temporal:** a IV de um negócio de opção usa o preço do **último negócio do ativo-objeto até o horário** do negócio da opção (campo `HoraFechamento`), e não o fechamento do dia. Pares com defasagem acima da **janela máxima (padrão 10 s, configurável)** são descartados e contados no relatório de qualidade. |
+| RN-VOL-06 | **IV de referência diária** de cada série = **mediana das IVs por negócio, sincronizadas, na última hora da sessão regular**, com no mínimo 3 negócios. Abaixo disso, usa-se a IV do último negócio sincronizado, rotulada como **baixa amostra**. Guarda-se também o nº de negócios usados e o preço implícito. |
 | RN-VOL-04 | Séries sem negócios no dia ficam sem IV naquele dia. Séries abaixo do filtro mínimo de liquidez (ver §15) são excluídas do smile e do cálculo de IV ATM. |
 | RF-VOL-03 | **Scanner/ranking:** IV ATM de **prazo constante**, separando o **salto de eventos** (ex.: resultados) da vol "normal". |
 | RN-VOL-05 | Se não houver **dois vencimentos com negócios ATM** para interpolar, a IV de prazo constante fica **indisponível** (sem extrapolação). Nesse caso exibe-se a IV ATM do vencimento disponível, rotulada com o prazo efetivo. |
@@ -269,12 +272,13 @@ Todos os parâmetros citados como "configuráveis" ficam centralizados: custos, 
 
 | Dado | Fonte (fase 1) | Observações |
 |------|----------------|-------------|
-| Negócios por ativo/série e data | B3: `GET https://drp.b3.com.br/rapinegocios/tickercsv/{ticker}/{data}?type=2` | D-1. Campos: `DataReferencia`, `CodigoInstrumento`, `AcaoAtualizacao`, `PrecoNegocio`, `QuantidadeNegociada`, `HoraFechamento`, `CodigoIdentificadorNegocio`, `TipoSessaoPregao`, `DataNegocio`, `CodigoParticipanteComprador`, `CodigoParticipanteVendedor`, `Data_Consulta`, `Ticker_Buscado`. Endpoint sem documentação oficial: uso consciente, com cache. |
-| Cadastro de séries de opções | **A definir**: priorizar arquivo/API oficial da B3 | Precisa ter código, ativo-objeto, vencimento, strike, tipo e estilo. Pesquisa e validação pendentes (§15). |
+| Negócios por ativo/série e data | B3: `GET https://drp.b3.com.br/rapinegocios/tickercsv/{ticker}/{data}?type=2` | D-1. Campos: `DataReferencia`, `CodigoInstrumento`, `AcaoAtualizacao`, `PrecoNegocio`, `QuantidadeNegociada`, `HoraFechamento` (`HHMMSSmmm`, horário de Brasília), `CodigoIdentificadorNegocio`, `TipoSessaoPregao`, `DataNegocio`, `CodigoParticipanteComprador`, `CodigoParticipanteVendedor`. Data e ticker consultados são metadados do arquivo baixado, não colunas da resposta. Endpoint sem documentação oficial: uso consciente, com cache. |
+| Cotações diárias oficiais (COTAHIST) | B3: `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_D{DDMMAAAA}.ZIP` (diário) e `COTAHIST_A{AAAA}.ZIP` (anual) | Arquivo oficial e público, layout fixo de 245 colunas. Fonte do **OHLC oficial** do ativo-objeto, do **cadastro das séries negociadas** e do **pré-filtro** da coleta de opções. |
+| Cadastro de séries de opções | COTAHIST (RN-DAD-02) | Código, ISIN do ativo-objeto, vencimento, strike ajustado, tipo; estilo pelo sufixo `E` (validado). O Cadastro de Instrumentos da B3 exige reCAPTCHA e **não é automatizado**; importação manual opcional para conferência. |
 | Taxa livre de risco | Banco Central (SGS), série da Selic | Convenção 252 dias úteis, exponencial. |
-| Dividendos / JCP | Yahoo Finance (candidata) ou fonte B3, se encontrada | Fonte não oficial; complementada pelo cadastro manual no calendário. |
+| Dividendos / JCP | Histórico: Yahoo Finance, conferido pelos ajustes de strike do COTAHIST. Futuros: **cadastro manual** | O Yahoo acerta as datas ex, mas os valores divergem do ajuste oficial (até 23%), não informa o tipo (dividendo × JCP) nem proventos anunciados e ainda não "ex". |
 | Calendário de eventos | Cadastro manual | Confirmada/estimada. |
-| Feriados B3 | A definir | Necessário para dias úteis e para gerar as requisições. |
+| Feriados B3 | Página oficial "Calendário de negociação — Feriados" da B3. Base de longo prazo: lista de feriados nacionais (2001–2078) fornecida pelo usuário, **complementada pelas regras da B3** (20/11 a partir de 2024, 24/12 e 31/12 sem pregão); anos ainda não publicados pela B3 ficam **provisórios** | Conferência posterior: pregão "útil" sem negócios gera alerta de calendário. 24/12 e 31/12 sem pregão; 25/01 e 09/07 com pregão. |
 | Preços do momento | Entrada manual do usuário | Identificados como manuais. |
 | Margem | Entrada manual do usuário | — |
 
@@ -296,8 +300,8 @@ Os critérios medem **processo, não lucro**.
 | ID | Premissa |
 |----|----------|
 | PM-01 | O endpoint da B3 continuará acessível e com o formato atual durante a fase 1. |
-| PM-02 | O endpoint aceita tickers de opções individuais. |
-| PM-03 | Existe uma fonte oficial da B3 para o cadastro de séries, ou uma alternativa validável. |
+| PM-02 | O endpoint aceita tickers de opções individuais. **Validada na Etapa 0.** |
+| PM-03 | Existe uma fonte oficial da B3 para o cadastro de séries, ou uma alternativa validável. **Validada na Etapa 0 (COTAHIST).** |
 | PM-04 | A Selic é uma aproximação aceitável da taxa livre de risco nesta fase. |
 | PM-05 | Black-Scholes europeu é aceitável como aproximação para todas as séries. |
 | PM-06 | O usuário registra posições, hedges e eventos manualmente e com disciplina. |
@@ -309,8 +313,8 @@ Os critérios medem **processo, não lucro**.
 - Fase 1 roda **localmente**, com **um único usuário**, sem autenticação.
 - Uso pessoal e não comercial.
 - Dados limitados a negócios realizados: **não há livro de ofertas (bid/ask)**.
-- Uma requisição por ativo/série × dia útil.
-- Histórico inicial: 1 ano (ativo-objeto) e 3 meses (opções).
+- Uma requisição de negócios por ticker × dia útil, mais um arquivo COTAHIST por pregão.
+- Histórico inicial: 1 ano de OHLC oficial (ativo-objeto) e 3 meses de negócios intradiários (ativo-objeto e opções elegíveis).
 - Tecnologias conhecidas pelo proprietário: JavaScript, Next.js e React (orientação, não decisão de arquitetura deste documento).
 
 ## 12. Fases futuras (indicativo)
@@ -338,13 +342,13 @@ Os critérios medem **processo, não lucro**.
 | ID | Risco | Prob. | Impacto | Mitigação |
 |----|-------|-------|---------|-----------|
 | RS-01 | Descontinuação ou mudança do endpoint B3 | Média | Alto | Cache local de tudo o que for baixado; fonte isolada e substituível; monitorar falhas na rotina de carga. |
-| RS-02 | Instabilidade ou bloqueio do Yahoo Finance | Alta | Médio | Cadastro manual de proventos como alternativa; buscar fonte B3. |
-| RS-03 | Ausência de fonte oficial para o cadastro de séries | Média | Alto | Pesquisa prioritária antes do desenvolvimento (§15); inferência por código só após validação. |
+| RS-02 | Instabilidade ou bloqueio do Yahoo Finance; valores divergentes | Alta | Médio | Cadastro manual de proventos (obrigatório para os futuros); conferência pelos ajustes de strike do COTAHIST. |
+| RS-03 | Ausência de fonte oficial para o cadastro de séries | Baixa | Alto | Resolvido na Etapa 0 com o COTAHIST; estilo de exercício validado contra o cadastro oficial. |
 | RS-04 | Baixa liquidez gerando IV ruidosa e smile incompleto | Alta | Alto | Filtro de liquidez; IV de prazo constante indisponível quando não houver base; exibir incerteza. |
 | RS-05 | Amostra pequena: intervalos largos e semáforo frequentemente "inconclusivo" | Alta | Médio | Comportamento **esperado, não defeito**; comunicar na interface; acumular dados diariamente. |
 | RS-06 | Erros de lançamento manual no diário | Média | Alto | Validações de consistência (quantidades, posição resultante, vínculos com a posição original); resíduo alto da atribuição como sinal de erro. |
 | RS-07 | Ajustes de strike por proventos não capturados | Média | Alto | Regra RN-DAD-03; tipo de lançamento próprio; alertar em datas ex-provento de ativos com posição aberta. |
-| RS-08 | Volume de requisições na carga histórica de opções | Média | Médio | Carga incremental; limitar às séries relevantes (vencimentos e moneyness); respeitar ritmo de requisições. |
+| RS-08 | Volume de requisições na carga histórica de opções | Média | Médio | Pré-filtro pelo COTAHIST do pregão; carga incremental em várias sessões; limitar às séries elegíveis (vencimentos, moneyness e liquidez); respeitar ritmo de requisições. O serviço fica atrás do Cloudflare. |
 | RS-09 | Excesso de confiança em poucos trades | Média | Alto | Aviso explícito (§9) de que N = 20 não é evidência de edge. |
 | RS-10 | Divergência de IV em séries americanas | Baixa | Baixo | Limitação LC-01 documentada; revisar em fase futura. |
 
@@ -352,19 +356,19 @@ Os critérios medem **processo, não lucro**.
 
 | ID | Questão | Sugestão inicial |
 |----|---------|------------------|
-| QA-01 | Qual fonte oficial da B3 fornece o cadastro de séries (código, ativo-objeto, vencimento, strike, tipo, estilo, ajustes)? | Pesquisar e validar antes do desenvolvimento. |
-| QA-02 | Qual fonte para o calendário de feriados da B3? | Pesquisar fonte oficial B3. |
+| QA-01 | Qual fonte oficial da B3 fornece o cadastro de séries (código, ativo-objeto, vencimento, strike, tipo, estilo, ajustes)? | **Resolvida (2026-11-22):** COTAHIST (RN-DAD-02). |
+| QA-02 | Qual fonte para o calendário de feriados da B3? | **Resolvida (2026-11-22):** página oficial da B3 + regra para anos não publicados (§8). |
 | QA-03 | Qual **prazo** da IV de prazo constante usar no ranking? | 21 dias úteis, configurável. |
-| QA-04 | Qual **preço de referência diário** de cada série para IV (último negócio, VWAP, mediana)? | Avaliar com dados reais; registrar a escolha. |
-| QA-05 | Qual **janela máxima** de defasagem entre o negócio da opção e o do ativo-objeto na sincronização (RN-VOL-03)? | Definir após análise dos dados; descartar pares fora da janela. |
-| QA-06 | Quais são os **filtros mínimos de liquidez** (nº de negócios, quantidade, volume financeiro) por série? | Configuráveis; calibrar com 3 meses de dados. |
+| QA-04 | Qual **preço de referência diário** de cada série para IV (último negócio, VWAP, mediana)? | **Resolvida (2026-11-22):** mediana das IVs sincronizadas na última hora (RN-VOL-06). VWAP descartado. |
+| QA-05 | Qual **janela máxima** de defasagem entre o negócio da opção e o do ativo-objeto na sincronização (RN-VOL-03)? | **Resolvida (2026-11-22):** 10 s, configurável. |
+| QA-06 | Quais são os **filtros mínimos de liquidez** (nº de negócios, quantidade, volume financeiro) por série? | **Resolvida (2026-11-22):** padrão **≥ 20 negócios no dia** (elevado de 10 na versão 1.2), K/S entre 0,9 e 1,1, 2 próximos vencimentos mensais, semanais desligadas; tudo configurável. |
 | QA-07 | Qual **nível de confiança** e qual método para os intervalos? | 90%, configurável; método a definir. |
 | QA-08 | Quais as **amostras mínimas** para sair de "dados insuficientes" em cada métrica? | Definir por métrica. |
 | QA-09 | Como definir a **"perda máxima por trade"** em estruturas de perda ilimitada (straddle/strangle vendido) para aplicar o teto de 7%? | Usar a pior perda entre os cenários de stress configurados ou um percentil extremo (ex.: 99%) da distribuição simulada. |
 | QA-10 | Qual método gera a **distribuição simulada de P&L** (bootstrap de retornos históricos, simulação paramétrica etc.)? | Bootstrap de retornos históricos, considerando a regra de hedge. |
 | QA-11 | Quais **valores padrão** para banda de delta, intervalo de hedge, meta de lucro, stop e dias até o vencimento? | Definir com o usuário antes do uso. |
 | QA-12 | Quais **choques exatos** do cenário de crise histórica (episódios e magnitudes)? | Medir nos episódios de mai/2017 e mar/2020 para cada ativo. |
-| QA-13 | Como tratar os **cancelamentos** (`AcaoAtualizacao`) e os **tipos de sessão** (`TipoSessaoPregao`, ex.: leilão, after-market) na construção do OHLC e da IV? | Validar contra dados reais. |
+| QA-13 | Como tratar os **cancelamentos** (`AcaoAtualizacao`) e os **tipos de sessão** (`TipoSessaoPregao`, ex.: leilão, after-market) na construção do OHLC e da IV? | **Resolvida (2026-11-22):** regra R4 (RN-DAD-01). |
 
 ## 16. Glossário
 

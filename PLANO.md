@@ -34,7 +34,7 @@ Situação atual: [STATUS.md](STATUS.md).
 - Fixtures reais da B3 (CSV/ZIP) salvas para os testes de ingestão.
 
 **Critérios de saída:** todos os critérios da tabela do PRD §12. Se PM-02 falhar → revisar o BRD e o PRD.
-**Gate:** relatório da Etapa 0 aprovado.
+**Gate:** relatório da Etapa 0 aprovado. ✅ **Concluída em 2026-11-22** (relatório aprovado; BRD e PRD atualizados para 1.1).
 
 ---
 
@@ -42,6 +42,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Entregáveis**
 - Monorepo (`apps/web`, `services/engine`, `packages/api-types`, `data/raw/` no `.gitignore`).
+- Fixtures da Etapa 0 movidas de `docs/pesquisa/fixtures/` para `services/engine/tests/fixtures/` (com o `MANIFEST.csv`). A lista de feriados (`fixtures/calendario/feriados.csv`) vai para os dados de carga do engine (seed de `exchange_holidays`), não para os testes.
 - Código atual migrado para TypeScript, landing funcionando igual a antes.
 - `/entrar` redireciona para `/app`; `/cadastro` mostra "em breve"; casca do `/app` com navegação.
 - `docker-compose.yml` com Postgres, engine-api e engine-worker; `.env.example`.
@@ -52,13 +53,14 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Critérios de saída:** `docker compose up` mais `npm run dev` sobem tudo; CI verde; contrato gerado e versionado.
 **Revisões:** segurança (bind local, segredos, CORS).
+**Gate:** ✅ **Concluída em 2026-11-22** (CI verde; revisão de segurança aprovada com ressalvas, bloqueantes corrigidos; fechamento aprovado pelo usuário).
 
 ---
 
 ## Etapa 2 — Dados
 
 **Entregáveis**
-- Adaptadores B3 (negócios, cadastro de séries, feriados), BCB SGS e Yahoo (proventos), isolados (RF-DAD-07).
+- Adaptadores B3 (negócios `rapinegocios`, COTAHIST diário e anual para OHLC oficial, cadastro de séries e pré-filtro de opções; feriados), BCB SGS e Yahoo (proventos), isolados (RF-DAD-07).
 - Cache bruto imutável com hash; parsing de CSV e ZIP seguro (PRD-NF-05).
 - Coleta sob demanda: `/collection/pending`, execução no worker, progresso, retomada e relatório de lacunas.
 - Carga inicial em várias sessões (PRD-NF-04).
