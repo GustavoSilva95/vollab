@@ -3,16 +3,18 @@
 
 name: vollab
 
+x-engine-env: &engine-env
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?defina no .env}:${POSTGRES_PASSWORD:?defina no .env}@postgres:5432/${POSTGRES_DB:?defina no .env}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_JSON: "true"
+
 x-engine: &engine
   build:
     context: ./services/engine
     args:
       ENGINE_VERSION: ${ENGINE_VERSION:-dev}
   image: vollab-engine:local
-  environment:
-    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?defina no .env}:${POSTGRES_PASSWORD:?defina no .env}@postgres:5432/${POSTGRES_DB:?defina no .env}
-    LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    LOG_JSON: "true"
+  environment: *engine-env
   volumes:
     - ./data/raw:/app/data/raw
 
@@ -46,9 +48,7 @@ services:
   engine-api:
     <<: *engine
     environment:
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      LOG_LEVEL: ${LOG_LEVEL:-INFO}
-      LOG_JSON: "true"
+      <<: *engine-env
       # Dentro do container precisa ouvir em todas as interfaces; para o host,
       # a porta só é publicada em 127.0.0.1 (abaixo).
       ENGINE_HOST: 0.0.0.0

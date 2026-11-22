@@ -10,7 +10,8 @@ def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level, json=settings.log_json)
     uvicorn.run(
-        "vollab.api.app:app",
+        "vollab.api.app:create_app",
+        factory=True,
         host=settings.engine_host,
         port=settings.engine_port,
         proxy_headers=False,

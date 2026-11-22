@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     # sobrescreve para 0.0.0.0 e publica a porta apenas em 127.0.0.1 do host.
     engine_host: str = "127.0.0.1"
     engine_port: int = 8000
+    # Hosts aceitos no cabeçalho Host / X-Forwarded-Host (defesa contra DNS rebinding).
+    allowed_hosts: list[str] = Field(default=["127.0.0.1", "localhost", "[::1]"])
     # Versão gravada no retrato da decisão (PRD §5.4): git sha do build.
     engine_version: str = "dev"
     log_level: str = "INFO"

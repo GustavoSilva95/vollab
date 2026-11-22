@@ -13,7 +13,8 @@ from vollab.api.app import create_app
 
 
 def openapi_document() -> dict[str, Any]:
-    return create_app().openapi()
+    # O guarda de Host não altera o schema; assim a exportação não exige DATABASE_URL.
+    return create_app(allowed_hosts=[]).openapi()
 
 
 def render() -> str:

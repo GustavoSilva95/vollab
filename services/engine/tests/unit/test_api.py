@@ -4,6 +4,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
+from tests.conftest import LOCAL
 from vollab.api.app import create_app
 from vollab.api.export_openapi import openapi_document, render
 from vollab.db.session import get_session
@@ -21,7 +22,7 @@ def _client_with_broken_db() -> TestClient:
         yield _BrokenSession()
 
     app.dependency_overrides[get_session] = _session
-    return TestClient(app)
+    return TestClient(app, base_url=LOCAL)
 
 
 def test_health_reports_degraded_when_database_is_down() -> None:
@@ -36,7 +37,7 @@ def test_health_reports_degraded_when_database_is_down() -> None:
 
 def test_unknown_route_returns_problem_details() -> None:
     """PRD §7: erros seguem RFC 9457."""
-    response = TestClient(create_app()).get("/nao-existe")
+    response = TestClient(create_app(), base_url=LOCAL).get("/nao-existe")
     assert response.status_code == 404
     assert response.headers["content-type"] == "application/problem+json"
     assert response.json() == {
@@ -55,7 +56,7 @@ def test_validation_error_returns_problem_details() -> None:
     def _route(n: int) -> dict[str, int]:
         return {"n": n}
 
-    response = TestClient(app).get("/_teste/abc")
+    response = TestClient(app, base_url=LOCAL).get("/_teste/abc")
     assert response.status_code == 422
     assert response.headers["content-type"] == "application/problem+json"
     body = response.json()
@@ -68,7 +69,7 @@ def test_no_cors_middleware() -> None:
     app = create_app()
     names = {m.cls.__name__ for m in app.user_middleware}  # type: ignore[attr-defined]
     assert "CORSMiddleware" not in names
-    response = TestClient(app).get("/health", headers={"Origin": "https://exemplo.com"})
+    response = TestClient(app, base_url=LOCAL).get("/health", headers={"Origin": "https://exemplo.com"})
     assert "access-control-allow-origin" not in response.headers
 
 
@@ -83,3 +84,23 @@ def test_openapi_contract_basics() -> None:
     assert "ProblemDetails" in doc["components"]["schemas"]
     # A versão do contrato não pode ser o git sha (mudaria a cada commit).
     assert doc["info"]["version"] == "0.1.0"
+
+
+def test_rejects_foreign_host_dns_rebinding() -> None:
+    """PRD-NF-01: um domínio religado para 127.0.0.1 não consegue ler o engine."""
+    client = TestClient(create_app(), base_url="http://evil.example:8000")
+    response = client.get("/health")
+    assert response.status_code == 400
+    assert response.headers["content-type"] == "application/problem+json"
+
+
+def test_rejects_foreign_forwarded_host_via_next_rewrite() -> None:
+    """O rewrite do Next troca o Host (changeOrigin) e repassa o original em X-Forwarded-Host."""
+    client = TestClient(create_app(), base_url=LOCAL)
+    assert client.get("/health", headers={"X-Forwarded-Host": "evil.example:3000"}).status_code == 400
+    assert client.get("/health", headers={"X-Forwarded-Host": "localhost:3000"}).status_code == 200
+
+
+def test_accepts_local_hosts() -> None:
+    for host in ("http://localhost:8000", "http://127.0.0.1", "http://[::1]:8000"):
+        assert TestClient(create_app(), base_url=host).get("/health").status_code == 200

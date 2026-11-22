@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 1 — Fundação (implementada; fechamento pendente: CI verde no GitHub, revisão de segurança e aprovação)
+**Etapa atual:** Etapa 1 — Fundação (CI verde e revisão de segurança feita; aguardando aprovação do usuário para fechar)
 **Próxima etapa:** Etapa 2 — Dados (bloqueada até o fechamento da Etapa 1)
 
 ## Aprovações
@@ -35,6 +35,12 @@
   - `lib/format` com T-REF-06 (parte web, 25 testes) e regra de lint que proíbe formatação fora dele (PRD-UI-03).
   - CI (`.github/workflows/ci.yml`) com os 6 jobs do PRD §10.4. Reproduzidos localmente a partir de `npm ci`: todos verdes (web: 28 testes; engine: 21 testes, ruff, mypy estrito; e2e: 3 testes; contrato determinístico). **Ainda não rodou no GitHub.**
   - Fixtures movidas para `services/engine/tests/fixtures/` (SHA-256 conferidos por teste); `feriados.csv` em `services/engine/src/vollab/db/seed/`.
+  - **CI no GitHub: verde** nos 6 jobs (commit 7bbdd4d, branch `etapa-1-fundacao`, run 45053794816).
+  - **Revisão de segurança (2026-11-22): aprovada com ressalvas**, todas as bloqueantes corrigidas:
+    - A-1 (alto, bloqueante) — Next escutava em `0.0.0.0` (padrão do Next 16): `dev`/`start` agora com `-H 127.0.0.1`, com teste que impede regressão; PRD-NF-01 esclarecido.
+    - M-1 — DNS rebinding: `proxy.ts` no Next recusa `Host` não local em `/app` e `/api/engine/*`; o engine recusa `Host`/`X-Forwarded-Host` não local (o rewrite usa `changeOrigin`, então a checagem só no engine não bastava).
+    - M-2 (a) — migration `0002`: `TRUNCATE` em `config_versions` também é bloqueado.
+    - B-1 — pytest só aceita `TEST_DATABASE_URL` terminado em `_test`. B-3 — compose mantém `${VAR:?}` no engine-api. B-4 — `.dockerignore` com `.env*`.
 
 ## Decisões registradas
 
@@ -65,13 +71,17 @@
 ## Bloqueios e riscos ativos
 
 - Calendário 2027 provisório até a B3 publicar.
-- CI ainda não executado no GitHub (falta push). O `contract-drift` só passa com `packages/api-types` commitado.
-- Revisão de segurança da Etapa 1 (bind local, segredos, CORS) pendente — exigida pelo PLANO para fechar a etapa.
+- Backlog de segurança (revisão da Etapa 1, não bloqueante):
+  - M-2 (b): separar papéis do Postgres (dono das migrations × aplicação sem DDL/UPDATE/DELETE nas tabelas imutáveis) — junto com as decisões gravadas, Etapa 6.
+  - B-2: fixar ações do CI por SHA (com Dependabot) e imagens por digest/versão completa (`uv:0.13.9`).
+  - B-5: DSN com `SecretStr`; higienizar `jobs.last_error` e logs quando entrarem os adaptadores da Etapa 2.
+  - B-6: `ENGINE_URL` do rewrite é fixado no `next build` (documentar ou mover para `proxy.ts`).
+- Antes de hospedar (ADR-14): autenticação no `proxy.ts`/Route Handlers com lista de rotas permitidas; desligar `/docs` e `/openapi.json`; TLS até banco e engine; CSP, CSRF e rate limit; gerenciador de segredos; rever o que o `/health` expõe.
 - `rapinegocios` atrás do Cloudflare: monitorar bloqueios na carga inicial (1 req/s).
 - Semântica de `TipoSessaoPregao = 6` e valores do Yahoo (bruto × líquido) a investigar na Etapa 2.
 
 ## Próximos passos
 
-1. Commit e push da Etapa 1; confirmar o CI verde no GitHub.
-2. Revisão de segurança (`revisor-seguranca`) e correção dos achados.
-3. Aprovação do usuário para fechar a Etapa 1 e liberar a Etapa 2 (Dados).
+1. Push das correções da revisão e CI verde de novo.
+2. Aprovação do usuário para fechar a Etapa 1 (e decidir o merge de `etapa-1-fundacao` na `main`).
+3. Liberar a Etapa 2 (Dados).

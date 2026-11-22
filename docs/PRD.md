@@ -380,7 +380,7 @@ Nenhum teste de CI acessa a B3, o BCB ou o Yahoo. As fontes externas são simula
 
 | ID | Requisito |
 |----|-----------|
-| PRD-NF-01 | **Execução local:** o engine e o Postgres escutam apenas em `127.0.0.1`. Sem CORS aberto. |
+| PRD-NF-01 | **Execução local:** o Next.js (`dev` e `start`), o engine e o Postgres escutam apenas em `127.0.0.1`. Sem CORS aberto. Web e engine recusam requisições com `Host` (ou `X-Forwarded-Host`) não local, contra DNS rebinding. *(Esclarecido em 2026-11-22 pela revisão de segurança da Etapa 1: o padrão do Next é `0.0.0.0`.)* |
 | PRD-NF-02 | **Coleta educada:** ritmo de requisições configurável (padrão 1 req/s), backoff exponencial, `User-Agent` genérico, sem paralelismo agressivo (RS-08). |
 | PRD-NF-03 | **Coleta idempotente e retomável:** reexecutar não duplica negócios; uma interrupção retoma do último item pendente. |
 | PRD-NF-04 | **Volume da carga inicial (medido na Etapa 0, filtro padrão):** universo inicial **BOVA11, BBAS3 e PETR4** → 2 COTAHIST anuais (OHLC de 1 ano) + 63 COTAHIST diários + ~190 requisições intradiárias do ativo-objeto (3 × 63) + **~17.700 de opções** (filtro: 2 mensais, K/S 0,9–1,1, ≥ 20 negócios; ~280 séries elegíveis por pregão: BOVA11 ~121, PETR4 ~100, BBAS3 ~61). A 1 req/s, **cerca de 5,0 h**. Coleta diária: **~285 requisições (~5 min)**. Comparação: ≥ 10 negócios → ~18.700 (5,3 h); ≥ 51 → ~15.100 (4,3 h, com perda nas asas e no 2º vencimento). O limiar de 20 retém 99,8% dos negócios do limiar de 10. Referência para 10 ativos: ~45 mil requisições (~12,5 h). A carga roda em várias sessões e começa pelos COTAHIST e pelo ativo-objeto. |

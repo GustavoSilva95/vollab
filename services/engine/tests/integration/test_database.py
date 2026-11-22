@@ -3,11 +3,11 @@ from collections.abc import Iterator
 import pytest
 from alembic import command
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, inspect, select
+from sqlalchemy import Engine, inspect, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session, sessionmaker
 
-from tests.conftest import alembic_config
+from tests.conftest import LOCAL, alembic_config
 from vollab.api.app import create_app
 from vollab.db.config_store import create_config_version, current_config_version
 from vollab.db.models import FIXED_USER_ID, ConfigVersion, User
@@ -62,6 +62,15 @@ def test_config_versions_are_immutable(session: Session, operation: str) -> None
     assert stored.params == {"a": 1}
 
 
+def test_config_versions_reject_truncate(session: Session) -> None:
+    create_config_version(session, user_id=FIXED_USER_ID, params={"a": 1})
+    session.commit()
+    with pytest.raises(DBAPIError, match="imutável"):
+        session.execute(text("TRUNCATE config_versions"))
+    session.rollback()
+    assert session.scalars(select(ConfigVersion)).one().params == {"a": 1}
+
+
 @pytest.fixture
 def api_client(make_session: sessionmaker[Session]) -> Iterator[TestClient]:
     app = create_app()
@@ -71,7 +80,7 @@ def api_client(make_session: sessionmaker[Session]) -> Iterator[TestClient]:
             yield s
 
     app.dependency_overrides[get_session] = _session
-    yield TestClient(app)
+    yield TestClient(app, base_url=LOCAL)
 
 
 def test_health_ok_with_database(api_client: TestClient) -> None:

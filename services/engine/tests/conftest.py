@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, make_url, text
 from sqlalchemy.orm import Session, sessionmaker
 
 # Unitários não tocam o banco, mas Settings exige DATABASE_URL: um valor inválido de propósito.
@@ -20,6 +20,8 @@ os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://unit:unit@127.0.0.1:
 
 ENGINE_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).parent / "fixtures"
+# Base URL dos TestClients: o guarda de Host só aceita hosts locais (PRD-NF-01).
+LOCAL = "http://127.0.0.1:8000"
 
 
 def alembic_config(url: str) -> Config:
@@ -35,6 +37,12 @@ def database_url() -> str:
         if os.environ.get("CI"):
             pytest.fail("TEST_DATABASE_URL é obrigatória no CI para os testes de integração.")
         pytest.skip("TEST_DATABASE_URL não definida: testes de integração pulados.")
+    # A sessão de testes zera o banco (downgrade base): nunca aponte para o banco real.
+    database = make_url(url).database or ""
+    if not database.endswith("_test"):
+        pytest.fail(
+            f"TEST_DATABASE_URL deve apontar para um banco terminado em _test (recebido: {database!r})."
+        )
     return url
 
 
@@ -53,8 +61,10 @@ def migrated_engine(database_url: str) -> Iterator[Engine]:
 @pytest.fixture
 def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
     yield sessionmaker(bind=migrated_engine, expire_on_commit=False)
-    # TRUNCATE não dispara os triggers de linha que tornam config_versions imutável.
+    # config_versions é imutável (inclusive contra TRUNCATE). Só a limpeza de testes desliga os
+    # triggers, com session_replication_role = replica (exige superusuário, como no compose e no CI).
     with migrated_engine.begin() as conn:
+        conn.execute(text("SET LOCAL session_replication_role = replica"))
         conn.execute(text("TRUNCATE jobs, config_versions RESTART IDENTITY"))
 
 
