@@ -4,9 +4,9 @@
 **Base:** [BRD 1.2 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
 **Versão:** 1.3
 **Data:** 2026-11-22
-**Status:** 1.2 aprovado (2026-11-22); 1.3 em aprovação junto com o fechamento da Etapa 2
+**Status:** Aprovado (1.3, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3).
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3).
 
 ---
 

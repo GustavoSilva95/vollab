@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 2 — Dados (implementada; CI verde; aguardando aprovação do fechamento)
-**Próxima etapa:** Etapa 3 — Volatilidade e eventos (bloqueada até o fechamento da Etapa 2)
+**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada, não iniciada)
+**Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (bloqueada até o fechamento da Etapa 3)
 
 ## Aprovações
 
@@ -15,6 +15,8 @@
 | PRD | 1.1 | Aprovado (incorpora A-01..A-10 e universo inicial) | 2026-11-22 |
 | BRD / PRD | 1.2 | Aprovado (liquidez mínima de 20 negócios) | 2026-11-22 |
 | Fechamento da Etapa 1 (Fundação): CI verde (run 45054728296) e revisão de segurança com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
+| PRD | 1.3 | Aprovado (Yahoo por httpx, nomes físicos, stack do E2E, PRD-QA-02) | 2026-11-22 |
+| Fechamento da Etapa 2 (Dados): CI verde (run 45062752607), revisões de segurança e performance com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 
 ## Feito
 
@@ -43,7 +45,7 @@
     - M-2 (a) — migration `0002`: `TRUNCATE` em `config_versions` também é bloqueado.
     - B-1 — pytest só aceita `TEST_DATABASE_URL` terminado em `_test`. B-3 — compose mantém `${VAR:?}` no engine-api. B-4 — `.dockerignore` com `.env*`.
 
-- **Etapa 2 implementada (2026-11-22), branch `etapa-2-dados`, aguardando aprovação:**
+- **Etapa 2 concluída e aprovada (2026-11-22)**, branch `etapa-2-dados`, PR #2:
   - Migration `0003`: `underlyings` (universo inicial semeado), `option_series`, `series_adjustments`, `exchange_holidays` (1.147 dias: lista nacional + regras B3; 2025–2026 confirmados), `risk_free_rates`, `corporate_actions`, `raw_files`, `trades` (particionada por mês, chave com o instrumento primeiro), `daily_bars`, `option_daily_stats`, `collection_runs`, `collection_items` (PRD §6).
   - Fontes isoladas em `data/` (RF-DAD-07): B3 negócios e COTAHIST diário/anual, BCB SGS, Yahoo (httpx). Cliente educado (1 req/s, backoff, UA genérico, só HTTPS para hosts conhecidos, corpo limitado), ZIP seguro, cache bruto por SHA-256 (PRD-NF-02/05, ADR-06).
   - Ingestão idempotente: OHLC oficial, séries pelo ISIN com estilo inferido, ajustes de strike recalculados (com provento oficial implícito para conferir o Yahoo), negócios via COPY com R4 e verificação contra o COTAHIST, Selic em decimal, proventos do Yahoo como estimados (RN-DAD-01..03, RS-02).
@@ -105,7 +107,6 @@
 
 ## Próximos passos
 
-1. ~~CI verde no GitHub~~: **verde** nos 6 jobs (run 45062752607, PR #2).
-2. Aprovação do usuário: fechamento da Etapa 2 e PRD 1.3.
-3. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
-4. Depois da aprovação: liberar a Etapa 3 (Volatilidade e eventos).
+1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
+2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
+3. Iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO: incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).

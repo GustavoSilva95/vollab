@@ -69,7 +69,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Critérios de saída:** testes de ingestão com fixtures reais; idempotência comprovada; Playwright, fluxo 1.
 **Revisões:** segurança (entrada não confiável, ZIP) e performance (inserção em lote, índices, particionamento — PRD-QA-02).
-**Gate:** implementada em 2026-11-22 (branch `etapa-2-dados`); revisões feitas e bloqueantes corrigidos; CI verde (run 45062752607); **aguardando aprovação do usuário** (inclui o PRD 1.3).
+**Gate:** implementada em 2026-11-22 (branch `etapa-2-dados`); revisões feitas e bloqueantes corrigidos; CI verde (run 45062752607). ✅ **Concluída em 2026-11-22** (fechamento e PRD 1.3 aprovados pelo usuário).
 
 ---
 
