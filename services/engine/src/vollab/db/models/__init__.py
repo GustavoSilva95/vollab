@@ -2,6 +2,7 @@
 
 from vollab.db.models.collection import CollectionItem, CollectionRun
 from vollab.db.models.config_version import ConfigVersion
+from vollab.db.models.costs import OptionSpreadEstimate
 from vollab.db.models.events import Event
 from vollab.db.models.forecast import ForecastEvaluation, ForecastEvaluationPoint, RvForecast
 from vollab.db.models.job import Job, JobStatus
@@ -46,6 +47,7 @@ __all__ = [
     "OptionDailyQuote",
     "OptionDailyStat",
     "OptionSeries",
+    "OptionSpreadEstimate",
     "RawFile",
     "RealizedVol",
     "RiskFreeRate",

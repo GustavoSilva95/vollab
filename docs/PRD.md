@@ -1,13 +1,13 @@
 # PRD — Documento de Requisitos de Produto
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
-**Base:** [BRD 1.4 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
+**Base:** [BRD 1.5 — Fase 1](./BRD.md) (aprovado em 2026-11-23)
 **Referência técnica de fórmulas:** [`referencia/volatility-trading.md`](./referencia/volatility-trading.md) — sempre a forma corrigida; nunca a forma impressa no livro de fórmula listada na Errata (§2 da referência)
-**Versão:** 1.7
+**Versão:** 1.8.1
 **Data:** 2026-11-23
-**Status:** Aprovado (1.7, 2026-11-23)
+**Status:** Aprovado (1.8.1, 2026-11-23)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06. 1.6 (2026-11-23, Etapa 3, aprovado): detalhes físicos e de método da volatilidade — `intraday_sessions` e `constant_maturity_vols` (§6.2), salto de evento e IV ex-evento calculados na leitura em vez de `event_jumps` (§6.4), `corporate_actions.event_id`, endpoints `/summary` e `/prices` e a lista `/app/ativos` (§7, §8.1), métodos da §5.5.1; nenhuma mudança de escopo do BRD. 1.7 (2026-11-23, Etapa 4, aprovado): métodos de previsão e avaliação (§5.7) com as decisões do usuário — histórico diário mantido em 1 ano (BRD inalterado), intervalo empírico com fallback χ² (QA-07), combinação por média simples sem Parkinson e Garman-Klass, modelo do edge escolhido pelo usuário; amostras mínimas (QA-08); `forecast_evaluation_points` (§6.4); `/models/evaluation/points` e `PUT /models/selection` (§7); T-REF-09 detalhado (§10.2).
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06. 1.6 (2026-11-23, Etapa 3, aprovado): detalhes físicos e de método da volatilidade — `intraday_sessions` e `constant_maturity_vols` (§6.2), salto de evento e IV ex-evento calculados na leitura em vez de `event_jumps` (§6.4), `corporate_actions.event_id`, endpoints `/summary` e `/prices` e a lista `/app/ativos` (§7, §8.1), métodos da §5.5.1; nenhuma mudança de escopo do BRD. 1.7 (2026-11-23, Etapa 4, aprovado): métodos de previsão e avaliação (§5.7) com as decisões do usuário — histórico diário mantido em 1 ano (BRD inalterado), intervalo empírico com fallback χ² (QA-07), combinação por média simples sem Parkinson e Garman-Klass, modelo do edge escolhido pelo usuário; amostras mínimas (QA-08); `forecast_evaluation_points` (§6.4); `/models/evaluation/points` e `PUT /models/selection` (§7); T-REF-09 detalhado (§10.2). 1.8 (2026-11-23, Etapa 5, aprovado): métodos de custos, spread normal, edge, semáforo nas duas direções e ranking (§5.6.1, QA-14, QA-11 parcial); `option_spread_estimates` (§6.2); `/ranking` e `/config` detalhados (§7); telas `/app/ranking` e `/app/configuracoes` (§8.1); testes da Etapa 5 (§10.2). 1.8.1 (2026-11-23, decisão do usuário durante a Etapa 5): o spread de fechamento do COTAHIST sai do custo conservador e fica só como conferência — nas fixtures as ofertas após o fechamento vinham ~10× o spread dos negócios (PETR4 ATM 19/11: 15,7% × 1,26%).
 
 ---
 
@@ -170,7 +170,8 @@ EstimatedValue {
 
 - As configurações são guardadas em `config_versions`, **imutáveis**. Editar cria uma versão nova.
 - Toda decisão, operação e alerta grava o `config_version_id` vigente.
-- O primeiro valor de cada parâmetro marcado "a definir com o usuário" (QA-11) é preenchido na Etapa 6 e rotulado como "não calibrado".
+- O primeiro valor de cada parâmetro marcado "a definir com o usuário" (QA-11) é preenchido na etapa que o usa e rotulado como "não calibrado". *(1.8)* Etapa 5: limiar de edge, custos e intervalo de hedge do custo (§5.6.1); Etapas 6 e 8: banda de delta, meta de lucro, stop e dias até o vencimento.
+- *(1.8)* Edição por `POST /config`: o engine valida o snapshot inteiro (Pydantic), grava uma versão nova com nota e devolve o id; versões nunca são alteradas. Parâmetros de coleta e de vol alterados passam a valer no próximo recálculo (o histórico gravado não é refeito em silêncio).
 
 ### 5.4 Retrato da decisão (RF-DIA-01, RN-EDG-06)
 
@@ -226,6 +227,54 @@ Notação no mesmo horizonte *h*: IV = IV de prazo constante ex-evento (RN-EVT-0
 - O spread normal é definido uma vez, em termos relativos; a forma absoluta é *s*·σ̂. Assim as duas métricas sempre têm o mesmo sinal.
 - Sem histórico suficiente, *s* vem de `config_versions` com `calibrated = false` e rótulo "não calibrado"; nunca zero implícito.
 - Todas as métricas saem em `EstimatedValue` com intervalo (QA-07), herdado do intervalo de σ̂.
+
+#### 5.6.1 Métodos adotados na Etapa 5 *(1.8)*
+
+Decisões do usuário (2026-11-23): spread normal padrão de **15%** não calibrado, semáforo nas **duas direções**, corretagem padrão de **R$ 0 por ordem**, limiar de **1 ponto de vol**. Tudo configurável (blocos `costs` e `edge` de `config_versions`).
+
+**Insumos no mesmo horizonte *h*** = `vol.constant_maturity_bd` (21 du):
+
+| Insumo | Origem | Sem o insumo |
+|--------|--------|--------------|
+| IV | IV de prazo constante **ex-evento** no último pregão (§5.5.1, RN-EVT-03) | Fallback "ATM do vencimento mais próximo" (RN-VOL-05): usa o prazo efetivo *h*′ e σ̂ em *h*′ lido do estado (§5.7); todas as métricas saem `approximate`, com o motivo. Sem IV ATM → **indisponível** |
+| σ̂ e [σ̂_lo, σ̂_hi] | Modelo escolhido (`forecast.selected_model`) em *h*, com o intervalo da §5.7 | Modelo sem avaliação no ativo e horizonte → **indisponível** (§5.7), sem troca automática |
+| *s* | Spread normal (abaixo) | Nunca falta: cai no valor configurado |
+| Custos *c* | Abaixo | Sem estimativa de spread das opções ATM em nenhum pregão da janela → **indisponível** |
+
+**Spread normal *s* (RN-EDG-07, QA-14)**
+- Pares das **mesmas origens não sobrepostas** da avaliação do baseline `implied` em *h* (§5.7, `forecast_evaluation_points`): xₖ = (IVₖ − RVₖ)/RVₖ, com IVₖ = IV de prazo constante **com** o evento (a RV realizada da janela também inclui o evento) e RVₖ = RV realizada close-to-close de média zero. Origens nos últimos 252 pregões (LC-03).
+- *s* = **mediana** dos xₖ; intervalo por bootstrap percentil (mesma semente e nº de reamostragens da §5.7), só para exibição. Com ≥ `forecast.min_evaluation_windows` (8) pares: `calibrated = true`, `origin = estimated`. Abaixo disso: `edge.normal_spread_default` (**0,15**), `calibrated = false`, `origin = manual`, rótulo "não calibrado" com o nº de pares.
+- Calculado na leitura (no máximo ~12 pares por ativo).
+
+**Spread das opções (RN-CST-03)** — no worker, dentro do laço por pregão do `vol_recompute` (negócios já lidos; nada na requisição):
+- Por série com ≥ `costs.spread_min_trades` (20) negócios válidos pela R4 na sessão regular: dᵢ = |Pᵢ − Pᵢ₋₁| entre negócios consecutivos **com preço diferente** (o vaivém entre compra e venda, critério "execução × negócio anterior" da referência, cap. 6). Spread da série = mediana dos dᵢ, com **piso** = `costs.tick_brl` (R$ 0,01) ou o piso configurado para o ativo e a faixa; relativo = spread ÷ mediana do preço da série no dia.
+- **Faixas de moneyness** por K/F (strike efetivo, §5.5.1): `low` < 0,95 ≤ `atm` ≤ 1,05 < `high` (limites em `costs.moneyness_bands`). Por ativo, pregão e faixa grava-se: nº de séries e de negócios, mediana e percentil 75 do spread relativo entre séries, e a mediana do spread relativo de **fechamento** do COTAHIST (melhor venda − melhor compra)/médio, quando as duas pontas existirem.
+- Mesmo método para o **ativo-objeto** (faixa `underlying`), usado no custo de hedge.
+- Spread usado no edge, janela de `costs.spread_lookback_bd` (5) pregões: **central** = mediana das medianas; **conservador** (RN-EDG-04, o que entra no semáforo) = mediana dos percentis 75. *(1.8.1)* O spread de fechamento do COTAHIST é exibido **só como conferência**, fora do custo: as ofertas após o fechamento vinham velhas ou fora de mercado (PETR4 ATM: 15,7% × 1,26% pelos negócios em 19/11; 12,9% × 0,66% em 18/11). Sempre `origin = estimated`, rótulo "estimativa".
+
+**Custos em pontos de vol (RN-CST-01, RN-EDG-04)** — estrutura de referência: **straddle ATM teórico** (strike = forward) no prazo *h*, precificado por BS à IV. Prêmio P e vega 𝒱 por unidade de vol (decimal), por opção.
+- Opções, ida e volta (entrada e saída, duas pernas): custo em R$ por straddle = Σ pernas [spread_rel × Pᵢ (meio spread na entrada + meio na saída) + 2 × `costs.option_fee_rate` × Pᵢ + 2 × `costs.brokerage_rate` × Pᵢ] + 4 × `costs.brokerage_per_order_brl` ÷ `costs.reference_contracts`. *c*_opç = custo ÷ 𝒱_straddle.
+- Hedge (Leland, eqs. 6.7–6.8 da referência, a mesma do código de referência `leland_vol`): λ = meio spread relativo do ativo-objeto (conservador) + `costs.underlying_fee_rate`; Δt = `costs.hedge_interval_bd`/252 (base 252, coerente com σ̂); a = (λ/σ̂)·√(8/(πΔt)). Venda: *c*_hedge = σ̂·√(1 + a) − σ̂. Compra: *c*_hedge = σ̂ − σ̂·√(1 − a); com a ≥ 1 o hedge consome todo o edge de compra (compra **sem edge**, com o motivo).
+- *c*_venda = *c*_opç + *c*_hedge,venda; *c*_compra = *c*_opç + *c*_hedge,compra. Exibidos discriminados (opções: spread, taxas, corretagem; hedge), em pontos e em R$ por straddle de referência.
+- Padrões: `option_fee_rate` **0,00134** (B3, opções de ações, pessoa física: negociação 0,0370% + liquidação 0,0275% + registro 0,0695%), `underlying_fee_rate` **0,0003** (ações à vista), ambos **a conferir na tabela vigente da B3** e rotulados assim na tela de configurações; `brokerage_per_order_brl` **0**, `brokerage_rate` **0**, `reference_contracts` **100**, `hedge_interval_bd` **1**. O IR fica fora (RN-CST-04).
+
+**Prêmio, edge e semáforo (RN-EDG-01..05)**
+- Prêmio *p* = IV − σ̂(1 + *s*), intervalo [*p*_lo, *p*_hi] = [IV − σ̂_hi(1 + *s*), IV − σ̂_lo(1 + *s*)] (herdado de σ̂; *s* entra pelo valor pontual). Edge relativo = *p*/σ̂ com intervalo [*p*_lo/σ̂, *p*_hi/σ̂].
+- Limiar *L* = `edge.threshold_vol_pts` (**0,01** = 1 ponto), `calibrated = false` ("não calibrado") até a calibração por dados (Etapa 9, RN-EDG-05). Níveis exigidos: N_v = *c*_venda + *L*; N_c = *c*_compra + *L*.
+- Estados (comparações **estritas**; empate nunca dá edge líquido):
+  - **Edge líquido — venda** se *p*_lo > N_v; **edge líquido — compra** se *p*_hi < −N_c.
+  - **Sem edge** se *p*_hi ≤ N_v **e** *p*_lo ≥ −N_c.
+  - **Inconclusivo** nos demais casos.
+  - **Indisponível** (fora do semáforo, com o motivo) se faltar IV, σ̂ avaliado ou custos.
+- Direção da linha = a do estado, ou o sinal de *p* quando não há edge líquido. **Edge relativo líquido** na direção: venda (*p* − *c*_venda)/σ̂; compra (−*p* − *c*_compra)/σ̂. Também o P&L esperado aproximado por straddle de referência = 𝒱_straddle × (|*p*| − *c*) na direção (sem *L*).
+- **Ranking (RF-RNK-01):** edge líquido > inconclusivo > sem edge > indisponível; dentro do estado, edge relativo líquido decrescente; desempate pelo ticker.
+
+**Outras colunas do ranking (RF-RNK-02)**, todas calculadas na leitura:
+- **IV rank** e percentil da IV de prazo constante (com evento) nos últimos 252 pregões disponíveis; < 60 pregões → `insufficient_data`; rótulo "relativo ao último ano (N pregões)" (RN-VOL-02, LC-03).
+- **Skew** = IV(K/F = 0,95) − IV(K/F = 1,05), em pontos, no vencimento da ATM usada, pela interpolação em ln(K/F) das opções OTM (§5.5.1); sem os dois lados → indisponível.
+- **Estrutura a termo** = ATM do 2º vencimento − ATM do 1º, em pontos, com os prazos.
+- **Eventos próximos** em (último pregão, + *h* du]; **liquidez**: séries que passam o filtro QA-06, negócios e volume financeiro de opções no pregão (`option_daily_stats`).
+- O ranking é calculado na leitura (no máximo 10 ativos; insumos já gravados).
 
 ### 5.7 Previsão de RV e avaliação de modelos (RF-PRV-01..04, RN-PRV-01/02, Etapa 4) *(1.7)*
 
@@ -307,6 +356,7 @@ Detalhes confirmados na Etapa 2:
 | `intraday_bars` | barras de 5 min do ativo-objeto por pregão (início, último preço, nº de negócios, quantidade), a partir dos negócios válidos pela R4, e a cobertura do pregão (% de barras com negócio, completo/incompleto) | RN-VOL-08 |
 | `intraday_sessions` | *(1.6)* resumo do pregão intradiário: grade (abertura, fim da sessão, tamanho da barra), barras totais e com negócio, cobertura, completo, Σ r² intradiário (sem a noite) | RN-VOL-08 |
 | `constant_maturity_vols` | *(1.6)* IV de prazo constante por ativo e pregão (sem remoção de eventos), vencimentos usados ou o vencimento de fallback com o prazo efetivo | RF-VOL-03, RN-VOL-05 |
+| `option_spread_estimates` | *(1.8)* spread estimado por ativo, pregão e faixa (`low`, `atm`, `high`, `underlying`): nº de séries e de negócios, mediana e p75 do spread relativo, mediana do spread de fechamento do COTAHIST, `config_version_id`; gravado no `vol_recompute` (§5.6.1) | RN-CST-03 |
 | `realized_vols` | RV por ativo, pregão de referência, **estimador** (`close_to_close`, `close_to_close_demeaned`, `parkinson`, `garman_klass`, `rogers_satchell`, `yang_zhang`, `intraday_5m`) e janela (`window_bd`): valor, nº de pregões usados, status (`ok` \| `insufficient_data`) e motivo | RF-VOL-01 |
 
 ### 6.3 Coleta
@@ -353,14 +403,14 @@ Base: `/api/engine` no navegador (via `rewrites`) e `http://127.0.0.1:8000` para
 | Volatilidade | `GET /underlyings/{t}/vol/realized` · `/vol/implied/smile?expiry=` · `/vol/term-structure` · `/vol/constant-maturity` | RF-VOL-01..05 |
 | Eventos | `GET/POST/PATCH/DELETE /events` · `GET /underlyings/{t}/event-jumps` | §7.3 |
 | Previsão | `GET /forecasts?underlying=&horizon_bd=&model=` · `GET /models/evaluation` · *(1.7)* `GET /models/evaluation/points?underlying=&model=&horizon_bd=` · `PUT /models/selection` (grava `forecast.selected_model` numa versão nova de configuração; a única escrita desta etapa) | §7.1 Previsão |
-| Ranking | `GET /ranking` | §7.4 |
+| Ranking | `GET /ranking` *(1.8: uma linha por ativo ativo, com estado, direção, IV, σ̂, *s*, prêmio, edge relativo e líquido com intervalos, custos discriminados, IV rank, skew, estrutura a termo, eventos, liquidez, `config_version_id` e modelo)* · `GET /underlyings/{t}/spreads` (estimativas por faixa e pregão) | §7.4, RN-CST-03 |
 | Simulação | `POST /simulations` (estrutura, séries, preços manuais opcionais) → payoff, Greeks, custos, distribuição de P&L, P&L esperado | §7.6 |
 | Dimensionamento | `POST /sizing` (simulação, capital, margem manual) → Kelly, teto, tamanho final e regra que prevaleceu | §7.7 |
 | Operações | `GET/POST /positions` · `POST /positions/{id}/entries` · `GET /positions/{id}` (marcações, atribuição) | §7.10 |
 | Carteira e risco | `GET /portfolio` (Greeks, exposição por vencimento) · `POST /portfolio/stress` · `GET /portfolio/limits` | §7.8 |
 | Alertas | `GET /alerts` · `PATCH /alerts/{id}` | §7.9 |
 | Performance | `GET /performance` (líquido de custos; líquido de IR separado) · `GET /performance/aggregate` | RF-DIA-05..07 |
-| Configuração | `GET /config` (vigente) · `POST /config` (cria versão) · `GET /config/versions` | §7.11 |
+| Configuração | `GET /config` (vigente, com os padrões preenchidos) · `POST /config` (cria versão; 422 com o campo inválido) · `GET /config/versions` (lista com nota e data) · *(1.8)* `GET /config/versions/{id}` | §7.11 |
 
 Regras do contrato:
 
@@ -383,7 +433,7 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | `/cadastro` | "Em breve" | Server | ADR-13 |
 | `/app` | Painel: pendências de coleta, alertas, resumo da carteira | Server (casca) + TanStack Query (pendências e alertas) | O estado muda após a coleta |
 | `/app/coleta` | Execução, progresso, relatório de lacunas | TanStack Query (polling do progresso) | Progresso ao vivo |
-| `/app/ranking` | Ranking com semáforo | TanStack Query | Invalida após coleta ou mudança de configuração |
+| `/app/ranking` | Ranking com semáforo | TanStack Query | Invalida após coleta ou mudança de configuração. *(1.8)* TanStack Table; estado e direção com cor **e** texto; intervalo do edge; rótulos "não calibrado" (*s*, limiar), "estimativa" (spread) e "aproximado" (fallback); linha expandida com os custos discriminados e o motivo de "indisponível"; link para o ativo |
 | `/app/ativos` | *(1.6)* Lista dos ativos cadastrados, com link para cada um | TanStack Query | Navegação até a tela do ativo antes do ranking (Etapa 5) |
 | `/app/ativos/[ticker]` | RV, IV, smile, estrutura a termo, eventos, salto | Server (casca) + Client para dados e gráficos | Leitura; Plotly só no cliente |
 | `/app/simulador` | Simulação, preços manuais, dimensionamento, registro da entrada | TanStack Query (mutations) + RHF/Zod | Recalcula com entradas |
@@ -393,7 +443,7 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | `/app/performance` | Previsto × realizado, análise agregada, IR | Server + Client para gráficos | Leitura |
 | `/app/modelos` | Erro de previsão por modelo × baselines | Server + Client para gráficos | Leitura; *(1.7)* seletor de ativo e horizonte, tabela com n, viés, MAE, RMSE e razão contra os baselines (com intervalos e "dados insuficientes"), previsão atual de cada modelo com intervalo, gráfico previsto × realizado por janela e escolha do modelo em uso (RF-PRV-04) |
 | `/app/eventos` | Calendário e cadastro manual | TanStack Query + RHF/Zod | CRUD |
-| `/app/configuracoes` | Parâmetros e histórico de versões | TanStack Query + RHF/Zod | CRUD versionado |
+| `/app/configuracoes` | Parâmetros e histórico de versões | TanStack Query + RHF/Zod | CRUD versionado. *(1.8)* Formulários de `costs` e `edge` (taxas da B3 marcadas "a conferir") e dos parâmetros principais de `vol` e `forecast`; demais blocos só leitura; histórico com nota, data e diferenças em relação à versão anterior |
 
 ### 8.2 Requisitos de interface
 
@@ -460,6 +510,8 @@ No lugar de uma meta de cobertura percentual, **a etapa não fecha sem estes tes
 | T-REF-07 | **Kelly e teto** em casos montados à mão (prevalece Kelly; prevalece teto; zero sem edge) | igualdade exata |
 | T-REF-08 | **Atribuição de P&L**: em série sintética gerada pelo próprio modelo, o resíduo tende a zero | resíduo < limite |
 | T-REF-09 | **Avaliação de modelos**: janelas não sobrepostas verificadas (nenhum dia compartilhado). *(1.7)* Também: espaçamento de *h* pregões e ancoragem no fim; nenhuma previsão usa dado posterior à origem (perturbar o futuro não muda a previsão); EWMA × laço ingênuo; previsão do GARCH × eq. 4.9 da referência e vol de longo prazo do caso MSFT (≈ 0,142); recuperação dos parâmetros do GARCH em série sintética; métricas × cálculo manual; cobertura do intervalo χ² em simulação | propriedade (hypothesis) e referência |
+
+*(1.8)* Testes da Etapa 5 (critério de saída do PLANO, complementam os T-REF): semáforo nos três estados, nas duas direções e **nos limites** (*p*_lo = N_v e *p*_hi = −N_c não dão edge líquido; indisponível sem cada insumo), com hypothesis para a monotonicidade (subir custos ou *L* nunca melhora o estado); `leland_vol` × caso da §7 da referência (σ = 10%, meio spread 0,5%, Δt = 1/365, vendido ≈ 0,159); estimador de spread × cálculo manual e piso de tick; *s* × mediana manual e o corte de 8 pares ("não calibrado"); custos em pontos × straddle montado à mão; unidades (nada em %). Web: rótulos "não calibrado", "estimativa" e "aproximado"; Playwright: ranking → ativo, e editar um custo cria versão e muda o ranking.
 
 ### 10.3 Fluxos ponta a ponta (Playwright)
 

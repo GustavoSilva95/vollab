@@ -63,6 +63,32 @@
         "title": "CollectionGapsResponse",
         "type": "object"
       },
+      "CollectionParams-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "liquidity": {
+            "$ref": "#/components/schemas/LiquidityFilter-Input"
+          },
+          "window": {
+            "$ref": "#/components/schemas/CollectionWindow"
+          }
+        },
+        "title": "CollectionParams",
+        "type": "object"
+      },
+      "CollectionParams-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "liquidity": {
+            "$ref": "#/components/schemas/LiquidityFilter-Output"
+          },
+          "window": {
+            "$ref": "#/components/schemas/CollectionWindow"
+          }
+        },
+        "title": "CollectionParams",
+        "type": "object"
+      },
       "CollectionPendingResponse": {
         "properties": {
           "active_run": {
@@ -219,6 +245,194 @@
         "title": "CollectionRunResponse",
         "type": "object"
       },
+      "CollectionWindow": {
+        "additionalProperties": false,
+        "description": "Janelas da carga (RF-DAD-05).",
+        "properties": {
+          "daily_bars_bd": {
+            "default": 252,
+            "description": "Pregões de OHLC oficial.",
+            "maximum": 1260.0,
+            "minimum": 21.0,
+            "title": "Daily Bars Bd",
+            "type": "integer"
+          },
+          "intraday_bd": {
+            "default": 63,
+            "description": "Pregões de negócios intradiários.",
+            "maximum": 504.0,
+            "minimum": 1.0,
+            "title": "Intraday Bd",
+            "type": "integer"
+          }
+        },
+        "title": "CollectionWindow",
+        "type": "object"
+      },
+      "ConfigCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version_id": {
+            "description": "Versão sobre a qual a edição foi feita; 409 se não for mais a vigente (evita desfazer em silêncio uma mudança feita em outra tela, como a troca do modelo do edge).",
+            "minimum": 1.0,
+            "title": "Base Version Id",
+            "type": "integer"
+          },
+          "note": {
+            "description": "O que mudou e por quê.",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Note",
+            "type": "string"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConfigParams-Input"
+          }
+        },
+        "required": [
+          "params",
+          "note",
+          "base_version_id"
+        ],
+        "title": "ConfigCreate",
+        "type": "object"
+      },
+      "ConfigCreateOut": {
+        "properties": {
+          "created": {
+            "description": "False: os parâmetros eram iguais aos vigentes; nada foi gravado.",
+            "title": "Created",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created"
+        ],
+        "title": "ConfigCreateOut",
+        "type": "object"
+      },
+      "ConfigParams-Input": {
+        "additionalProperties": false,
+        "description": "Todos os blocos de parâmetros, com os padrões preenchidos.",
+        "properties": {
+          "collection": {
+            "$ref": "#/components/schemas/CollectionParams-Input"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/CostParams"
+          },
+          "edge": {
+            "$ref": "#/components/schemas/EdgeParams"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/ForecastParams"
+          },
+          "vol": {
+            "$ref": "#/components/schemas/VolParams"
+          }
+        },
+        "title": "ConfigParams",
+        "type": "object"
+      },
+      "ConfigParams-Output": {
+        "additionalProperties": false,
+        "description": "Todos os blocos de parâmetros, com os padrões preenchidos.",
+        "properties": {
+          "collection": {
+            "$ref": "#/components/schemas/CollectionParams-Output"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/CostParams"
+          },
+          "edge": {
+            "$ref": "#/components/schemas/EdgeParams"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/ForecastParams"
+          },
+          "vol": {
+            "$ref": "#/components/schemas/VolParams"
+          }
+        },
+        "title": "ConfigParams",
+        "type": "object"
+      },
+      "ConfigVersionOut": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ConfigParams-Output"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "note",
+          "params"
+        ],
+        "title": "ConfigVersionOut",
+        "type": "object"
+      },
+      "ConfigVersionSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "note",
+          "current"
+        ],
+        "title": "ConfigVersionSummary",
+        "type": "object"
+      },
       "ConstantMaturityOut": {
         "properties": {
           "as_of": {
@@ -352,6 +566,318 @@
           "history"
         ],
         "title": "ConstantMaturityResponse",
+        "type": "object"
+      },
+      "CostBreakdown": {
+        "description": "Custos da estrutura de referência (straddle ATM teórico, ida e volta) e do hedge.",
+        "properties": {
+          "brokerage_brl": {
+            "title": "Brokerage Brl",
+            "type": "string"
+          },
+          "fees_brl": {
+            "title": "Fees Brl",
+            "type": "string"
+          },
+          "hedge_buy_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Comprado em vol; None: o hedge consome tudo.",
+            "title": "Hedge Buy Vol Pts"
+          },
+          "hedge_half_spread": {
+            "description": "λ de Leland: meio spread do ativo + taxa.",
+            "title": "Hedge Half Spread",
+            "type": "number"
+          },
+          "hedge_interval_bd": {
+            "title": "Hedge Interval Bd",
+            "type": "integer"
+          },
+          "hedge_sell_vol_pts": {
+            "description": "Custo do hedge vendido em vol (Leland).",
+            "title": "Hedge Sell Vol Pts",
+            "type": "number"
+          },
+          "option_spread_central": {
+            "description": "Spread relativo das opções ATM (mediana).",
+            "title": "Option Spread Central",
+            "type": "number"
+          },
+          "option_spread_conservative": {
+            "description": "Spread relativo usado no semáforo (RN-EDG-04).",
+            "title": "Option Spread Conservative",
+            "type": "number"
+          },
+          "option_spread_quoted": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Conferência: spread de fechamento do COTAHIST (fora do custo, PRD 1.8.1).",
+            "title": "Option Spread Quoted"
+          },
+          "options_vol_pts": {
+            "description": "Custo das opções em pontos de vol.",
+            "title": "Options Vol Pts",
+            "type": "number"
+          },
+          "reference_contracts": {
+            "title": "Reference Contracts",
+            "type": "integer"
+          },
+          "spread_brl": {
+            "title": "Spread Brl",
+            "type": "string"
+          },
+          "spread_days": {
+            "description": "Pregões com estimativa na janela.",
+            "title": "Spread Days",
+            "type": "integer"
+          },
+          "spread_series": {
+            "description": "Séries ATM somadas na janela.",
+            "title": "Spread Series",
+            "type": "integer"
+          },
+          "straddle_premium_brl": {
+            "description": "Prêmio de um straddle (call + put), por opção.",
+            "title": "Straddle Premium Brl",
+            "type": "string"
+          },
+          "straddle_vega_brl": {
+            "description": "Vega do straddle por 1 ponto de vol (0,01).",
+            "title": "Straddle Vega Brl",
+            "type": "string"
+          },
+          "total_buy_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Buy Vol Pts"
+          },
+          "total_sell_vol_pts": {
+            "title": "Total Sell Vol Pts",
+            "type": "number"
+          },
+          "underlying_spread": {
+            "description": "Spread relativo do ativo-objeto (conservador).",
+            "title": "Underlying Spread",
+            "type": "number"
+          },
+          "underlying_spread_estimated": {
+            "description": "False: piso do tick, sem negócios para medir.",
+            "title": "Underlying Spread Estimated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "option_spread_central",
+          "option_spread_conservative",
+          "option_spread_quoted",
+          "underlying_spread",
+          "underlying_spread_estimated",
+          "spread_days",
+          "spread_series",
+          "reference_contracts",
+          "straddle_premium_brl",
+          "straddle_vega_brl",
+          "spread_brl",
+          "fees_brl",
+          "brokerage_brl",
+          "options_vol_pts",
+          "hedge_sell_vol_pts",
+          "hedge_buy_vol_pts",
+          "hedge_half_spread",
+          "hedge_interval_bd",
+          "total_sell_vol_pts",
+          "total_buy_vol_pts"
+        ],
+        "title": "CostBreakdown",
+        "type": "object"
+      },
+      "CostParams": {
+        "additionalProperties": false,
+        "description": "Bloco `costs` de `config_versions.params` (PRD 1.8 §5.6.1; RN-CST-01..03, QA-11 parcial).\n\nTaxas da B3 em decimal sobre o volume financeiro; **a conferir na tabela vigente da B3** (a\nvigência da página consultada em 2026-11-23 não foi confirmada). Corretagem padrão R$ 0 por ordem\n(decisão do usuário). O IR fica fora do edge (RN-CST-04).",
+        "properties": {
+          "brokerage_per_order_brl": {
+            "default": 0.0,
+            "description": "Corretagem por ordem.",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Brokerage Per Order Brl",
+            "type": "number"
+          },
+          "brokerage_rate": {
+            "default": 0.0,
+            "description": "Corretagem sobre o volume.",
+            "maximum": 0.05,
+            "minimum": 0.0,
+            "title": "Brokerage Rate",
+            "type": "number"
+          },
+          "hedge_interval_bd": {
+            "default": 1,
+            "description": "Intervalo do hedge (Leland).",
+            "maximum": 21.0,
+            "minimum": 1.0,
+            "title": "Hedge Interval Bd",
+            "type": "integer"
+          },
+          "moneyness_bands": {
+            "default": [
+              0.95,
+              1.05
+            ],
+            "description": "Limites K/F das faixas low | atm | high.",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Moneyness Bands",
+            "type": "array"
+          },
+          "option_fee_rate": {
+            "default": 0.00134,
+            "description": "Taxas da B3 em opções de ações, pessoa física (0,0370% + 0,0275% + 0,0695%).",
+            "maximum": 0.01,
+            "minimum": 0.0,
+            "title": "Option Fee Rate",
+            "type": "number"
+          },
+          "reference_contracts": {
+            "default": 100,
+            "description": "Opções por perna na estrutura de referência.",
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Reference Contracts",
+            "type": "integer"
+          },
+          "spread_floors_brl": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            "description": "Piso por ativo e faixa ({'PETR4': {'atm': 0.02}}); vale o maior entre ele e o tick.",
+            "title": "Spread Floors Brl",
+            "type": "object"
+          },
+          "spread_lookback_bd": {
+            "default": 5,
+            "description": "Pregões da estimativa do edge.",
+            "maximum": 63.0,
+            "minimum": 1.0,
+            "title": "Spread Lookback Bd",
+            "type": "integer"
+          },
+          "spread_min_trades": {
+            "default": 20,
+            "description": "Negócios mínimos da série.",
+            "maximum": 10000.0,
+            "minimum": 2.0,
+            "title": "Spread Min Trades",
+            "type": "integer"
+          },
+          "tick_brl": {
+            "default": 0.01,
+            "description": "Piso do spread estimado (tick da B3).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Tick Brl",
+            "type": "number"
+          },
+          "underlying_fee_rate": {
+            "default": 0.0003,
+            "description": "Emolumentos e taxas da B3 em ações à vista (hedge).",
+            "maximum": 0.01,
+            "minimum": 0.0,
+            "title": "Underlying Fee Rate",
+            "type": "number"
+          }
+        },
+        "title": "CostParams",
+        "type": "object"
+      },
+      "EdgeParams": {
+        "additionalProperties": false,
+        "description": "Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.",
+        "properties": {
+          "iv_rank_min_days": {
+            "default": 60,
+            "description": "Pregões mínimos do IV rank.",
+            "maximum": 252.0,
+            "minimum": 20.0,
+            "title": "Iv Rank Min Days",
+            "type": "integer"
+          },
+          "normal_spread_default": {
+            "default": 0.15,
+            "description": "Spread normal não calibrado (relativo à RV prevista).",
+            "maximum": 2.0,
+            "minimum": -0.5,
+            "title": "Normal Spread Default",
+            "type": "number"
+          },
+          "normal_spread_lookback_bd": {
+            "default": 252,
+            "description": "Pregões das origens usadas na calibração do spread normal.",
+            "maximum": 1260.0,
+            "minimum": 63.0,
+            "title": "Normal Spread Lookback Bd",
+            "type": "integer"
+          },
+          "skew_moneyness": {
+            "default": [
+              0.95,
+              1.05
+            ],
+            "description": "K/F do skew (put − call).",
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Skew Moneyness",
+            "type": "array"
+          },
+          "threshold_vol_pts": {
+            "default": 0.01,
+            "description": "Limiar somado aos custos no semáforo (0,01 = 1 ponto).",
+            "maximum": 0.2,
+            "minimum": 0.0,
+            "title": "Threshold Vol Pts",
+            "type": "number"
+          }
+        },
+        "title": "EdgeParams",
         "type": "object"
       },
       "EstimatedValue": {
@@ -1316,6 +1842,92 @@
         "title": "ForecastOut",
         "type": "object"
       },
+      "ForecastParams": {
+        "additionalProperties": false,
+        "description": "Bloco `forecast` de `config_versions.params` (PRD 1.7 §5.7; QA-07 e QA-08 resolvidas).",
+        "properties": {
+          "bootstrap_reps": {
+            "default": 2000,
+            "maximum": 20000.0,
+            "minimum": 200.0,
+            "title": "Bootstrap Reps",
+            "type": "integer"
+          },
+          "combination_window_bd": {
+            "default": 20,
+            "description": "Janela dos estimadores combinados (PRD §5.7).",
+            "maximum": 252.0,
+            "minimum": 5.0,
+            "title": "Combination Window Bd",
+            "type": "integer"
+          },
+          "evaluation_horizons_bd": {
+            "default": [
+              21
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Evaluation Horizons Bd",
+            "type": "array"
+          },
+          "ewma_lambda": {
+            "default": 0.94,
+            "description": "λ da EWMA (eq. 4.1).",
+            "maximum": 0.99,
+            "minimum": 0.9,
+            "title": "Ewma Lambda",
+            "type": "number"
+          },
+          "ewma_min_returns": {
+            "default": 60,
+            "description": "Amostra mínima da EWMA (QA-08).",
+            "maximum": 1260.0,
+            "minimum": 20.0,
+            "title": "Ewma Min Returns",
+            "type": "integer"
+          },
+          "garch_max_returns": {
+            "default": 1260,
+            "description": "Retornos usados no ajuste.",
+            "maximum": 5040.0,
+            "minimum": 240.0,
+            "title": "Garch Max Returns",
+            "type": "integer"
+          },
+          "garch_min_returns": {
+            "default": 240,
+            "description": "Amostra mínima do GARCH.",
+            "maximum": 1260.0,
+            "minimum": 100.0,
+            "title": "Garch Min Returns",
+            "type": "integer"
+          },
+          "min_evaluation_windows": {
+            "default": 8,
+            "description": "Janelas não sobrepostas mínimas (QA-08, RN-PRV-02).",
+            "maximum": 100.0,
+            "minimum": 3.0,
+            "title": "Min Evaluation Windows",
+            "type": "integer"
+          },
+          "selected_model": {
+            "default": "ewma",
+            "description": "Modelo que alimenta o edge (RF-PRV-04), escolhido pelo usuário.",
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Selected Model",
+            "type": "string"
+          }
+        },
+        "title": "ForecastParams",
+        "type": "object"
+      },
       "ForecastsResponse": {
         "properties": {
           "as_of": {
@@ -1582,6 +2194,73 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "ImpliedParams": {
+        "additionalProperties": false,
+        "properties": {
+          "dividend_protected_strikes": {
+            "default": true,
+            "description": "A B3 reduz o strike pelo provento na data ex (RN-DAD-03): na precificação, o strike efetivo no vencimento é K − proventos com data ex até o vencimento.",
+            "title": "Dividend Protected Strikes",
+            "type": "boolean"
+          },
+          "reference_min_trades": {
+            "default": 3,
+            "description": "Mínimo para usar a mediana.",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Reference Min Trades",
+            "type": "integer"
+          },
+          "reference_window_min": {
+            "default": 60,
+            "description": "Janela final da sessão para a IV de referência (RN-VOL-06).",
+            "maximum": 480.0,
+            "minimum": 5.0,
+            "title": "Reference Window Min",
+            "type": "integer"
+          },
+          "sync_window_s": {
+            "default": 10.0,
+            "description": "Defasagem máxima (RN-VOL-03).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 600.0,
+            "title": "Sync Window S",
+            "type": "number"
+          }
+        },
+        "title": "ImpliedParams",
+        "type": "object"
+      },
+      "IntradayParams": {
+        "additionalProperties": false,
+        "properties": {
+          "bar_minutes": {
+            "default": 5,
+            "description": "Tamanho da barra (RN-VOL-08).",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Bar Minutes",
+            "type": "integer"
+          },
+          "min_coverage": {
+            "default": 0.8,
+            "description": "Fração mínima de barras com negócio para o pregão contar.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Min Coverage",
+            "type": "number"
+          },
+          "session_open": {
+            "default": "10:00:00",
+            "description": "Início da grade (relógio de Brasília).",
+            "format": "time",
+            "title": "Session Open",
+            "type": "string"
+          }
+        },
+        "title": "IntradayParams",
+        "type": "object"
+      },
       "IntradayQuality": {
         "properties": {
           "bars_total": {
@@ -1737,6 +2416,128 @@
           "sync_window_s"
         ],
         "title": "IvQuality",
+        "type": "object"
+      },
+      "LiquidityFilter-Input": {
+        "additionalProperties": false,
+        "description": "Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).",
+        "properties": {
+          "include_weeklies": {
+            "default": false,
+            "description": "Incluir séries semanais (W1..W5).",
+            "title": "Include Weeklies",
+            "type": "boolean"
+          },
+          "min_trades": {
+            "default": 20,
+            "description": "Mínimo de negócios no dia (COTAHIST).",
+            "minimum": 1.0,
+            "title": "Min Trades",
+            "type": "integer"
+          },
+          "moneyness_max": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "1.1",
+            "description": "K/S máximo.",
+            "title": "Moneyness Max"
+          },
+          "moneyness_min": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0.9",
+            "description": "K/S mínimo.",
+            "title": "Moneyness Min"
+          },
+          "monthly_expiries": {
+            "default": 2,
+            "description": "Próximos vencimentos mensais.",
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Monthly Expiries",
+            "type": "integer"
+          }
+        },
+        "title": "LiquidityFilter",
+        "type": "object"
+      },
+      "LiquidityFilter-Output": {
+        "additionalProperties": false,
+        "description": "Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).",
+        "properties": {
+          "include_weeklies": {
+            "default": false,
+            "description": "Incluir séries semanais (W1..W5).",
+            "title": "Include Weeklies",
+            "type": "boolean"
+          },
+          "min_trades": {
+            "default": 20,
+            "description": "Mínimo de negócios no dia (COTAHIST).",
+            "minimum": 1.0,
+            "title": "Min Trades",
+            "type": "integer"
+          },
+          "moneyness_max": {
+            "default": "1.1",
+            "description": "K/S máximo.",
+            "title": "Moneyness Max",
+            "type": "string"
+          },
+          "moneyness_min": {
+            "default": "0.9",
+            "description": "K/S mínimo.",
+            "title": "Moneyness Min",
+            "type": "string"
+          },
+          "monthly_expiries": {
+            "default": 2,
+            "description": "Próximos vencimentos mensais.",
+            "maximum": 6.0,
+            "minimum": 1.0,
+            "title": "Monthly Expiries",
+            "type": "integer"
+          }
+        },
+        "title": "LiquidityFilter",
+        "type": "object"
+      },
+      "LiquidityOut": {
+        "properties": {
+          "liquid_series": {
+            "description": "Séries que passam o filtro de liquidez (QA-06) no pregão.",
+            "title": "Liquid Series",
+            "type": "integer"
+          },
+          "option_trades": {
+            "title": "Option Trades",
+            "type": "integer"
+          },
+          "option_volume_brl": {
+            "title": "Option Volume Brl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "liquid_series",
+          "option_trades",
+          "option_volume_brl"
+        ],
+        "title": "LiquidityOut",
         "type": "object"
       },
       "ModelSelectionIn": {
@@ -2080,6 +2881,374 @@
           "failed"
         ],
         "title": "ProgressCounts",
+        "type": "object"
+      },
+      "RankingEvent": {
+        "properties": {
+          "event_date": {
+            "format": "date",
+            "title": "Event Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "event_date",
+          "status",
+          "ticker"
+        ],
+        "title": "RankingEvent",
+        "type": "object"
+      },
+      "RankingResponse": {
+        "properties": {
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "expected_as_of": {
+            "description": "Último pregão esperado (para marcar dados antigos).",
+            "format": "date",
+            "title": "Expected As Of",
+            "type": "string"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RankingRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "selected_model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Selected Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_as_of",
+          "horizon_bd",
+          "selected_model",
+          "ci_level",
+          "config_version_id",
+          "engine_version",
+          "rows"
+        ],
+        "title": "RankingResponse",
+        "type": "object"
+      },
+      "RankingRow": {
+        "properties": {
+          "approximate": {
+            "description": "Fallback de IV (ATM do vencimento disponível), RN-VOL-05.",
+            "title": "Approximate",
+            "type": "boolean"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pregão da IV usada.",
+            "title": "As Of"
+          },
+          "costs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CostBreakdown"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sell",
+                  "buy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Venda ou compra de vol (sinal do prêmio).",
+            "title": "Direction"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RankingEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "events_removed": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Events Removed",
+            "type": "array"
+          },
+          "expected_pnl_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "≈ vega × pontos líquidos, por straddle de referência.",
+            "title": "Expected Pnl Brl"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "RV prevista pelo modelo escolhido, com intervalo."
+          },
+          "horizon_bd": {
+            "description": "Prazo efetivo usado (= prazo constante sem fallback).",
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "iv": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "IV ex-evento (RN-EVT-03)."
+          },
+          "iv_percentile": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "iv_rank": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "(IV − mín)/(máx − mín) no último ano."
+          },
+          "iv_rank_days": {
+            "title": "Iv Rank Days",
+            "type": "integer"
+          },
+          "iv_with_events": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "liquidity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LiquidityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "net_premium": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "|prêmio| − custos na direção, pontos de vol.",
+            "title": "Net Premium"
+          },
+          "net_relative_edge": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "(|prêmio| − custos) ÷ σ̂ na direção.",
+            "title": "Net Relative Edge"
+          },
+          "normal_spread": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "Spread normal s (calibrated = false → não calibrado)."
+          },
+          "normal_spread_pairs": {
+            "title": "Normal Spread Pairs",
+            "type": "integer"
+          },
+          "position": {
+            "description": "Posição no ranking (1 = melhor).",
+            "title": "Position",
+            "type": "integer"
+          },
+          "premium": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "IV − σ̂(1 + s), pontos de vol (RN-EDG-01)."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Motivo de 'indisponível' ou da aproximação.",
+            "title": "Reason"
+          },
+          "relative_edge": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "Prêmio ÷ σ̂ (RN-EDG-02)."
+          },
+          "required_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custos de compra + L (None: compra inviável).",
+            "title": "Required Buy"
+          },
+          "required_sell": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custos de venda + L.",
+            "title": "Required Sell"
+          },
+          "skew": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "IV(K/F baixo) − IV(K/F alto), pontos de vol."
+          },
+          "skew_expiry": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skew Expiry"
+          },
+          "state": {
+            "enum": [
+              "edge",
+              "inconclusive",
+              "no_edge",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "term_slope": {
+            "$ref": "#/components/schemas/TermSlope"
+          },
+          "threshold": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "Limiar L (RN-EDG-05), pontos de vol."
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "ticker",
+          "as_of",
+          "state",
+          "direction",
+          "reason",
+          "approximate",
+          "horizon_bd",
+          "model",
+          "iv",
+          "iv_with_events",
+          "events_removed",
+          "forecast",
+          "normal_spread",
+          "normal_spread_pairs",
+          "premium",
+          "relative_edge",
+          "net_relative_edge",
+          "net_premium",
+          "expected_pnl_brl",
+          "threshold",
+          "required_sell",
+          "required_buy",
+          "costs",
+          "iv_rank",
+          "iv_percentile",
+          "iv_rank_days",
+          "skew",
+          "skew_expiry",
+          "term_slope",
+          "events",
+          "liquidity"
+        ],
+        "title": "RankingRow",
         "type": "object"
       },
       "RatioOut": {
@@ -2615,6 +3784,118 @@
         "title": "SmileResponse",
         "type": "object"
       },
+      "SpreadDayOut": {
+        "properties": {
+          "band": {
+            "enum": [
+              "low",
+              "atm",
+              "high",
+              "underlying"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "n_series": {
+            "title": "N Series",
+            "type": "integer"
+          },
+          "n_trades": {
+            "title": "N Trades",
+            "type": "integer"
+          },
+          "quoted_rel_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quoted Rel Median"
+          },
+          "rel_median": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel Median"
+          },
+          "rel_p75": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel P75"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "band",
+          "n_series",
+          "n_trades",
+          "rel_median",
+          "rel_p75",
+          "quoted_rel_median"
+        ],
+        "title": "SpreadDayOut",
+        "type": "object"
+      },
+      "SpreadsResponse": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/SpreadDayOut"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "lookback_bd": {
+            "title": "Lookback Bd",
+            "type": "integer"
+          },
+          "moneyness_bands": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Moneyness Bands",
+            "type": "array"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "moneyness_bands",
+          "lookback_bd",
+          "days"
+        ],
+        "title": "SpreadsResponse",
+        "type": "object"
+      },
       "TermPointOut": {
         "properties": {
           "atm_iv": {
@@ -2641,6 +3922,65 @@
           "atm_iv"
         ],
         "title": "TermPointOut",
+        "type": "object"
+      },
+      "TermSlope": {
+        "properties": {
+          "days1_bd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days1 Bd"
+          },
+          "days2_bd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days2 Bd"
+          },
+          "expiry1": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry1"
+          },
+          "expiry2": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry2"
+          },
+          "value": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "ATM do 2º vencimento − ATM do 1º, pontos de vol."
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "TermSlope",
         "type": "object"
       },
       "TermStructureResponse": {
@@ -2829,13 +4169,65 @@
         ],
         "title": "UnderlyingUpdate",
         "type": "object"
+      },
+      "VolParams": {
+        "additionalProperties": false,
+        "properties": {
+          "ci_level": {
+            "default": 0.9,
+            "description": "Nível dos intervalos (QA-07).",
+            "exclusiveMaximum": 1.0,
+            "exclusiveMinimum": 0.5,
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "close_to_close_mode": {
+            "default": "zero_mean",
+            "description": "Close-to-close oficial (PRD §5.5): média zero ou subtraída.",
+            "enum": [
+              "zero_mean",
+              "demeaned"
+            ],
+            "title": "Close To Close Mode",
+            "type": "string"
+          },
+          "constant_maturity_bd": {
+            "default": 21,
+            "description": "Prazo da IV constante (QA-03).",
+            "maximum": 252.0,
+            "minimum": 5.0,
+            "title": "Constant Maturity Bd",
+            "type": "integer"
+          },
+          "implied": {
+            "$ref": "#/components/schemas/ImpliedParams"
+          },
+          "intraday": {
+            "$ref": "#/components/schemas/IntradayParams"
+          },
+          "windows_bd": {
+            "default": [
+              20,
+              60
+            ],
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Windows Bd",
+            "type": "array"
+          }
+        },
+        "title": "VolParams",
+        "type": "object"
       }
     }
   },
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -3005,6 +4397,174 @@
         "summary": "Progresso de uma coleta",
         "tags": [
           "coleta"
+        ]
+      }
+    },
+    "/config": {
+      "get": {
+        "operationId": "get_config",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Configuração vigente",
+        "tags": [
+          "configuração"
+        ]
+      },
+      "post": {
+        "operationId": "post_config",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigCreateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "A versão-base não é mais a vigente."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Criar uma versão nova da configuração",
+        "tags": [
+          "configuração"
+        ]
+      }
+    },
+    "/config/versions": {
+      "get": {
+        "operationId": "list_config_versions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConfigVersionSummary"
+                  },
+                  "title": "Response List Config Versions",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Histórico de versões",
+        "tags": [
+          "configuração"
+        ]
+      }
+    },
+    "/config/versions/{version_id}": {
+      "get": {
+        "operationId": "get_config_version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Version Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigVersionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Versão inexistente."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Uma versão da configuração",
+        "tags": [
+          "configuração"
         ]
       }
     },
@@ -3622,6 +5182,59 @@
         ]
       }
     },
+    "/ranking": {
+      "get": {
+        "operationId": "get_ranking",
+        "parameters": [
+          {
+            "description": "Só um ativo (detalhe).",
+            "in": "query",
+            "name": "underlying",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 12,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Só um ativo (detalhe).",
+              "title": "Underlying"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Ranking dos ativos com semáforo de edge",
+        "tags": [
+          "ranking"
+        ]
+      }
+    },
     "/underlyings": {
       "get": {
         "operationId": "list_underlyings",
@@ -3964,6 +5577,72 @@
         "summary": "Séries de opção do pregão",
         "tags": [
           "volatilidade"
+        ]
+      }
+    },
+    "/underlyings/{ticker}/spreads": {
+      "get": {
+        "operationId": "get_spreads",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "title": "Ticker",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Pregões mais recentes.",
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 21,
+              "description": "Pregões mais recentes.",
+              "maximum": 252,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpreadsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Spread estimado por faixa de moneyness",
+        "tags": [
+          "ranking"
         ]
       }
     },

@@ -1,0 +1,80 @@
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* A cor reforça o texto; nunca é a única pista. */
+.badge[data-state='edge'] {
+  border-color: var(--status-ok);
+  color: var(--status-ok);
+}
+
+.badge[data-state='inconclusive'] {
+  border-color: var(--status-warn);
+  color: var(--status-warn);
+}
+
+.badge[data-state='no_edge'] {
+  color: var(--fg-muted);
+}
+
+.badge[data-state='unavailable'] {
+  border-style: dashed;
+  color: var(--fg-muted);
+}
+
+.sort {
+  all: unset;
+  cursor: pointer;
+}
+
+.sort:focus-visible,
+.expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.expand {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.details {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+
+.panel {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* Pares rótulo | valor em grade de duas colunas (a grade de fatos da tela do ativo tem seis e separa
+   rótulo e valor quando o texto é longo). */
+.facts {
+  display: grid;
+  grid-template-columns: minmax(160px, max-content) 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+}
+
+.facts dd {
+  margin: 0;
+}

@@ -14,14 +14,14 @@ export const COCKPIT_ROUTES: readonly CockpitRoute[] = [
   { href: '/app', label: 'Painel', stage: 1, available: true },
   { href: '/app/coleta', label: 'Coleta', stage: 2, available: true },
   { href: '/app/ativos', label: 'Ativos', stage: 3, available: true },
-  { href: '/app/ranking', label: 'Ranking', stage: 5, available: false },
+  { href: '/app/ranking', label: 'Ranking', stage: 5, available: true },
   { href: '/app/simulador', label: 'Simulador', stage: 6, available: false },
   { href: '/app/carteira', label: 'Carteira', stage: 7, available: false },
   { href: '/app/diario', label: 'Diário', stage: 7, available: false },
   { href: '/app/performance', label: 'Performance', stage: 9, available: false },
   { href: '/app/modelos', label: 'Modelos', stage: 4, available: true },
   { href: '/app/eventos', label: 'Eventos', stage: 3, available: true },
-  { href: '/app/configuracoes', label: 'Configurações', stage: 5, available: false },
+  { href: '/app/configuracoes', label: 'Configurações', stage: 5, available: true },
 ];
 
 /** Rota ativa: correspondência exata para o painel, por prefixo para as demais. */

@@ -146,7 +146,11 @@ function ForecastCard({ ticker, horizon }: { ticker: string; horizon: number | n
 
 function isForecastQuery(key: readonly unknown[]): boolean {
   const first = key[0] as { _id?: string } | undefined;
-  return first?._id === 'getForecasts' || first?._id === 'getModelsEvaluation';
+  // A escolha cria uma versão nova de configuração (RF-PRV-04): ranking, configuração vigente e histórico
+  // também são invalidados, senão a tela de configurações salvaria sobre a versão antiga.
+  return ['getForecasts', 'getModelsEvaluation', 'getRanking', 'getConfig', 'listConfigVersions'].includes(
+    first?._id ?? '',
+  );
 }
 
 function problemDetail(error: unknown): string {

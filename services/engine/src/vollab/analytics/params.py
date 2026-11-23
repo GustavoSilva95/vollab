@@ -105,3 +105,98 @@ class ForecastParams(BaseModel):
 def forecast_params_from_config(version: ConfigVersion) -> ForecastParams:
     raw: dict[str, Any] = dict(version.params.get("forecast", {}))
     return ForecastParams.model_validate(raw)
+
+
+class CostParams(BaseModel):
+    """Bloco `costs` de `config_versions.params` (PRD 1.8 §5.6.1; RN-CST-01..03, QA-11 parcial).
+
+    Taxas da B3 em decimal sobre o volume financeiro; **a conferir na tabela vigente da B3** (a
+    vigência da página consultada em 2026-11-23 não foi confirmada). Corretagem padrão R$ 0 por ordem
+    (decisão do usuário). O IR fica fora do edge (RN-CST-04).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    option_fee_rate: float = Field(
+        default=0.00134,
+        ge=0,
+        le=0.01,
+        description="Taxas da B3 em opções de ações, pessoa física (0,0370% + 0,0275% + 0,0695%).",
+    )
+    underlying_fee_rate: float = Field(
+        default=0.0003, ge=0, le=0.01, description="Emolumentos e taxas da B3 em ações à vista (hedge)."
+    )
+    brokerage_per_order_brl: float = Field(default=0.0, ge=0, le=1000, description="Corretagem por ordem.")
+    brokerage_rate: float = Field(default=0.0, ge=0, le=0.05, description="Corretagem sobre o volume.")
+    reference_contracts: int = Field(
+        default=100, ge=1, le=1_000_000, description="Opções por perna na estrutura de referência."
+    )
+    tick_brl: float = Field(default=0.01, gt=0, le=1, description="Piso do spread estimado (tick da B3).")
+    spread_floors_brl: dict[str, dict[str, float]] = Field(
+        default_factory=dict,
+        description="Piso por ativo e faixa ({'PETR4': {'atm': 0.02}}); vale o maior entre ele e o tick.",
+    )
+    spread_min_trades: int = Field(default=20, ge=2, le=10_000, description="Negócios mínimos da série.")
+    spread_lookback_bd: int = Field(default=5, ge=1, le=63, description="Pregões da estimativa do edge.")
+    moneyness_bands: tuple[float, float] = Field(
+        default=(0.95, 1.05), description="Limites K/F das faixas low | atm | high."
+    )
+    hedge_interval_bd: int = Field(default=1, ge=1, le=21, description="Intervalo do hedge (Leland).")
+
+    @field_validator("moneyness_bands")
+    @classmethod
+    def _bands(cls, v: tuple[float, float]) -> tuple[float, float]:
+        lo, hi = v
+        if not 0.5 <= lo < 1.0 < hi <= 1.5:
+            raise ValueError("Faixas de moneyness: 0,5 ≤ inferior < 1 < superior ≤ 1,5.")
+        return v
+
+    @field_validator("spread_floors_brl")
+    @classmethod
+    def _floors(cls, v: dict[str, dict[str, float]]) -> dict[str, dict[str, float]]:
+        bands = {"low", "atm", "high", "underlying"}
+        out: dict[str, dict[str, float]] = {}
+        for ticker, by_band in v.items():
+            if not ticker.isalnum() or len(ticker) > 12:
+                raise ValueError(f"Ticker inválido no piso de spread: {ticker!r}.")
+            for band, floor in by_band.items():
+                if band not in bands:
+                    raise ValueError(f"Faixa inválida no piso de spread: {band!r}.")
+                if not 0 < floor <= 100:
+                    raise ValueError("Piso de spread entre R$ 0 e R$ 100.")
+            out[ticker.upper()] = dict(by_band)
+        return out
+
+
+class EdgeParams(BaseModel):
+    """Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    normal_spread_default: float = Field(
+        default=0.15, ge=-0.5, le=2.0, description="Spread normal não calibrado (relativo à RV prevista)."
+    )
+    normal_spread_lookback_bd: int = Field(
+        default=252, ge=63, le=1260, description="Pregões das origens usadas na calibração do spread normal."
+    )
+    threshold_vol_pts: float = Field(
+        default=0.01, ge=0, le=0.2, description="Limiar somado aos custos no semáforo (0,01 = 1 ponto)."
+    )
+    iv_rank_min_days: int = Field(default=60, ge=20, le=252, description="Pregões mínimos do IV rank.")
+    skew_moneyness: tuple[float, float] = Field(default=(0.95, 1.05), description="K/F do skew (put − call).")
+
+    @field_validator("skew_moneyness")
+    @classmethod
+    def _skew(cls, v: tuple[float, float]) -> tuple[float, float]:
+        lo, hi = v
+        if not 0.8 <= lo < 1.0 < hi <= 1.2:
+            raise ValueError("Skew: 0,8 ≤ K/F inferior < 1 < K/F superior ≤ 1,2.")
+        return v
+
+
+def cost_params_from_config(version: ConfigVersion) -> CostParams:
+    return CostParams.model_validate(dict(version.params.get("costs", {})))
+
+
+def edge_params_from_config(version: ConfigVersion) -> EdgeParams:
+    return EdgeParams.model_validate(dict(version.params.get("edge", {})))

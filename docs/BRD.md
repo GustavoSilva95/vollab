@@ -2,11 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
-**Versão:** 1.4 — Fase 1
-**Data:** 2026-11-22
-**Status:** Aprovado (1.4, 2026-11-22)
+**Versão:** 1.5 — Fase 1
+**Data:** 2026-11-23
+**Status:** Aprovado (1.5, 2026-11-23)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário. 1.4 (2026-11-22, decisão do usuário): referência técnica de fórmulas adotada (`docs/referencia/volatility-trading.md`, com Errata); prêmio de vol absoluto em pontos (RN-EDG-01) e **edge relativo** como métrica principal de ranking e alertas (novo RN-EDG-02), ambos descontando o **spread normal** do produto (RN-EDG-07, QA-14); regras seguintes do semáforo renumeradas (RN-EDG-02..05 → RN-EDG-03..06).
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário. 1.4 (2026-11-22, decisão do usuário): referência técnica de fórmulas adotada (`docs/referencia/volatility-trading.md`, com Errata); prêmio de vol absoluto em pontos (RN-EDG-01) e **edge relativo** como métrica principal de ranking e alertas (novo RN-EDG-02), ambos descontando o **spread normal** do produto (RN-EDG-07, QA-14); regras seguintes do semáforo renumeradas (RN-EDG-02..05 → RN-EDG-03..06). 1.5 (2026-11-23, Etapa 5, decisões do usuário): semáforo nas **duas direções** (venda e compra de vol, RN-EDG-03) e ranking pelo edge relativo líquido na direção do sinal (RF-RNK-01); **QA-14 resolvida** (spread normal pela mediana de (IV − RV realizada)/RV realizada em janelas não sobrepostas, padrão não calibrado de **15%**); QA-11 parcial: limiar de edge padrão de **1 ponto de vol**, corretagem padrão de **R$ 0 por ordem** e hedge diário como premissa do custo de hedge.
 
 ---
 
@@ -189,14 +189,15 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 
 | ID | Requisito |
 |----|-----------|
-| RF-RNK-01 | Ranking **apenas entre os ativos cadastrados** pelo usuário, ordenado pelo estado do semáforo e pelo **edge relativo líquido** (RN-EDG-02). |
+| RF-RNK-01 | Ranking **apenas entre os ativos cadastrados** pelo usuário, ordenado pelo estado do semáforo e pelo **edge relativo líquido** (RN-EDG-02) **na direção do sinal** (venda ou compra de vol). |
 | RF-RNK-02 | Para cada ativo, exibir: IV de prazo constante (ex-evento), RV prevista, **edge relativo e prêmio de vol, com intervalo de confiança, descontados do spread normal e líquidos de custos**, o spread normal usado, IV rank (relativo ao último ano), skew, estrutura a termo, eventos próximos e indicadores de liquidez. |
 | RN-EDG-01 | **Prêmio de vol (absoluto, em pontos de vol)** = IV − RV prevista, no mesmo horizonte, **descontado do spread normal** do produto (RN-EDG-07). É a medida usada no **P&L esperado ≈ vega × pontos** e no semáforo. |
 | RN-EDG-02 | **Edge relativo** = (IV − RV prevista) / RV prevista, no mesmo horizonte, **descontado do spread normal** do produto (RN-EDG-07). É a **métrica principal do ranking e dos alertas** (regra S1 da referência técnica). |
-| RN-EDG-03 | Semáforo de três estados (sobre o prêmio de vol descontado do spread normal, RN-EDG-01): |
-| | • **Sem edge:** o limite superior do intervalo não supera os custos. |
-| | • **Inconclusivo:** o intervalo contém o nível de custos. |
-| | • **Edge líquido:** o **limite inferior do intervalo supera os custos**. |
+| RN-EDG-03 | Semáforo de três estados (sobre o prêmio de vol descontado do spread normal, RN-EDG-01), **nas duas direções** (*1.5*): o nível exigido em cada direção é custos + limiar (RN-EDG-05). |
+| | • **Edge líquido (venda de vol):** o **limite inferior do intervalo supera o nível exigido**. **Edge líquido (compra de vol):** o **limite superior do intervalo fica abaixo do nível exigido com sinal negativo**. |
+| | • **Sem edge:** o intervalo inteiro fica entre os dois níveis (nenhuma direção paga os custos). |
+| | • **Inconclusivo:** o intervalo contém o nível exigido de alguma das direções. |
+| | Sem IV, previsão avaliada ou custos, o ativo fica **indisponível**, com o motivo; nunca "edge líquido". |
 | RN-EDG-04 | O estado "edge líquido" usa sempre a **versão mais conservadora** dos custos estimados, incluindo o spread. |
 | RN-EDG-05 | O limiar de edge é **configurável** e deve ser **calibrado por dados** quando houver amostra suficiente. Até lá, vale o valor configurado, rotulado como "não calibrado". |
 | RN-EDG-06 | **100% das entradas** registradas no diário passam pelo semáforo; o estado no momento da entrada é gravado com a operação. |
@@ -372,10 +373,10 @@ Os critérios medem **processo, não lucro**.
 | QA-08 | Quais as **amostras mínimas** para sair de "dados insuficientes" em cada métrica? | Definir por métrica. |
 | QA-09 | Como definir a **"perda máxima por trade"** em estruturas de perda ilimitada (straddle/strangle vendido) para aplicar o teto de 7%? | Usar a pior perda entre os cenários de stress configurados ou um percentil extremo (ex.: 99%) da distribuição simulada. |
 | QA-10 | Qual método gera a **distribuição simulada de P&L** (bootstrap de retornos históricos, simulação paramétrica etc.)? | Bootstrap de retornos históricos, considerando a regra de hedge. |
-| QA-11 | Quais **valores padrão** para banda de delta, intervalo de hedge, meta de lucro, stop e dias até o vencimento? | Definir com o usuário antes do uso. |
+| QA-11 | Quais **valores padrão** para banda de delta, intervalo de hedge, meta de lucro, stop e dias até o vencimento? | Definir com o usuário antes do uso. **Parcial (Etapa 5, 2026-11-23):** limiar de edge 1 ponto de vol; corretagem R$ 0 por ordem; hedge diário (1 du) como premissa do custo de hedge no edge. O resto nas Etapas 6 e 8. |
 | QA-12 | Quais **choques exatos** do cenário de crise histórica (episódios e magnitudes)? | Medir nos episódios de mai/2017 e mar/2020 para cada ativo. |
 | QA-13 | Como tratar os **cancelamentos** (`AcaoAtualizacao`) e os **tipos de sessão** (`TipoSessaoPregao`, ex.: leilão, after-market) na construção do OHLC e da IV? | **Resolvida (2026-11-22):** regra R4 (RN-DAD-01). |
-| QA-14 | Como medir o **spread normal** do produto (RN-EDG-07) e qual o valor padrão enquanto não houver histórico? | Mediana, no último ano, de (IV de prazo constante − RV realizada depois, no mesmo prazo) / RV realizada, por ativo; abaixo da amostra mínima (QA-08), valor configurado rotulado "não calibrado". Definir na Etapa 5. |
+| QA-14 | Como medir o **spread normal** do produto (RN-EDG-07) e qual o valor padrão enquanto não houver histórico? | **Resolvida (Etapa 5, 2026-11-23):** mediana, no último ano, de (IV de prazo constante − RV realizada depois, no mesmo prazo) / RV realizada, por ativo, nas janelas não sobrepostas da avaliação; abaixo de 8 janelas (QA-08), **15%** configurado, rotulado "não calibrado" (PRD 1.8 §5.6.1). |
 
 ## 16. Glossário
 

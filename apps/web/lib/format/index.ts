@@ -209,6 +209,79 @@ export function formatRatio(value: Maybe<number>, decimals = 2): string {
   return numberFormat(fixed(decimals)).format(value);
 }
 
+/** Teto de sanidade para razões relativas (edge relativo, spread normal): 20 = 2.000%. */
+export const MAX_DECIMAL_RELATIVE = 20;
+
+/**
+ * Edge relativo e spread normal (razão sobre a RV prevista, PRD §5.1) → `25,0%` ou `-47,5%`.
+ * Diferente de `formatFraction`, aceita valores fora de 0..1 e negativos.
+ */
+export function formatRelative(value: Maybe<number>, decimals = 1): string {
+  if (value == null) return EMPTY;
+  assertDecimalScale(value, MAX_DECIMAL_RELATIVE, 'formatRelative');
+  return numberFormat({ style: 'percent', ...fixed(decimals) }).format(value);
+}
+
+/** Taxa ou custo proporcional pequeno (decimal) → `0,134%` (até 4 casas, sem zeros à direita). */
+export function formatSmallRate(value: Maybe<number>, maxDecimals = 4): string {
+  if (value == null) return EMPTY;
+  assertDecimalScale(value, 1, 'formatSmallRate');
+  return numberFormat({ style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: maxDecimals }).format(
+    value,
+  );
+}
+
+/*
+ * Entradas de formulário (PRD-UI-03): o usuário digita em % ou em pontos de vol, como lê na tela;
+ * a conversão para decimal acontece só aqui. Aceitam vírgula ou ponto; inválido → null.
+ */
+
+const INPUT_NUMBER = /^-?\d+([.,]\d+)?$/;
+
+function parseInputNumber(raw: string): number | null {
+  const text = raw.trim();
+  if (!INPUT_NUMBER.test(text)) return null;
+  const value = Number(text.replace(',', '.'));
+  return Number.isFinite(value) ? value : null;
+}
+
+function roundDecimal(value: number): number {
+  return Number(value.toPrecision(12)); // remove ruído binário de 0,134 / 100
+}
+
+/** "0,134" (%) → 0.00134. */
+export function parsePercentInput(raw: string): number | null {
+  const value = parseInputNumber(raw);
+  return value == null ? null : roundDecimal(value / 100);
+}
+
+/** 0.00134 → "0,134" (para preencher o campo em %). */
+export function toPercentInput(value: number): string {
+  assertFinite(value, 'toPercentInput');
+  return String(roundDecimal(value * 100)).replace('.', ',');
+}
+
+/** "1,5" (pontos de vol) → 0.015. */
+export function parseVolPointsInput(raw: string): number | null {
+  return parsePercentInput(raw);
+}
+
+/** 0.015 → "1,5" (pontos de vol). */
+export function toVolPointsInput(value: number): string {
+  return toPercentInput(value);
+}
+
+/** Número simples de formulário ("0,95", "20") → número; inválido → null. */
+export function parsePlainInput(raw: string): number | null {
+  return parseInputNumber(raw);
+}
+
+/** Número → texto de formulário com vírgula decimal. */
+export function toPlainInput(value: number): string {
+  assertFinite(value, 'toPlainInput');
+  return String(roundDecimal(value)).replace('.', ',');
+}
+
 /**
  * Formatação dentro dos gráficos (Plotly usa d3-format): separadores do pt-BR e eixos de vol em
  * decimal exibidos como percentual. Ficam aqui para que nenhum componente formate por conta própria.

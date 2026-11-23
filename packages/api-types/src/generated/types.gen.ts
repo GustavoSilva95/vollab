@@ -47,6 +47,22 @@ export type CollectionGapsResponse = {
 };
 
 /**
+ * CollectionParams
+ */
+export type CollectionParamsInput = {
+    liquidity?: LiquidityFilterInput;
+    window?: CollectionWindow;
+};
+
+/**
+ * CollectionParams
+ */
+export type CollectionParamsOutput = {
+    liquidity?: LiquidityFilterOutput;
+    window?: CollectionWindow;
+};
+
+/**
  * CollectionPendingResponse
  */
 export type CollectionPendingResponse = {
@@ -139,6 +155,128 @@ export type CollectionRunResponse = {
 };
 
 /**
+ * CollectionWindow
+ *
+ * Janelas da carga (RF-DAD-05).
+ */
+export type CollectionWindow = {
+    /**
+     * Daily Bars Bd
+     *
+     * Pregões de OHLC oficial.
+     */
+    daily_bars_bd?: number;
+    /**
+     * Intraday Bd
+     *
+     * Pregões de negócios intradiários.
+     */
+    intraday_bd?: number;
+};
+
+/**
+ * ConfigCreate
+ */
+export type ConfigCreate = {
+    /**
+     * Base Version Id
+     *
+     * Versão sobre a qual a edição foi feita; 409 se não for mais a vigente (evita desfazer em silêncio uma mudança feita em outra tela, como a troca do modelo do edge).
+     */
+    base_version_id: number;
+    /**
+     * Note
+     *
+     * O que mudou e por quê.
+     */
+    note: string;
+    params: ConfigParamsInput;
+};
+
+/**
+ * ConfigCreateOut
+ */
+export type ConfigCreateOut = {
+    /**
+     * Created
+     *
+     * False: os parâmetros eram iguais aos vigentes; nada foi gravado.
+     */
+    created: boolean;
+    /**
+     * Id
+     */
+    id: number;
+};
+
+/**
+ * ConfigParams
+ *
+ * Todos os blocos de parâmetros, com os padrões preenchidos.
+ */
+export type ConfigParamsInput = {
+    collection?: CollectionParamsInput;
+    costs?: CostParams;
+    edge?: EdgeParams;
+    forecast?: ForecastParams;
+    vol?: VolParams;
+};
+
+/**
+ * ConfigParams
+ *
+ * Todos os blocos de parâmetros, com os padrões preenchidos.
+ */
+export type ConfigParamsOutput = {
+    collection?: CollectionParamsOutput;
+    costs?: CostParams;
+    edge?: EdgeParams;
+    forecast?: ForecastParams;
+    vol?: VolParams;
+};
+
+/**
+ * ConfigVersionOut
+ */
+export type ConfigVersionOut = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Note
+     */
+    note: string | null;
+    params: ConfigParamsOutput;
+};
+
+/**
+ * ConfigVersionSummary
+ */
+export type ConfigVersionSummary = {
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Current
+     */
+    current: boolean;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Note
+     */
+    note: string | null;
+};
+
+/**
  * ConstantMaturityOut
  */
 export type ConstantMaturityOut = {
@@ -203,6 +341,246 @@ export type ConstantMaturityResponse = {
      * Ticker
      */
     ticker: string;
+};
+
+/**
+ * CostBreakdown
+ *
+ * Custos da estrutura de referência (straddle ATM teórico, ida e volta) e do hedge.
+ */
+export type CostBreakdown = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl: string;
+    /**
+     * Fees Brl
+     */
+    fees_brl: string;
+    /**
+     * Hedge Buy Vol Pts
+     *
+     * Comprado em vol; None: o hedge consome tudo.
+     */
+    hedge_buy_vol_pts: number | null;
+    /**
+     * Hedge Half Spread
+     *
+     * λ de Leland: meio spread do ativo + taxa.
+     */
+    hedge_half_spread: number;
+    /**
+     * Hedge Interval Bd
+     */
+    hedge_interval_bd: number;
+    /**
+     * Hedge Sell Vol Pts
+     *
+     * Custo do hedge vendido em vol (Leland).
+     */
+    hedge_sell_vol_pts: number;
+    /**
+     * Option Spread Central
+     *
+     * Spread relativo das opções ATM (mediana).
+     */
+    option_spread_central: number;
+    /**
+     * Option Spread Conservative
+     *
+     * Spread relativo usado no semáforo (RN-EDG-04).
+     */
+    option_spread_conservative: number;
+    /**
+     * Option Spread Quoted
+     *
+     * Conferência: spread de fechamento do COTAHIST (fora do custo, PRD 1.8.1).
+     */
+    option_spread_quoted: number | null;
+    /**
+     * Options Vol Pts
+     *
+     * Custo das opções em pontos de vol.
+     */
+    options_vol_pts: number;
+    /**
+     * Reference Contracts
+     */
+    reference_contracts: number;
+    /**
+     * Spread Brl
+     */
+    spread_brl: string;
+    /**
+     * Spread Days
+     *
+     * Pregões com estimativa na janela.
+     */
+    spread_days: number;
+    /**
+     * Spread Series
+     *
+     * Séries ATM somadas na janela.
+     */
+    spread_series: number;
+    /**
+     * Straddle Premium Brl
+     *
+     * Prêmio de um straddle (call + put), por opção.
+     */
+    straddle_premium_brl: string;
+    /**
+     * Straddle Vega Brl
+     *
+     * Vega do straddle por 1 ponto de vol (0,01).
+     */
+    straddle_vega_brl: string;
+    /**
+     * Total Buy Vol Pts
+     */
+    total_buy_vol_pts: number | null;
+    /**
+     * Total Sell Vol Pts
+     */
+    total_sell_vol_pts: number;
+    /**
+     * Underlying Spread
+     *
+     * Spread relativo do ativo-objeto (conservador).
+     */
+    underlying_spread: number;
+    /**
+     * Underlying Spread Estimated
+     *
+     * False: piso do tick, sem negócios para medir.
+     */
+    underlying_spread_estimated: boolean;
+};
+
+/**
+ * CostParams
+ *
+ * Bloco `costs` de `config_versions.params` (PRD 1.8 §5.6.1; RN-CST-01..03, QA-11 parcial).
+ *
+ * Taxas da B3 em decimal sobre o volume financeiro; **a conferir na tabela vigente da B3** (a
+ * vigência da página consultada em 2026-11-23 não foi confirmada). Corretagem padrão R$ 0 por ordem
+ * (decisão do usuário). O IR fica fora do edge (RN-CST-04).
+ */
+export type CostParams = {
+    /**
+     * Brokerage Per Order Brl
+     *
+     * Corretagem por ordem.
+     */
+    brokerage_per_order_brl?: number;
+    /**
+     * Brokerage Rate
+     *
+     * Corretagem sobre o volume.
+     */
+    brokerage_rate?: number;
+    /**
+     * Hedge Interval Bd
+     *
+     * Intervalo do hedge (Leland).
+     */
+    hedge_interval_bd?: number;
+    /**
+     * Moneyness Bands
+     *
+     * Limites K/F das faixas low | atm | high.
+     */
+    moneyness_bands?: [
+        number,
+        number
+    ];
+    /**
+     * Option Fee Rate
+     *
+     * Taxas da B3 em opções de ações, pessoa física (0,0370% + 0,0275% + 0,0695%).
+     */
+    option_fee_rate?: number;
+    /**
+     * Reference Contracts
+     *
+     * Opções por perna na estrutura de referência.
+     */
+    reference_contracts?: number;
+    /**
+     * Spread Floors Brl
+     *
+     * Piso por ativo e faixa ({'PETR4': {'atm': 0.02}}); vale o maior entre ele e o tick.
+     */
+    spread_floors_brl?: {
+        [key: string]: {
+            [key: string]: number;
+        };
+    };
+    /**
+     * Spread Lookback Bd
+     *
+     * Pregões da estimativa do edge.
+     */
+    spread_lookback_bd?: number;
+    /**
+     * Spread Min Trades
+     *
+     * Negócios mínimos da série.
+     */
+    spread_min_trades?: number;
+    /**
+     * Tick Brl
+     *
+     * Piso do spread estimado (tick da B3).
+     */
+    tick_brl?: number;
+    /**
+     * Underlying Fee Rate
+     *
+     * Emolumentos e taxas da B3 em ações à vista (hedge).
+     */
+    underlying_fee_rate?: number;
+};
+
+/**
+ * EdgeParams
+ *
+ * Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.
+ */
+export type EdgeParams = {
+    /**
+     * Iv Rank Min Days
+     *
+     * Pregões mínimos do IV rank.
+     */
+    iv_rank_min_days?: number;
+    /**
+     * Normal Spread Default
+     *
+     * Spread normal não calibrado (relativo à RV prevista).
+     */
+    normal_spread_default?: number;
+    /**
+     * Normal Spread Lookback Bd
+     *
+     * Pregões das origens usadas na calibração do spread normal.
+     */
+    normal_spread_lookback_bd?: number;
+    /**
+     * Skew Moneyness
+     *
+     * K/F do skew (put − call).
+     */
+    skew_moneyness?: [
+        number,
+        number
+    ];
+    /**
+     * Threshold Vol Pts
+     *
+     * Limiar somado aos custos no semáforo (0,01 = 1 ponto).
+     */
+    threshold_vol_pts?: number;
 };
 
 /**
@@ -670,6 +1048,64 @@ export type ForecastOut = {
 };
 
 /**
+ * ForecastParams
+ *
+ * Bloco `forecast` de `config_versions.params` (PRD 1.7 §5.7; QA-07 e QA-08 resolvidas).
+ */
+export type ForecastParams = {
+    /**
+     * Bootstrap Reps
+     */
+    bootstrap_reps?: number;
+    /**
+     * Combination Window Bd
+     *
+     * Janela dos estimadores combinados (PRD §5.7).
+     */
+    combination_window_bd?: number;
+    /**
+     * Evaluation Horizons Bd
+     */
+    evaluation_horizons_bd?: Array<number>;
+    /**
+     * Ewma Lambda
+     *
+     * λ da EWMA (eq. 4.1).
+     */
+    ewma_lambda?: number;
+    /**
+     * Ewma Min Returns
+     *
+     * Amostra mínima da EWMA (QA-08).
+     */
+    ewma_min_returns?: number;
+    /**
+     * Garch Max Returns
+     *
+     * Retornos usados no ajuste.
+     */
+    garch_max_returns?: number;
+    /**
+     * Garch Min Returns
+     *
+     * Amostra mínima do GARCH.
+     */
+    garch_min_returns?: number;
+    /**
+     * Min Evaluation Windows
+     *
+     * Janelas não sobrepostas mínimas (QA-08, RN-PRV-02).
+     */
+    min_evaluation_windows?: number;
+    /**
+     * Selected Model
+     *
+     * Modelo que alimenta o edge (RF-PRV-04), escolhido pelo usuário.
+     */
+    selected_model?: 'ewma' | 'combination' | 'garch';
+};
+
+/**
  * ForecastsResponse
  */
 export type ForecastsResponse = {
@@ -824,6 +1260,60 @@ export type HealthResponse = {
 };
 
 /**
+ * ImpliedParams
+ */
+export type ImpliedParams = {
+    /**
+     * Dividend Protected Strikes
+     *
+     * A B3 reduz o strike pelo provento na data ex (RN-DAD-03): na precificação, o strike efetivo no vencimento é K − proventos com data ex até o vencimento.
+     */
+    dividend_protected_strikes?: boolean;
+    /**
+     * Reference Min Trades
+     *
+     * Mínimo para usar a mediana.
+     */
+    reference_min_trades?: number;
+    /**
+     * Reference Window Min
+     *
+     * Janela final da sessão para a IV de referência (RN-VOL-06).
+     */
+    reference_window_min?: number;
+    /**
+     * Sync Window S
+     *
+     * Defasagem máxima (RN-VOL-03).
+     */
+    sync_window_s?: number;
+};
+
+/**
+ * IntradayParams
+ */
+export type IntradayParams = {
+    /**
+     * Bar Minutes
+     *
+     * Tamanho da barra (RN-VOL-08).
+     */
+    bar_minutes?: number;
+    /**
+     * Min Coverage
+     *
+     * Fração mínima de barras com negócio para o pregão contar.
+     */
+    min_coverage?: number;
+    /**
+     * Session Open
+     *
+     * Início da grade (relógio de Brasília).
+     */
+    session_open?: string;
+};
+
+/**
  * IntradayQuality
  */
 export type IntradayQuality = {
@@ -929,6 +1419,102 @@ export type IvQuality = {
      * Trades Valid
      */
     trades_valid: number;
+};
+
+/**
+ * LiquidityFilter
+ *
+ * Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).
+ */
+export type LiquidityFilterInput = {
+    /**
+     * Include Weeklies
+     *
+     * Incluir séries semanais (W1..W5).
+     */
+    include_weeklies?: boolean;
+    /**
+     * Min Trades
+     *
+     * Mínimo de negócios no dia (COTAHIST).
+     */
+    min_trades?: number;
+    /**
+     * Moneyness Max
+     *
+     * K/S máximo.
+     */
+    moneyness_max?: number | string;
+    /**
+     * Moneyness Min
+     *
+     * K/S mínimo.
+     */
+    moneyness_min?: number | string;
+    /**
+     * Monthly Expiries
+     *
+     * Próximos vencimentos mensais.
+     */
+    monthly_expiries?: number;
+};
+
+/**
+ * LiquidityFilter
+ *
+ * Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).
+ */
+export type LiquidityFilterOutput = {
+    /**
+     * Include Weeklies
+     *
+     * Incluir séries semanais (W1..W5).
+     */
+    include_weeklies?: boolean;
+    /**
+     * Min Trades
+     *
+     * Mínimo de negócios no dia (COTAHIST).
+     */
+    min_trades?: number;
+    /**
+     * Moneyness Max
+     *
+     * K/S máximo.
+     */
+    moneyness_max?: string;
+    /**
+     * Moneyness Min
+     *
+     * K/S mínimo.
+     */
+    moneyness_min?: string;
+    /**
+     * Monthly Expiries
+     *
+     * Próximos vencimentos mensais.
+     */
+    monthly_expiries?: number;
+};
+
+/**
+ * LiquidityOut
+ */
+export type LiquidityOut = {
+    /**
+     * Liquid Series
+     *
+     * Séries que passam o filtro de liquidez (QA-06) no pregão.
+     */
+    liquid_series: number;
+    /**
+     * Option Trades
+     */
+    option_trades: number;
+    /**
+     * Option Volume Brl
+     */
+    option_volume_brl: string;
 };
 
 /**
@@ -1143,6 +1729,209 @@ export type ProgressCounts = {
      * Total
      */
     total: number;
+};
+
+/**
+ * RankingEvent
+ */
+export type RankingEvent = {
+    /**
+     * Event Date
+     */
+    event_date: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Ticker
+     */
+    ticker: string | null;
+};
+
+/**
+ * RankingResponse
+ */
+export type RankingResponse = {
+    /**
+     * Ci Level
+     */
+    ci_level: number;
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    /**
+     * Engine Version
+     */
+    engine_version: string;
+    /**
+     * Expected As Of
+     *
+     * Último pregão esperado (para marcar dados antigos).
+     */
+    expected_as_of: string;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Rows
+     */
+    rows: Array<RankingRow>;
+    /**
+     * Selected Model
+     */
+    selected_model: 'ewma' | 'combination' | 'garch';
+};
+
+/**
+ * RankingRow
+ */
+export type RankingRow = {
+    /**
+     * Approximate
+     *
+     * Fallback de IV (ATM do vencimento disponível), RN-VOL-05.
+     */
+    approximate: boolean;
+    /**
+     * As Of
+     *
+     * Pregão da IV usada.
+     */
+    as_of: string | null;
+    costs: CostBreakdown | null;
+    /**
+     * Direction
+     *
+     * Venda ou compra de vol (sinal do prêmio).
+     */
+    direction: 'sell' | 'buy' | null;
+    /**
+     * Events
+     */
+    events: Array<RankingEvent>;
+    /**
+     * Events Removed
+     */
+    events_removed: Array<number>;
+    /**
+     * Expected Pnl Brl
+     *
+     * ≈ vega × pontos líquidos, por straddle de referência.
+     */
+    expected_pnl_brl: string | null;
+    /**
+     * RV prevista pelo modelo escolhido, com intervalo.
+     */
+    forecast: EstimatedValue;
+    /**
+     * Horizon Bd
+     *
+     * Prazo efetivo usado (= prazo constante sem fallback).
+     */
+    horizon_bd: number;
+    /**
+     * IV ex-evento (RN-EVT-03).
+     */
+    iv: EstimatedValue;
+    iv_percentile: EstimatedValue;
+    /**
+     * (IV − mín)/(máx − mín) no último ano.
+     */
+    iv_rank: EstimatedValue;
+    /**
+     * Iv Rank Days
+     */
+    iv_rank_days: number;
+    iv_with_events: EstimatedValue;
+    liquidity: LiquidityOut | null;
+    /**
+     * Model
+     */
+    model: 'ewma' | 'combination' | 'garch';
+    /**
+     * Net Premium
+     *
+     * |prêmio| − custos na direção, pontos de vol.
+     */
+    net_premium: number | null;
+    /**
+     * Net Relative Edge
+     *
+     * (|prêmio| − custos) ÷ σ̂ na direção.
+     */
+    net_relative_edge: number | null;
+    /**
+     * Spread normal s (calibrated = false → não calibrado).
+     */
+    normal_spread: EstimatedValue;
+    /**
+     * Normal Spread Pairs
+     */
+    normal_spread_pairs: number;
+    /**
+     * Position
+     *
+     * Posição no ranking (1 = melhor).
+     */
+    position: number;
+    /**
+     * IV − σ̂(1 + s), pontos de vol (RN-EDG-01).
+     */
+    premium: EstimatedValue;
+    /**
+     * Reason
+     *
+     * Motivo de 'indisponível' ou da aproximação.
+     */
+    reason: string | null;
+    /**
+     * Prêmio ÷ σ̂ (RN-EDG-02).
+     */
+    relative_edge: EstimatedValue;
+    /**
+     * Required Buy
+     *
+     * Custos de compra + L (None: compra inviável).
+     */
+    required_buy: number | null;
+    /**
+     * Required Sell
+     *
+     * Custos de venda + L.
+     */
+    required_sell: number | null;
+    /**
+     * IV(K/F baixo) − IV(K/F alto), pontos de vol.
+     */
+    skew: EstimatedValue;
+    /**
+     * Skew Expiry
+     */
+    skew_expiry: string | null;
+    /**
+     * State
+     */
+    state: 'edge' | 'inconclusive' | 'no_edge' | 'unavailable';
+    term_slope: TermSlope;
+    /**
+     * Limiar L (RN-EDG-05), pontos de vol.
+     */
+    threshold: EstimatedValue;
+    /**
+     * Ticker
+     */
+    ticker: string;
 };
 
 /**
@@ -1437,6 +2226,65 @@ export type SmileResponse = {
 };
 
 /**
+ * SpreadDayOut
+ */
+export type SpreadDayOut = {
+    /**
+     * Band
+     */
+    band: 'low' | 'atm' | 'high' | 'underlying';
+    /**
+     * N Series
+     */
+    n_series: number;
+    /**
+     * N Trades
+     */
+    n_trades: number;
+    /**
+     * Quoted Rel Median
+     */
+    quoted_rel_median: number | null;
+    /**
+     * Rel Median
+     */
+    rel_median: number | null;
+    /**
+     * Rel P75
+     */
+    rel_p75: number | null;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+};
+
+/**
+ * SpreadsResponse
+ */
+export type SpreadsResponse = {
+    /**
+     * Days
+     */
+    days: Array<SpreadDayOut>;
+    /**
+     * Lookback Bd
+     */
+    lookback_bd: number;
+    /**
+     * Moneyness Bands
+     */
+    moneyness_bands: [
+        number,
+        number
+    ];
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
  * TermPointOut
  */
 export type TermPointOut = {
@@ -1453,6 +2301,32 @@ export type TermPointOut = {
      * Is Weekly
      */
     is_weekly: boolean;
+};
+
+/**
+ * TermSlope
+ */
+export type TermSlope = {
+    /**
+     * Days1 Bd
+     */
+    days1_bd?: number | null;
+    /**
+     * Days2 Bd
+     */
+    days2_bd?: number | null;
+    /**
+     * Expiry1
+     */
+    expiry1?: string | null;
+    /**
+     * Expiry2
+     */
+    expiry2?: string | null;
+    /**
+     * ATM do 2º vencimento − ATM do 1º, pontos de vol.
+     */
+    value: EstimatedValue;
 };
 
 /**
@@ -1551,6 +2425,36 @@ export type UnderlyingUpdate = {
      * Active
      */
     active: boolean;
+};
+
+/**
+ * VolParams
+ */
+export type VolParams = {
+    /**
+     * Ci Level
+     *
+     * Nível dos intervalos (QA-07).
+     */
+    ci_level?: number;
+    /**
+     * Close To Close Mode
+     *
+     * Close-to-close oficial (PRD §5.5): média zero ou subtraída.
+     */
+    close_to_close_mode?: 'zero_mean' | 'demeaned';
+    /**
+     * Constant Maturity Bd
+     *
+     * Prazo da IV constante (QA-03).
+     */
+    constant_maturity_bd?: number;
+    implied?: ImpliedParams;
+    intraday?: IntradayParams;
+    /**
+     * Windows Bd
+     */
+    windows_bd?: Array<number>;
 };
 
 export type GetCollectionGapsData = {
@@ -1670,6 +2574,121 @@ export type GetCollectionRunResponses = {
 };
 
 export type GetCollectionRunResponse = GetCollectionRunResponses[keyof GetCollectionRunResponses];
+
+export type GetConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/config';
+};
+
+export type GetConfigErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetConfigError = GetConfigErrors[keyof GetConfigErrors];
+
+export type GetConfigResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConfigVersionOut;
+};
+
+export type GetConfigResponse = GetConfigResponses[keyof GetConfigResponses];
+
+export type PostConfigData = {
+    body: ConfigCreate;
+    path?: never;
+    query?: never;
+    url: '/config';
+};
+
+export type PostConfigErrors = {
+    /**
+     * A versão-base não é mais a vigente.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostConfigError = PostConfigErrors[keyof PostConfigErrors];
+
+export type PostConfigResponses = {
+    /**
+     * Successful Response
+     */
+    201: ConfigCreateOut;
+};
+
+export type PostConfigResponse = PostConfigResponses[keyof PostConfigResponses];
+
+export type ListConfigVersionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/config/versions';
+};
+
+export type ListConfigVersionsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type ListConfigVersionsError = ListConfigVersionsErrors[keyof ListConfigVersionsErrors];
+
+export type ListConfigVersionsResponses = {
+    /**
+     * Response List Config Versions
+     *
+     * Successful Response
+     */
+    200: Array<ConfigVersionSummary>;
+};
+
+export type ListConfigVersionsResponse = ListConfigVersionsResponses[keyof ListConfigVersionsResponses];
+
+export type GetConfigVersionData = {
+    body?: never;
+    path: {
+        /**
+         * Version Id
+         */
+        version_id: number;
+    };
+    query?: never;
+    url: '/config/versions/{version_id}';
+};
+
+export type GetConfigVersionErrors = {
+    /**
+     * Versão inexistente.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetConfigVersionError = GetConfigVersionErrors[keyof GetConfigVersionErrors];
+
+export type GetConfigVersionResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConfigVersionOut;
+};
+
+export type GetConfigVersionResponse = GetConfigVersionResponses[keyof GetConfigVersionResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -2008,6 +3027,38 @@ export type PutModelSelectionResponses = {
 
 export type PutModelSelectionResponse = PutModelSelectionResponses[keyof PutModelSelectionResponses];
 
+export type GetRankingData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Underlying
+         *
+         * Só um ativo (detalhe).
+         */
+        underlying?: string | null;
+    };
+    url: '/ranking';
+};
+
+export type GetRankingErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetRankingError = GetRankingErrors[keyof GetRankingErrors];
+
+export type GetRankingResponses = {
+    /**
+     * Successful Response
+     */
+    200: RankingResponse;
+};
+
+export type GetRankingResponse = GetRankingResponses[keyof GetRankingResponses];
+
 export type ListUnderlyingsData = {
     body?: never;
     path?: never;
@@ -2217,6 +3268,47 @@ export type GetUnderlyingSeriesResponses = {
 };
 
 export type GetUnderlyingSeriesResponse = GetUnderlyingSeriesResponses[keyof GetUnderlyingSeriesResponses];
+
+export type GetSpreadsData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Days
+         *
+         * Pregões mais recentes.
+         */
+        days?: number;
+    };
+    url: '/underlyings/{ticker}/spreads';
+};
+
+export type GetSpreadsErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetSpreadsError = GetSpreadsErrors[keyof GetSpreadsErrors];
+
+export type GetSpreadsResponses = {
+    /**
+     * Successful Response
+     */
+    200: SpreadsResponse;
+};
+
+export type GetSpreadsResponse = GetSpreadsResponses[keyof GetSpreadsResponses];
 
 export type GetUnderlyingSummaryData = {
     body?: never;

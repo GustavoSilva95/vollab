@@ -92,6 +92,15 @@ def atm_iv(points: Sequence[SmilePoint], forward: float, *, k_min: float, k_max:
     acima do forward, usando a opção **fora do dinheiro** de cada strike (put abaixo, call acima),
     ou a outra quando só ela tem IV. Exige strikes dos dois lados dentro de K/F ∈ [k_min, k_max]
     (RN-VOL-05: "negócios ATM"); sem isso, indisponível, sem extrapolação."""
+    return iv_at_moneyness(points, forward, 1.0, k_min=k_min, k_max=k_max)
+
+
+def iv_at_moneyness(
+    points: Sequence[SmilePoint], forward: float, target_kf: float, *, k_min: float, k_max: float
+) -> AtmResult:
+    """IV em K/F = `target_kf` (1 = ATM; PRD 1.8 usa 0,95 e 1,05 no skew): mesma regra da ATM —
+    interpolação linear em ln(K/F) entre os strikes vizinhos do alvo, opção fora do dinheiro de cada
+    strike (em relação ao forward), sem extrapolação."""
     if forward <= 0:
         return AtmResult(None, "forward inválido")
     by_strike: dict[float, dict[bool, float]] = {}
@@ -106,14 +115,16 @@ def atm_iv(points: Sequence[SmilePoint], forward: float, *, k_min: float, k_max:
         otm_is_call = k >= forward
         return ivs.get(otm_is_call, ivs.get(not otm_is_call, math.nan))
 
-    below = [k for k in by_strike if k <= forward]
-    above = [k for k in by_strike if k >= forward]
+    target = forward * target_kf
+    below = [k for k in by_strike if k <= target]
+    above = [k for k in by_strike if k >= target]
     if not below or not above:
-        return AtmResult(None, "sem strikes líquidos dos dois lados do dinheiro")
+        side = "do dinheiro" if target_kf == 1.0 else f"de K/F = {target_kf:g}"
+        return AtmResult(None, f"sem strikes líquidos dos dois lados {side}")
     k_lo, k_hi = max(below), min(above)
     if k_lo == k_hi:
         return AtmResult(pick(k_lo), None, k_lo, k_hi)
-    x_lo, x_hi, x = math.log(k_lo / forward), math.log(k_hi / forward), 0.0
+    x_lo, x_hi, x = math.log(k_lo / forward), math.log(k_hi / forward), math.log(target_kf)
     w = (x - x_lo) / (x_hi - x_lo)
     return AtmResult((1 - w) * pick(k_lo) + w * pick(k_hi), None, k_lo, k_hi)
 
