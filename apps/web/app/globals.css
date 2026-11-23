@@ -7,7 +7,7 @@
   --line-soft: rgb(85 85 85 / 0.45);
   --accent: #7fd1c7;
 
-  /* Estados (cockpit): base do semáforo de edge (RN-EDG-01) e de saúde do engine. */
+  /* Estados (cockpit): base do semáforo de edge (RN-EDG-03) e de saúde do engine. */
   --status-ok: #7fd1c7;
   --status-warn: #e3b45f;
   --status-danger: #e2716b;

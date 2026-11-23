@@ -76,7 +76,7 @@ Situação atual: [STATUS.md](STATUS.md).
 ## Etapa 3 — Volatilidade e eventos
 
 **Entregáveis**
-- `quant/pricing` (BS europeu com dividendos discretos), `quant/vol` (close-to-close, Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang, RV intradiária de 5 min com overnight; IV com sincronização temporal) — BRD 1.3 RF-VOL-01, RN-VOL-07..09; PRD 1.4 §5.5.
+- `quant/pricing` (BS europeu com dividendos discretos), `quant/vol` (close-to-close com média zero e divisor *n* como padrão e a forma com média subtraída para comparação, correção de viés por `bias_b_zero_mean`; Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang, RV intradiária de 5 min com overnight; IV com sincronização temporal) — BRD 1.3 RF-VOL-01, RN-VOL-07..09; PRD 1.5 §5.5. Fórmulas conforme `docs/referencia/volatility-trading.md` (nunca a forma impressa listada na Errata).
 - Barras de 5 min (`intraday_bars`) e RV por estimador e janela (`realized_vols`) calculadas **no worker após a coleta**; retornos ajustados por proventos.
 - `GET /underlyings/{t}/series` (adiado da Etapa 2).
 - Smile, estrutura a termo, IV de prazo constante (QA-03; indisponível sem dois vencimentos).
@@ -97,7 +97,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 ## Etapa 5 — Custos, edge e ranking
 
-**Entregáveis:** custos configuráveis e spread estimado (RN-CST-01..03); prêmio de vol com intervalo; semáforo de 3 estados (RN-EDG-01..04); ranking (`/app/ranking`); tela de configurações versionadas; valores padrão definidos com o usuário (QA-11).
+**Entregáveis:** custos configuráveis e spread estimado (RN-CST-01..03); prêmio de vol absoluto e edge relativo com intervalo, descontados do spread normal (RN-EDG-01/02/07, PRD §5.6; resolver QA-14); semáforo de 3 estados (RN-EDG-03..06); ranking (`/app/ranking`); tela de configurações versionadas; valores padrão definidos com o usuário (QA-11).
 **Critérios de saída:** testes do semáforo nos três estados e nos limites; rótulo "não calibrado".
 
 ---

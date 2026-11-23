@@ -20,6 +20,14 @@ Cockpit de decisão para traders de volatilidade em opções na B3: mede RV × I
 | [`PLANO.md`](PLANO.md) | Etapas, entregáveis e critérios de saída |
 | [`STATUS.md`](STATUS.md) | Onde estamos agora |
 
+**Referência técnica de fórmulas:** [`docs/referencia/volatility-trading.md`](docs/referencia/volatility-trading.md) (Sinclair, *Volatility Trading*, 2ª ed., com as fórmulas corrigidas, implementação de referência em Python e casos de teste).
+
+- Ao implementar ou revisar qualquer fórmula de volatilidade, precificação, previsão, hedge, dimensionamento ou avaliação, confira a fórmula nesse arquivo (§3) e **a Errata (§2)**.
+- **Nunca use a forma impressa no livro de uma fórmula listada na Errata.** Use sempre a forma corrigida. Isso vale para código, testes, documentos e textos da interface.
+- Os casos da §7 entram como testes de referência (complementam os T-REF do PRD §10.2).
+- A referência não muda o escopo: o BRD e o PRD continuam decidindo **o quê** será feito. Se o PRD divergir da referência numa fórmula, pare e proponha a correção do PRD antes de implementar.
+- Dados do livro são dos EUA e de 2013 (frações de variância no pregão, níveis do VIX, backtests): recalibrar para a B3, nunca usar como padrão sem rótulo (§8 da referência).
+
 ## Stack (resumo — detalhes no PRD §3)
 
 - **Web** (`apps/web`): Next.js 16, React 19, **TypeScript**, CSS Modules e os tokens atuais, Radix UI, TanStack Table, TanStack Query, React Hook Form com Zod, Plotly.js (import dinâmico, `ssr: false`, pacote parcial).

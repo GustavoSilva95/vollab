@@ -1,12 +1,13 @@
 # PRD — Documento de Requisitos de Produto
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
-**Base:** [BRD 1.3 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
-**Versão:** 1.4
+**Base:** [BRD 1.4 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
+**Referência técnica de fórmulas:** [`referencia/volatility-trading.md`](./referencia/volatility-trading.md) — sempre a forma corrigida; nunca a forma impressa no livro de fórmula listada na Errata (§2 da referência)
+**Versão:** 1.5
 **Data:** 2026-11-22
-**Status:** Aprovado (1.4, 2026-11-22)
+**Status:** Aprovado (1.5, 2026-11-22)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9).
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06.
 
 ---
 
@@ -69,7 +70,7 @@ Princípios de arquitetura:
 | ADR-01 | **TypeScript** no front, com migração do código atual (JS) para TS. | Muitas grandezas fáceis de confundir (vol decimal × %, dias úteis × corridos, manual × D-1). | Manter JS. |
 | ADR-02 | **Motor quantitativo e coleta em Python 3.13** (numpy, pandas, scipy, `arch`). | Ecossistema numérico maduro; GARCH e estatística prontos. | Tudo em TS dentro do Next.js. |
 | ADR-03 | **FastAPI + Pydantic v2**, dependências com **uv**. | Contrato OpenAPI gerado do código; validação forte; leve para rodar localmente. | Flask, Django. |
-| ADR-04 | **Somente o engine acessa o banco.** O Next.js chama a API para leitura e escrita, inclusive CRUD. | Regras e retrato da decisão (RN-EDG-05, §7.11 do BRD) num lugar só; schema em uma linguagem só. | Acesso dividido com ORM TS. |
+| ADR-04 | **Somente o engine acessa o banco.** O Next.js chama a API para leitura e escrita, inclusive CRUD. | Regras e retrato da decisão (RN-EDG-06, §7.11 do BRD) num lugar só; schema em uma linguagem só. | Acesso dividido com ORM TS. |
 | ADR-05 | **PostgreSQL 17 via Docker**, com SQLAlchemy 2 e Alembic para migrations. | Robusto, aceita API e worker em paralelo, migração direta para a nuvem. | SQLite. |
 | ADR-06 | **Cache bruto imutável em disco** (`data/raw/`, fora do git), indexado no banco por hash. | Preservar o histórico se a fonte mudar (RS-01); reprocessar sem baixar de novo. | Guardar só dados tratados. |
 | ADR-07 | **Coleta sob demanda, sem agendador.** Ao abrir o cockpit, o engine detecta os pregões pendentes e o usuário dispara a coleta. A coleta é retomável. | Corresponde ao uso real (o Mac nem sempre está ligado); menos peças. | APScheduler, cron. |
@@ -130,6 +131,7 @@ O pacote `quant` **não faz I/O**: recebe arrays e parâmetros e devolve resulta
 |----------|----------------------------------|----------|
 | Volatilidade | **decimal anualizado em base 252** (`0.2534`) | `25,34%` |
 | Prêmio de vol | decimal, em pontos de vol (`0.031`) | `3,1 pts` |
+| Edge relativo e spread normal | decimal adimensional, razão sobre a RV prevista (`0.25`) | `25%` |
 | Taxa de juros | decimal anual, capitalização exponencial, base 252 | `% a.a.` |
 | Tempo | **anos úteis** = dias úteis / 252; dias sempre com sufixo explícito (`_bd` úteis, `_cd` corridos) | `21 du` |
 | Preço e dinheiro | `Decimal` / `NUMERIC(18,6)` em BRL; nunca float no banco | `R$ 1.234,56` |
@@ -157,7 +159,7 @@ EstimatedValue {
   as_of:        date               // pregão de referência
   stale:        boolean            // dado mais antigo que o último pregão
   reason:       string | null      // ex.: "sem dois vencimentos ATM" (RN-VOL-05)
-  calibrated:   boolean | null     // para limiares (RN-EDG-04)
+  calibrated:   boolean | null     // para limiares e spread normal (RN-EDG-05/07)
 }
 ```
 
@@ -170,17 +172,18 @@ EstimatedValue {
 - Toda decisão, operação e alerta grava o `config_version_id` vigente.
 - O primeiro valor de cada parâmetro marcado "a definir com o usuário" (QA-11) é preenchido na Etapa 6 e rotulado como "não calibrado".
 
-### 5.4 Retrato da decisão (RF-DIA-01, RN-EDG-05)
+### 5.4 Retrato da decisão (RF-DIA-01, RN-EDG-06)
 
-Ao registrar uma entrada, o engine grava um retrato imutável (JSONB) com: semáforo, edge e intervalo, IV, RV prevista, modelo, custos discriminados, distribuição simulada resumida, Kelly, teto e qual dos dois prevaleceu, tamanho sugerido × executado, `config_version_id`, `engine_version` (git sha) e as entradas manuais usadas.
+Ao registrar uma entrada, o engine grava um retrato imutável (JSONB) com: semáforo, prêmio absoluto e edge relativo com intervalos, spread normal usado (e se calibrado), IV, RV prevista, modelo, custos discriminados, distribuição simulada resumida, Kelly, teto e qual dos dois prevaleceu, tamanho sugerido × executado, `config_version_id`, `engine_version` (git sha) e as entradas manuais usadas.
 
 ### 5.5 Estimadores de volatilidade realizada (RF-VOL-01, RN-VOL-07..09)
 
-Notação por pregão *t*: O, H, L, C oficiais (COTAHIST), C₋₁ = fechamento anterior **ajustado por proventos** (RN-VOL-07); logs naturais. Janela de *n* pregões; variância anualizada × 252 (RN-VOL-01); a vol é a raiz.
+Fórmulas conforme a referência técnica (§3 e Errata). Notação por pregão *t*: O, H, L, C oficiais (COTAHIST), C₋₁ = fechamento anterior **ajustado por proventos** (RN-VOL-07); logs naturais. Janela de *n* pregões; variância anualizada × 252 (RN-VOL-01); a vol é a raiz.
 
 | Estimador | Variância diária (média na janela) | Hipóteses / uso |
 |-----------|------------------------------------|-----------------|
-| Close-to-close | variância amostral de ln(Cₜ/C₋₁), com média subtraída, divisor *n* − 1 | baseline do RF-PRV-03 (20 pregões) |
+| Close-to-close (padrão) | **média zero, divisor *n***: (1/*n*)·Σ ln(Cₜ/C₋₁)² (eq. 2.1b) | baseline do RF-PRV-03 (20 pregões) |
+| Close-to-close com média subtraída (comparação) | variância amostral de ln(Cₜ/C₋₁) com média subtraída, divisor *n* − 1 (eq. 2.3) | opção configurável; exibida ao lado da padrão |
 | Parkinson | ln(H/L)² / (4 ln 2) | drift zero, sem gap de abertura |
 | Garman-Klass | ½ ln(H/L)² − (2 ln 2 − 1) ln(C/O)² | drift zero, sem gap de abertura |
 | Rogers-Satchell | ln(H/C)·ln(H/O) + ln(L/C)·ln(L/O) | aceita drift; ignora o overnight |
@@ -188,10 +191,27 @@ Notação por pregão *t*: O, H, L, C oficiais (COTAHIST), C₋₁ = fechamento 
 | Intradiária (5 min) | Σ ln(Pᵢ/Pᵢ₋₁)² nas barras de 5 min + ln(O/C₋₁)² | RN-VOL-08; só onde há negócios intradiários |
 
 Regras:
+- **Close-to-close:** `config_versions.params.vol.close_to_close_mode` = `zero_mean` (padrão) ou `demeaned`. O modo escolhido é o close-to-close "oficial" (baseline, combinação de estimadores); as duas formas são calculadas e gravadas (`close_to_close` e `close_to_close_demeaned`) para comparação na tela do ativo.
+- **Correção de viés da vol (desigualdade de Jensen):** a variância de média zero (1/*n*) já é sem viés, e **não** se aplica *n*/(*n* − 1). A vol exibida é corrigida por s / `bias_b_zero_mean(n)` = s / b₀(*n*), com b₀(*n*) = √(2/*n*)·Γ((*n*+1)/2)/Γ(*n*/2). Na forma com média subtraída e *n* − 1, o fator é c₄(*n*) = `bias_b(n)`·√(*n*/(*n* − 1)). **Nunca** usar `bias_b` (definido para 1/*n* com média subtraída) no estimador de média zero. A variância não corrigida é a que alimenta previsão e GARCH.
 - **Barras de 5 min** (`intraday_bars`): grade fixa no relógio de Brasília (10:00, 10:05, …), preço da barra = último negócio válido pela R4 dentro dela; barra sem negócio repete o último preço e conta como vazia para a cobertura. O primeiro retorno intradiário parte da abertura oficial; o último termina no fechamento oficial.
 - Janelas padrão: **20 e 60 pregões**, configuráveis (`config_versions`). Janela com pregões faltando, incompletos ou sem OHLC → `insufficient_data` com o motivo (PR-03).
 - Tudo é calculado **no worker depois da coleta** (PRD-NF-06) e gravado; as telas só leem. Negócios brutos nunca são agregados dentro de uma requisição.
 - Saída em `EstimatedValue` (§5.2), `origin = estimated`; o intervalo de confiança segue o método do QA-07 (Etapa 4).
+
+### 5.6 Prêmio, edge relativo e spread normal (BRD RN-EDG-01/02/07, Etapa 5)
+
+Notação no mesmo horizonte *h*: IV = IV de prazo constante ex-evento (RN-EVT-03), σ̂ = RV prevista (RF-PRV-04), *s* = spread normal relativo do ativo, *c* = custos estimados em pontos de vol (custo em BRL ÷ vega por ponto, versão conservadora, RN-EDG-04).
+
+| Métrica | Fórmula | Uso |
+|---------|---------|-----|
+| Spread normal *s* (RN-EDG-07) | razão típica (IV − RV realizada)/RV realizada do próprio ativo; método e padrão na QA-14 | descontado das duas métricas abaixo |
+| Prêmio de vol (RN-EDG-01), pontos | IV − σ̂·(1 + *s*) | semáforo (RN-EDG-03) contra *c*; P&L esperado ≈ vega por ponto × pontos |
+| Edge relativo (RN-EDG-02) | (IV − σ̂)/σ̂ − *s* = prêmio ÷ σ̂ | ranking e alertas |
+| Edge relativo líquido | (prêmio − *c*) ÷ σ̂ | ordenação do ranking (RF-RNK-01) e saída (RN-GES-02) |
+
+- O spread normal é definido uma vez, em termos relativos; a forma absoluta é *s*·σ̂. Assim as duas métricas sempre têm o mesmo sinal.
+- Sem histórico suficiente, *s* vem de `config_versions` com `calibrated = false` e rótulo "não calibrado"; nunca zero implícito.
+- Todas as métricas saem em `EstimatedValue` com intervalo (QA-07), herdado do intervalo de σ̂.
 
 ---
 
@@ -230,7 +250,7 @@ Detalhes confirmados na Etapa 2:
 | `implied_vols` | IV por negócio, com preço sincronizado do ativo e defasagem em ms; pares acima da janela (padrão 10 s) não geram IV e são contados | RF-VOL-02, RN-VOL-03 |
 | `atm_term_structure` | IV ATM por vencimento e IV de prazo constante (ou indisponível, com motivo) | RF-VOL-03, RN-VOL-05 |
 | `intraday_bars` | barras de 5 min do ativo-objeto por pregão (início, último preço, nº de negócios, quantidade), a partir dos negócios válidos pela R4, e a cobertura do pregão (% de barras com negócio, completo/incompleto) | RN-VOL-08 |
-| `realized_vols` | RV por ativo, pregão de referência, **estimador** (`close_to_close`, `parkinson`, `garman_klass`, `rogers_satchell`, `yang_zhang`, `intraday_5m`) e janela (`window_bd`): valor, nº de pregões usados, status (`ok` \| `insufficient_data`) e motivo | RF-VOL-01 |
+| `realized_vols` | RV por ativo, pregão de referência, **estimador** (`close_to_close`, `close_to_close_demeaned`, `parkinson`, `garman_klass`, `rogers_satchell`, `yang_zhang`, `intraday_5m`) e janela (`window_bd`): valor, nº de pregões usados, status (`ok` \| `insufficient_data`) e motivo | RF-VOL-01 |
 
 ### 6.3 Coleta
 
@@ -342,11 +362,11 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | M1 Vol | RF-VOL-01..05, RN-VOL-01..09 | `quant/vol`, `quant/pricing`, `jobs/` (recálculo pós-coleta) | Os 6 estimadores (§5.5) e a IV passam nos testes de referência (§10.2); retornos ajustados por proventos; pregão intradiário incompleto fora da janela; prazo constante "indisponível" sem extrapolação. |
 | M1 Previsão | RF-PRV-01..04, RN-PRV-01/02 | `quant/forecast` | EWMA, combinação de estimadores e **GARCH(1,1)** (biblioteca `arch`, retornos diários ajustados, previsão agregada no horizonte); avaliação apenas com janelas não sobrepostas; baselines RV C2C 20d e IV; GARCH instável ou sem convergência → "indisponível" com motivo (LC-04). |
 | M2 Eventos | RF-EVT-01/02, RN-EVT-01..03 | `/events`, `quant/events` | Salto pela estrutura a termo, conferido com o histórico; intervalo largo com pouco histórico. |
-| M3 Ranking | RF-RNK-01/02, RN-EDG-01..05, RN-CST-01..03 | `quant/edge`, `quant/costs`, `/ranking` | Semáforo de 3 estados com custos conservadores; limiar rotulado "não calibrado". |
+| M3 Ranking | RF-RNK-01/02, RN-EDG-01..07, RN-CST-01..03 | `quant/edge`, `quant/costs`, `/ranking` | Prêmio absoluto e edge relativo descontados do spread normal (§5.6); ranking pelo edge relativo líquido; semáforo de 3 estados com custos conservadores; limiar e spread normal rotulados "não calibrado" sem histórico. |
 | M4 Simulador | RF-SIM-01..05 | `quant/simulation`, `/simulations` | Payoff, Greeks e custos para as 3 estruturas; distribuição por bootstrap considerando a regra de hedge (QA-10). |
 | M5 Dimensionamento | RN-SIZ-01..06 | `quant/sizing`, `/sizing` | Kelly 1/4 sobre o limite inferior do edge e a variância simulada; teto de 7%; zero sem edge líquido. |
 | M6 Carteira e risco | RF-RSK-01..04 | `quant/risk`, `/portfolio` | Greeks agregados; 4 cenários de stress configuráveis; limites com alerta. |
-| M7 Gestão | RN-GES-01..05 | `quant/rules`, `/alerts` | Alertas de hedge (banda e tempo), saída (edge acabou e opcionais), rolagem só com edge líquido após custos, limites, data ex-provento com posição aberta (RS-07). |
+| M7 Gestão | RN-GES-01..05 | `quant/rules`, `/alerts` | Alertas de hedge (banda e tempo), saída (edge relativo líquido acabou e opcionais), rolagem só com edge líquido após custos, limites, data ex-provento com posição aberta (RS-07). |
 | M8 Diário e performance | RF-DIA-01..07, RN-CST-04 | `quant/attribution`, `/positions`, `/performance` | Atribuição com resíduo sempre visível; previsto × realizado nos dois níveis; IR separado. |
 | M9 Avaliação de modelos | RF-PRV-03/04, CS-03 | `/models/evaluation` | Todos os modelos ativos comparados aos baselines, com nº de observações. |
 
@@ -376,7 +396,7 @@ No lugar de uma meta de cobertura percentual, **a etapa não fecha sem estes tes
 | T-REF-02 | **Ida e volta da IV**: preço(σ) → IV → σ, em grade de moneyness, prazos e vols (hypothesis) | erro < 1e-6 onde a vega é relevante; falha explícita (sem número) onde não há solução |
 | T-REF-03 | **Paridade put-call** com dividendos discretos | resíduo < 1e-8 |
 | T-REF-04 | **Greeks contra diferenças finitas** (delta, gamma, theta, vega) | tolerância relativa por Greek, documentada |
-| T-REF-05 | **Estimadores de vol (os 6 do §5.5) contra cálculo independente**: implementação ingênua em loop e planilha de referência; mais propriedade em série sintética (movimento browniano geométrico com σ conhecido, sem drift e sem gap): todos convergem para σ dentro de tolerância estatística documentada | erro < 1e-10 (referência); tolerância documentada (sintético) |
+| T-REF-05 | **Estimadores de vol (os 6 do §5.5, com as duas formas de close-to-close) contra cálculo independente**: implementação ingênua em loop, planilha de referência e casos da §7 da referência técnica (inclui `bias_b` e `bias_b_zero_mean`: N = 5, 20, 100 → 0,951533; 0,987583; 0,997503); mais propriedade em série sintética (movimento browniano geométrico com σ conhecido, sem drift e sem gap): todos convergem para σ dentro de tolerância estatística documentada | erro < 1e-10 (referência); tolerância documentada (sintético) |
 | T-REF-06 | **Unidades e escalas**: vol decimal × %, dias úteis × corridos, anualização 252, taxa exponencial; nenhuma função aceita ou devolve % | testes dedicados no engine e no `lib/format` |
 | T-REF-07 | **Kelly e teto** em casos montados à mão (prevalece Kelly; prevalece teto; zero sem edge) | igualdade exata |
 | T-REF-08 | **Atribuição de P&L**: em série sintética gerada pelo próprio modelo, o resíduo tende a zero | resíduo < limite |
