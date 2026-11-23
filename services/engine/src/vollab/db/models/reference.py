@@ -135,6 +135,10 @@ class CorporateAction(CreatedAtMixin, Base):
     source: Mapped[str] = mapped_column(Text, nullable=False)
     confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False)
     raw_file_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("raw_files.id"))
+    # Provento manual criado a partir de um evento ex-dividendo/ex-JCP (apagado junto com ele).
+    event_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("events.id", ondelete="CASCADE"), unique=True
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

@@ -3,11 +3,11 @@
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base:** [BRD 1.4 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
 **Referência técnica de fórmulas:** [`referencia/volatility-trading.md`](./referencia/volatility-trading.md) — sempre a forma corrigida; nunca a forma impressa no livro de fórmula listada na Errata (§2 da referência)
-**Versão:** 1.5
-**Data:** 2026-11-22
-**Status:** Aprovado (1.5, 2026-11-22)
+**Versão:** 1.6
+**Data:** 2026-11-23
+**Status:** Aprovado (1.6, 2026-11-23)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06. 1.6 (2026-11-23, Etapa 3, aprovado): detalhes físicos e de método da volatilidade — `intraday_sessions` e `constant_maturity_vols` (§6.2), salto de evento e IV ex-evento calculados na leitura em vez de `event_jumps` (§6.4), `corporate_actions.event_id`, endpoints `/summary` e `/prices` e a lista `/app/ativos` (§7, §8.1), métodos da §5.5.1; nenhuma mudança de escopo do BRD.
 
 ---
 
@@ -198,6 +198,20 @@ Regras:
 - Tudo é calculado **no worker depois da coleta** (PRD-NF-06) e gravado; as telas só leem. Negócios brutos nunca são agregados dentro de uma requisição.
 - Saída em `EstimatedValue` (§5.2), `origin = estimated`; o intervalo de confiança segue o método do QA-07 (Etapa 4).
 
+#### 5.5.1 Métodos adotados na Etapa 3 (1.6)
+
+| Tema | Método |
+|------|--------|
+| Janela | Estrita: os *n* pregões do calendário até a data; qualquer pregão sem OHLC, com OHLC incoerente, sem fechamento anterior ou (intradiária) incompleto → `insufficient_data` com motivo (`missing_days`, `incomplete_sessions`, `non_positive`). |
+| Correção de viés | Só no close-to-close (b₀ e c₄). Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang e intradiária são exibidos sem correção (a referência não traz fator fechado). |
+| Grade de 5 min | Abertura configurável (10:00); fim = hora cheia do negócio de fechamento (último pelo identificador; 18:05 → 18:00), o que acompanha a mudança de horário da B3 sem configuração. Negócios do leilão de fechamento ficam fora das barras; o último retorno termina no fechamento oficial. |
+| Proventos | Por data ex, prioridade `manual` > `b3_strike_adjustment` > `yahoo`. Retorno: Cₜ₋₁ − D (RN-VOL-07). |
+| Precificação | Taxa contínua = ln(1 + Selic); prazo = dias úteis até o vencimento / 252; S* = S − VP(proventos com data ex em (hoje, vencimento]); **strike efetivo = K − Σ proventos** (a B3 reduz o strike na data ex, RN-DAD-03), configurável (`vol.implied.dividend_protected_strikes`). IV por Newton protegido por bisseção, vetorizada; fora dos limites de arbitragem → sem número, com o motivo. |
+| IV de referência | Mediana na última hora antes do fim da sessão regular (mesma regra da grade), incluindo o leilão de fechamento; abaixo de 3 negócios, o último negócio sincronizado (`low_sample`). |
+| ATM | Por vencimento: interpolação linear em ln(K/F) entre o strike líquido imediatamente abaixo e o imediatamente acima do forward F = (S − VP)·(1 + Selic)^t, usando a opção fora do dinheiro de cada strike; exige os dois lados dentro de K/F 0,9–1,1. |
+| Prazo constante | Interpolação linear na variância total σ²t entre os vencimentos que cercam o alvo (padrão 21 du, QA-03); sem extrapolação; sem dois vencimentos, exibe a ATM do vencimento mais próximo com o prazo efetivo (RN-VOL-05). |
+| Salto de evento | Eq. 5.3 com o 1º vencimento depois do evento e o seguinte (σ₁ ≤ σ₂ → não precificado). Histórico: retornos ajustados nas datas de resultado passadas cadastradas, média de r² menos a variância diária do close-to-close oficial da maior janela. Valor = estrutura a termo, ou o histórico (`approximate`) sem ela. Intervalo provisório até o QA-07: qui-quadrado do histórico, estendido para conter o valor; sem histórico, sem intervalo e com o motivo. Ex-evento: subtrai σ_E² da variância total de cada vencimento posterior ao evento e interpola de novo (RN-EVT-03). |
+
 ### 5.6 Prêmio, edge relativo e spread normal (BRD RN-EDG-01/02/07, Etapa 5)
 
 Notação no mesmo horizonte *h*: IV = IV de prazo constante ex-evento (RN-EVT-03), σ̂ = RV prevista (RF-PRV-04), *s* = spread normal relativo do ativo, *c* = custos estimados em pontos de vol (custo em BRL ÷ vega por ponto, versão conservadora, RN-EDG-04).
@@ -250,6 +264,8 @@ Detalhes confirmados na Etapa 2:
 | `implied_vols` | IV por negócio, com preço sincronizado do ativo e defasagem em ms; pares acima da janela (padrão 10 s) não geram IV e são contados | RF-VOL-02, RN-VOL-03 |
 | `atm_term_structure` | IV ATM por vencimento e IV de prazo constante (ou indisponível, com motivo) | RF-VOL-03, RN-VOL-05 |
 | `intraday_bars` | barras de 5 min do ativo-objeto por pregão (início, último preço, nº de negócios, quantidade), a partir dos negócios válidos pela R4, e a cobertura do pregão (% de barras com negócio, completo/incompleto) | RN-VOL-08 |
+| `intraday_sessions` | *(1.6)* resumo do pregão intradiário: grade (abertura, fim da sessão, tamanho da barra), barras totais e com negócio, cobertura, completo, Σ r² intradiário (sem a noite) | RN-VOL-08 |
+| `constant_maturity_vols` | *(1.6)* IV de prazo constante por ativo e pregão (sem remoção de eventos), vencimentos usados ou o vencimento de fallback com o prazo efetivo | RF-VOL-03, RN-VOL-05 |
 | `realized_vols` | RV por ativo, pregão de referência, **estimador** (`close_to_close`, `close_to_close_demeaned`, `parkinson`, `garman_klass`, `rogers_satchell`, `yang_zhang`, `intraday_5m`) e janela (`window_bd`): valor, nº de pregões usados, status (`ok` \| `insufficient_data`) e motivo | RF-VOL-01 |
 
 ### 6.3 Coleta
@@ -264,8 +280,8 @@ Detalhes confirmados na Etapa 2:
 
 | Tabela | Conteúdo | BRD |
 |--------|----------|-----|
-| `events` | tipo (resultado, ex-dividendo, ex-JCP, vencimento, Copom, macro), data, confirmada/estimada | RF-EVT-01/02 |
-| `event_jumps` | salto estimado por evento: pela estrutura a termo e pelo histórico, com intervalo | RN-EVT-01/02 |
+| `events` | tipo (resultado, ex-dividendo, ex-JCP, Copom, macro), data, confirmada/estimada, valor por ação (ex-dividendo/ex-JCP). *(1.6)* Vencimentos não são gravados: derivados das séries mensais na leitura. Ex-dividendo/ex-JCP criam um provento `manual` em `corporate_actions` (`event_id`, apagado junto) e enfileiram o recálculo do ativo | RF-EVT-01/02, RS-02 |
+| `event_jumps` | salto estimado por evento: pela estrutura a termo e pelo histórico, com intervalo. *(1.6: não persistida na Etapa 3 — calculado na leitura a partir de `atm_term_structure`, `daily_bars` e `realized_vols`, pois depende do calendário do usuário e é barato; volta a ser gravado no retrato da decisão, Etapa 6)* | RN-EVT-01/02 |
 | `rv_forecasts` | previsão por modelo, ativo, data e horizonte, com intervalo | RF-PRV-01/02 |
 | `forecast_evaluations` | erro por modelo e baseline, apenas janelas não sobrepostas, nº de observações | RF-PRV-03, RN-PRV-01 |
 
@@ -291,7 +307,7 @@ Base: `/api/engine` no navegador (via `rewrites`) e `http://127.0.0.1:8000` para
 |-------|----------------------|-----|
 | Saúde | `GET /health` (versão do engine, banco, última coleta) | — |
 | Coleta | `GET /collection/pending` (pregões e itens pendentes) · `POST /collection/runs` · `GET /collection/runs/{id}` (progresso) · `GET /collection/gaps` (relatório de falhas e lacunas) | RF-DAD-02/05/06 |
-| Ativos e séries | `GET/POST/PATCH /underlyings` · `GET /underlyings/{t}/series` | §5.1, RN-DAD-02 |
+| Ativos e séries | `GET/POST/PATCH /underlyings` · `GET /underlyings/{t}/series` · *(1.6)* `GET /underlyings/{t}/summary` (último pregão, qualidade do intradiário e da sincronização) · `GET /underlyings/{t}/prices` | §5.1, RN-DAD-02, RN-VOL-03 |
 | Volatilidade | `GET /underlyings/{t}/vol/realized` · `/vol/implied/smile?expiry=` · `/vol/term-structure` · `/vol/constant-maturity` | RF-VOL-01..05 |
 | Eventos | `GET/POST/PATCH/DELETE /events` · `GET /underlyings/{t}/event-jumps` | §7.3 |
 | Previsão | `GET /forecasts?underlying=&horizon_bd=&model=` · `GET /models/evaluation` | §7.1 Previsão |
@@ -326,7 +342,8 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | `/app` | Painel: pendências de coleta, alertas, resumo da carteira | Server (casca) + TanStack Query (pendências e alertas) | O estado muda após a coleta |
 | `/app/coleta` | Execução, progresso, relatório de lacunas | TanStack Query (polling do progresso) | Progresso ao vivo |
 | `/app/ranking` | Ranking com semáforo | TanStack Query | Invalida após coleta ou mudança de configuração |
-| `/app/ativos/[ticker]` | RV, IV, smile, estrutura a termo, eventos, salto | Server (dados D-1) + Client para gráficos | Leitura; Plotly só no cliente |
+| `/app/ativos` | *(1.6)* Lista dos ativos cadastrados, com link para cada um | TanStack Query | Navegação até a tela do ativo antes do ranking (Etapa 5) |
+| `/app/ativos/[ticker]` | RV, IV, smile, estrutura a termo, eventos, salto | Server (casca) + Client para dados e gráficos | Leitura; Plotly só no cliente |
 | `/app/simulador` | Simulação, preços manuais, dimensionamento, registro da entrada | TanStack Query (mutations) + RHF/Zod | Recalcula com entradas |
 | `/app/carteira` | Greeks, exposição, stress, limites | TanStack Query | Stress configurável na tela |
 | `/app/operacoes/[id]` | Detalhe, lançamentos, marcações, atribuição | Server (leitura) + formulário de lançamento em Client | Misto |

@@ -2,6 +2,7 @@
 
 from vollab.db.models.collection import CollectionItem, CollectionRun
 from vollab.db.models.config_version import ConfigVersion
+from vollab.db.models.events import Event
 from vollab.db.models.job import Job, JobStatus
 from vollab.db.models.market import DailyBar, OptionDailyStat, RawFile, trades
 from vollab.db.models.reference import (
@@ -13,20 +14,37 @@ from vollab.db.models.reference import (
     Underlying,
 )
 from vollab.db.models.user import FIXED_USER_ID, User
+from vollab.db.models.vol import (
+    AtmTermPoint,
+    ConstantMaturityVol,
+    ImpliedVol,
+    IntradayBar,
+    IntradaySession,
+    OptionDailyQuote,
+    RealizedVol,
+)
 
 __all__ = [
     "FIXED_USER_ID",
+    "AtmTermPoint",
     "CollectionItem",
     "CollectionRun",
     "ConfigVersion",
+    "ConstantMaturityVol",
     "CorporateAction",
     "DailyBar",
+    "Event",
     "ExchangeHoliday",
+    "ImpliedVol",
+    "IntradayBar",
+    "IntradaySession",
     "Job",
     "JobStatus",
+    "OptionDailyQuote",
     "OptionDailyStat",
     "OptionSeries",
     "RawFile",
+    "RealizedVol",
     "RiskFreeRate",
     "SeriesAdjustment",
     "Underlying",

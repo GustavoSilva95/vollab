@@ -139,6 +139,325 @@ export type CollectionRunResponse = {
 };
 
 /**
+ * ConstantMaturityOut
+ */
+export type ConstantMaturityOut = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Events Removed
+     *
+     * Ids dos eventos cujo salto foi removido.
+     */
+    events_removed: Array<number>;
+    /**
+     * Fallback Bd
+     *
+     * Prazo efetivo da ATM exibida no lugar.
+     */
+    fallback_bd: number | null;
+    /**
+     * Fallback Expiry
+     *
+     * Sem dois vencimentos: o vencimento cuja ATM é exibida (RN-VOL-05).
+     */
+    fallback_expiry: string | null;
+    /**
+     * Fallback Iv
+     */
+    fallback_iv: number | null;
+    /**
+     * IV ATM de prazo constante (interpolação em variância total).
+     */
+    iv: EstimatedValue;
+    /**
+     * Sem a variância dos saltos de evento (RN-EVT-03).
+     */
+    iv_ex_event: EstimatedValue;
+    /**
+     * Lower Expiry
+     */
+    lower_expiry: string | null;
+    /**
+     * Upper Expiry
+     */
+    upper_expiry: string | null;
+};
+
+/**
+ * ConstantMaturityResponse
+ */
+export type ConstantMaturityResponse = {
+    /**
+     * History
+     */
+    history: Array<ConstantMaturityOut>;
+    latest: ConstantMaturityOut | null;
+    /**
+     * Target Bd
+     */
+    target_bd: number;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * EstimatedValue
+ *
+ * Valor com proveniência (PRD §5.2). `insufficient_data` → a interface nunca mostra número.
+ */
+export type EstimatedValue = {
+    /**
+     * As Of
+     *
+     * Pregão de referência.
+     */
+    as_of: string;
+    /**
+     * Calibrated
+     *
+     * Para limiares e spread normal (Etapa 5).
+     */
+    calibrated?: boolean | null;
+    /**
+     * Ci High
+     *
+     * Limite superior do intervalo.
+     */
+    ci_high?: number | null;
+    /**
+     * Ci Level
+     *
+     * Nível do intervalo (QA-07), ex.: 0.90.
+     */
+    ci_level: number;
+    /**
+     * Ci Low
+     *
+     * Limite inferior do intervalo.
+     */
+    ci_low?: number | null;
+    /**
+     * Origin
+     */
+    origin: 'observed' | 'estimated' | 'manual' | 'approximate';
+    /**
+     * Reason
+     *
+     * Motivo de status ≠ ok ou de ausência de intervalo.
+     */
+    reason?: string | null;
+    /**
+     * Stale
+     *
+     * Dado mais antigo que o último pregão.
+     */
+    stale: boolean;
+    /**
+     * Status
+     */
+    status: 'ok' | 'insufficient_data' | 'unavailable';
+    /**
+     * Value
+     *
+     * Valor (vol: decimal anualizado em base 252).
+     */
+    value: number | null;
+};
+
+/**
+ * EstimatorSeries
+ */
+export type EstimatorSeries = {
+    /**
+     * Estimator
+     */
+    estimator: 'close_to_close' | 'close_to_close_demeaned' | 'parkinson' | 'garman_klass' | 'rogers_satchell' | 'yang_zhang' | 'intraday_5m';
+    latest: EstimatedValue;
+    /**
+     * Points
+     */
+    points: Array<RealizedPoint>;
+    /**
+     * Window Bd
+     */
+    window_bd: number;
+};
+
+/**
+ * EventCreate
+ */
+export type EventCreate = {
+    /**
+     * Amount
+     */
+    amount?: number | string | null;
+    /**
+     * Event Date
+     */
+    event_date: string;
+    /**
+     * Kind
+     */
+    kind: 'earnings' | 'ex_dividend' | 'ex_jcp' | 'copom' | 'macro';
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Status
+     */
+    status: 'confirmed' | 'estimated';
+    /**
+     * Ticker
+     */
+    ticker?: string | null;
+};
+
+/**
+ * EventJumpOut
+ */
+export type EventJumpOut = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    event: EventOut;
+    /**
+     * Expected Move
+     *
+     * Movimento esperado E|R| = sqrt(2/π)·σ (eq. 5.4).
+     */
+    expected_move: number | null;
+    /**
+     * Expiry1
+     */
+    expiry1: string | null;
+    /**
+     * Expiry2
+     */
+    expiry2: string | null;
+    /**
+     * Historical Ci High
+     */
+    historical_ci_high: number | null;
+    /**
+     * Historical Ci Low
+     */
+    historical_ci_low: number | null;
+    /**
+     * Historical N
+     *
+     * Datas de resultado passadas com retorno disponível.
+     */
+    historical_n: number;
+    /**
+     * Historical Value
+     */
+    historical_value: number | null;
+    /**
+     * σ do retorno no dia do evento (decimal, não anualizado).
+     */
+    jump: EstimatedValue;
+    /**
+     * Term Structure Reason
+     */
+    term_structure_reason: string | null;
+    /**
+     * Term Structure Value
+     */
+    term_structure_value: number | null;
+};
+
+/**
+ * EventJumpsResponse
+ */
+export type EventJumpsResponse = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    /**
+     * Jumps
+     */
+    jumps: Array<EventJumpOut>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * EventOut
+ */
+export type EventOut = {
+    /**
+     * Amount
+     *
+     * Valor por ação (ex-dividendo/ex-JCP), BRL.
+     */
+    amount: string | null;
+    /**
+     * Derived
+     *
+     * Vencimento derivado do COTAHIST (não editável).
+     */
+    derived: boolean;
+    /**
+     * Event Date
+     */
+    event_date: string;
+    /**
+     * Id
+     *
+     * Nulo para vencimentos (derivados das séries, não editáveis).
+     */
+    id: number | null;
+    /**
+     * Kind
+     */
+    kind: 'earnings' | 'ex_dividend' | 'ex_jcp' | 'copom' | 'macro' | 'expiry';
+    /**
+     * Note
+     */
+    note: string | null;
+    /**
+     * Status
+     */
+    status: 'confirmed' | 'estimated';
+    /**
+     * Ticker
+     */
+    ticker: string | null;
+};
+
+/**
+ * EventUpdate
+ */
+export type EventUpdate = {
+    /**
+     * Amount
+     */
+    amount?: number | string | null;
+    /**
+     * Event Date
+     */
+    event_date?: string | null;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Status
+     */
+    status?: 'confirmed' | 'estimated' | null;
+};
+
+/**
  * GapOut
  */
 export type GapOut = {
@@ -257,6 +576,36 @@ export type HealthResponse = {
 };
 
 /**
+ * IntradayQuality
+ */
+export type IntradayQuality = {
+    /**
+     * Bars Total
+     */
+    bars_total: number;
+    /**
+     * Bars With Trades
+     */
+    bars_with_trades: number;
+    /**
+     * Complete
+     *
+     * Cobertura ≥ mínimo configurado (RN-VOL-08).
+     */
+    complete: boolean;
+    /**
+     * Coverage
+     *
+     * Fração de barras de 5 min com negócio (decimal).
+     */
+    coverage: number;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+};
+
+/**
  * ItemOut
  */
 export type ItemOut = {
@@ -296,6 +645,96 @@ export type ItemOut = {
      * Underlying
      */
     underlying: string | null;
+};
+
+/**
+ * IvQuality
+ *
+ * Relatório de qualidade da sincronização (RN-VOL-03) no pregão.
+ */
+export type IvQuality = {
+    /**
+     * Sync Window S
+     */
+    sync_window_s: number;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+    /**
+     * Trades Lag Discarded
+     *
+     * Pares acima da janela máxima de sincronização.
+     */
+    trades_lag_discarded: number;
+    /**
+     * Trades No Solution
+     *
+     * Negócios sincronizados sem IV (preço fora dos limites).
+     */
+    trades_no_solution: number;
+    /**
+     * Trades Synced
+     */
+    trades_synced: number;
+    /**
+     * Trades Valid
+     */
+    trades_valid: number;
+};
+
+/**
+ * PriceHistory
+ */
+export type PriceHistory = {
+    /**
+     * Calendar
+     *
+     * Todos os pregões do período (para quebrar a linha nas lacunas).
+     */
+    calendar: Array<string>;
+    /**
+     * Points
+     *
+     * Só pregões com OHLC; a interface mostra as lacunas.
+     */
+    points: Array<PricePoint>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * PricePoint
+ */
+export type PricePoint = {
+    /**
+     * Close
+     */
+    close: string;
+    /**
+     * Dividend
+     *
+     * Provento com data ex no pregão (ajusta o retorno, RN-VOL-07).
+     */
+    dividend: string | null;
+    /**
+     * High
+     */
+    high: string;
+    /**
+     * Low
+     */
+    low: string;
+    /**
+     * Open
+     */
+    open: string;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
 };
 
 /**
@@ -371,6 +810,64 @@ export type ProgressCounts = {
 };
 
 /**
+ * RealizedPoint
+ */
+export type RealizedPoint = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Missing Days
+     */
+    missing_days: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'insufficient_data';
+    /**
+     * Variance Annual
+     *
+     * Variância anualizada sem correção (previsão/GARCH).
+     */
+    variance_annual: number | null;
+    /**
+     * Vol
+     *
+     * Vol exibida (com correção de viés no close-to-close).
+     */
+    vol: number | null;
+};
+
+/**
+ * RealizedVolResponse
+ */
+export type RealizedVolResponse = {
+    /**
+     * Estimators
+     */
+    estimators: Array<EstimatorSeries>;
+    /**
+     * Official Close To Close
+     *
+     * Forma do close-to-close usada como oficial (config `close_to_close_mode`).
+     */
+    official_close_to_close: 'close_to_close' | 'close_to_close_demeaned';
+    /**
+     * Ticker
+     */
+    ticker: string;
+    /**
+     * Windows Bd
+     */
+    windows_bd: Array<number>;
+};
+
+/**
  * RunSummary
  */
 export type RunSummary = {
@@ -417,6 +914,210 @@ export type RunSummary = {
 };
 
 /**
+ * SeriesOut
+ */
+export type SeriesOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Days To Expiry Bd
+     */
+    days_to_expiry_bd: number;
+    /**
+     * Effective Strike
+     *
+     * Strike no vencimento, com a proteção de proventos.
+     */
+    effective_strike: string | null;
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Is Weekly
+     */
+    is_weekly: boolean;
+    /**
+     * IV de referência do pregão (RN-VOL-06).
+     */
+    iv: EstimatedValue | null;
+    /**
+     * Iv Status
+     */
+    iv_status: 'ok' | 'low_sample' | 'no_iv' | null;
+    /**
+     * Liquid
+     *
+     * Passa no filtro de liquidez (RN-VOL-04).
+     */
+    liquid: boolean;
+    /**
+     * Option Type
+     */
+    option_type: 'call' | 'put';
+    /**
+     * Strike
+     *
+     * Strike do COTAHIST no pregão.
+     */
+    strike: string;
+    /**
+     * Style
+     */
+    style: 'european' | 'american';
+    /**
+     * Trades Count
+     *
+     * Negócios no pregão (COTAHIST).
+     */
+    trades_count: number;
+    /**
+     * Trades Used
+     */
+    trades_used: number | null;
+};
+
+/**
+ * SeriesResponse
+ */
+export type SeriesResponse = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    /**
+     * Series
+     */
+    series: Array<SeriesOut>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * SmilePointOut
+ */
+export type SmilePointOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Effective Strike
+     */
+    effective_strike: string;
+    /**
+     * Iv
+     */
+    iv: number;
+    /**
+     * Moneyness
+     *
+     * K efetivo / forward (decimal).
+     */
+    moneyness: number;
+    /**
+     * Option Type
+     */
+    option_type: 'call' | 'put';
+    /**
+     * Out Of The Money
+     */
+    out_of_the_money: boolean;
+    /**
+     * Status
+     */
+    status: 'ok' | 'low_sample';
+    /**
+     * Strike
+     */
+    strike: string;
+    /**
+     * Trades Used
+     */
+    trades_used: number;
+};
+
+/**
+ * SmileResponse
+ */
+export type SmileResponse = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    atm_iv: EstimatedValue | null;
+    /**
+     * Days To Expiry Bd
+     */
+    days_to_expiry_bd: number | null;
+    /**
+     * Expiries
+     *
+     * Vencimentos com IV de séries líquidas no pregão.
+     */
+    expiries: Array<string>;
+    /**
+     * Expiry
+     */
+    expiry: string | null;
+    /**
+     * Forward
+     */
+    forward: number | null;
+    /**
+     * Points
+     *
+     * Só séries líquidas (RN-VOL-04).
+     */
+    points: Array<SmilePointOut>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * TermPointOut
+ */
+export type TermPointOut = {
+    atm_iv: EstimatedValue;
+    /**
+     * Days To Expiry Bd
+     */
+    days_to_expiry_bd: number;
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Is Weekly
+     */
+    is_weekly: boolean;
+};
+
+/**
+ * TermStructureResponse
+ */
+export type TermStructureResponse = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    /**
+     * Points
+     */
+    points: Array<TermPointOut>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
  * UnderlyingCreate
  */
 export type UnderlyingCreate = {
@@ -442,6 +1143,44 @@ export type UnderlyingOut = {
      * ISIN do ativo; identifica as séries de opção (RN-DAD-02).
      */
     isin: string | null;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * UnderlyingSummary
+ */
+export type UnderlyingSummary = {
+    /**
+     * As Of
+     *
+     * Último pregão com OHLC oficial.
+     */
+    as_of: string | null;
+    /**
+     * Close
+     */
+    close: string | null;
+    /**
+     * Computed At
+     *
+     * Último recálculo de volatilidade no worker.
+     */
+    computed_at: string | null;
+    /**
+     * Expected As Of
+     *
+     * Último pregão esperado (D-1).
+     */
+    expected_as_of: string;
+    intraday: IntradayQuality | null;
+    /**
+     * Isin
+     */
+    isin: string | null;
+    iv_quality: IvQuality | null;
     /**
      * Ticker
      */
@@ -576,6 +1315,151 @@ export type GetCollectionRunResponses = {
 
 export type GetCollectionRunResponse = GetCollectionRunResponses[keyof GetCollectionRunResponses];
 
+export type ListEventsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Ticker
+         */
+        ticker?: string | null;
+        /**
+         * Start
+         *
+         * Padrão: hoje − 180 dias.
+         */
+        start?: string | null;
+        /**
+         * End
+         *
+         * Padrão: hoje + 365 dias.
+         */
+        end?: string | null;
+    };
+    url: '/events';
+};
+
+export type ListEventsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type ListEventsError = ListEventsErrors[keyof ListEventsErrors];
+
+export type ListEventsResponses = {
+    /**
+     * Response List Events
+     *
+     * Successful Response
+     */
+    200: Array<EventOut>;
+};
+
+export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];
+
+export type CreateEventData = {
+    body: EventCreate;
+    path?: never;
+    query?: never;
+    url: '/events';
+};
+
+export type CreateEventErrors = {
+    /**
+     * Evento duplicado ou provento já cadastrado na data.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type CreateEventError = CreateEventErrors[keyof CreateEventErrors];
+
+export type CreateEventResponses = {
+    /**
+     * Successful Response
+     */
+    201: EventOut;
+};
+
+export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
+
+export type DeleteEventData = {
+    body?: never;
+    path: {
+        /**
+         * Event Id
+         */
+        event_id: number;
+    };
+    query?: never;
+    url: '/events/{event_id}';
+};
+
+export type DeleteEventErrors = {
+    /**
+     * Evento não encontrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type DeleteEventError = DeleteEventErrors[keyof DeleteEventErrors];
+
+export type DeleteEventResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteEventResponse = DeleteEventResponses[keyof DeleteEventResponses];
+
+export type UpdateEventData = {
+    body: EventUpdate;
+    path: {
+        /**
+         * Event Id
+         */
+        event_id: number;
+    };
+    query?: never;
+    url: '/events/{event_id}';
+};
+
+export type UpdateEventErrors = {
+    /**
+     * Evento não encontrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Evento duplicado ou provento já cadastrado na data.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type UpdateEventError = UpdateEventErrors[keyof UpdateEventErrors];
+
+export type UpdateEventResponses = {
+    /**
+     * Successful Response
+     */
+    200: EventOut;
+};
+
+export type UpdateEventResponse = UpdateEventResponses[keyof UpdateEventResponses];
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -694,3 +1578,329 @@ export type UpdateUnderlyingResponses = {
 };
 
 export type UpdateUnderlyingResponse = UpdateUnderlyingResponses[keyof UpdateUnderlyingResponses];
+
+export type GetEventJumpsData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: never;
+    url: '/underlyings/{ticker}/event-jumps';
+};
+
+export type GetEventJumpsErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetEventJumpsError = GetEventJumpsErrors[keyof GetEventJumpsErrors];
+
+export type GetEventJumpsResponses = {
+    /**
+     * Successful Response
+     */
+    200: EventJumpsResponse;
+};
+
+export type GetEventJumpsResponse = GetEventJumpsResponses[keyof GetEventJumpsResponses];
+
+export type GetPriceHistoryData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Days
+         *
+         * Pregões a devolver.
+         */
+        days?: number;
+    };
+    url: '/underlyings/{ticker}/prices';
+};
+
+export type GetPriceHistoryErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetPriceHistoryError = GetPriceHistoryErrors[keyof GetPriceHistoryErrors];
+
+export type GetPriceHistoryResponses = {
+    /**
+     * Successful Response
+     */
+    200: PriceHistory;
+};
+
+export type GetPriceHistoryResponse = GetPriceHistoryResponses[keyof GetPriceHistoryResponses];
+
+export type GetUnderlyingSeriesData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Date
+         *
+         * Padrão: o último.
+         */
+        date?: string | null;
+    };
+    url: '/underlyings/{ticker}/series';
+};
+
+export type GetUnderlyingSeriesErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetUnderlyingSeriesError = GetUnderlyingSeriesErrors[keyof GetUnderlyingSeriesErrors];
+
+export type GetUnderlyingSeriesResponses = {
+    /**
+     * Successful Response
+     */
+    200: SeriesResponse;
+};
+
+export type GetUnderlyingSeriesResponse = GetUnderlyingSeriesResponses[keyof GetUnderlyingSeriesResponses];
+
+export type GetUnderlyingSummaryData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: never;
+    url: '/underlyings/{ticker}/summary';
+};
+
+export type GetUnderlyingSummaryErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetUnderlyingSummaryError = GetUnderlyingSummaryErrors[keyof GetUnderlyingSummaryErrors];
+
+export type GetUnderlyingSummaryResponses = {
+    /**
+     * Successful Response
+     */
+    200: UnderlyingSummary;
+};
+
+export type GetUnderlyingSummaryResponse = GetUnderlyingSummaryResponses[keyof GetUnderlyingSummaryResponses];
+
+export type GetConstantMaturityData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Days
+         *
+         * Pregões de histórico.
+         */
+        days?: number;
+    };
+    url: '/underlyings/{ticker}/vol/constant-maturity';
+};
+
+export type GetConstantMaturityErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetConstantMaturityError = GetConstantMaturityErrors[keyof GetConstantMaturityErrors];
+
+export type GetConstantMaturityResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConstantMaturityResponse;
+};
+
+export type GetConstantMaturityResponse = GetConstantMaturityResponses[keyof GetConstantMaturityResponses];
+
+export type GetSmileData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Expiry
+         *
+         * Padrão: o 1º vencimento com IV.
+         */
+        expiry?: string | null;
+        /**
+         * Date
+         *
+         * Padrão: o último.
+         */
+        date?: string | null;
+    };
+    url: '/underlyings/{ticker}/vol/implied/smile';
+};
+
+export type GetSmileErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetSmileError = GetSmileErrors[keyof GetSmileErrors];
+
+export type GetSmileResponses = {
+    /**
+     * Successful Response
+     */
+    200: SmileResponse;
+};
+
+export type GetSmileResponse = GetSmileResponses[keyof GetSmileResponses];
+
+export type GetRealizedVolData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Window Bd
+         *
+         * Padrão: todas as configuradas.
+         */
+        window_bd?: number | null;
+        /**
+         * Days
+         *
+         * Pregões de histórico.
+         */
+        days?: number;
+    };
+    url: '/underlyings/{ticker}/vol/realized';
+};
+
+export type GetRealizedVolErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetRealizedVolError = GetRealizedVolErrors[keyof GetRealizedVolErrors];
+
+export type GetRealizedVolResponses = {
+    /**
+     * Successful Response
+     */
+    200: RealizedVolResponse;
+};
+
+export type GetRealizedVolResponse = GetRealizedVolResponses[keyof GetRealizedVolResponses];
+
+export type GetTermStructureData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Date
+         *
+         * Padrão: o último.
+         */
+        date?: string | null;
+    };
+    url: '/underlyings/{ticker}/vol/term-structure';
+};
+
+export type GetTermStructureErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetTermStructureError = GetTermStructureErrors[keyof GetTermStructureErrors];
+
+export type GetTermStructureResponses = {
+    /**
+     * Successful Response
+     */
+    200: TermStructureResponse;
+};
+
+export type GetTermStructureResponse = GetTermStructureResponses[keyof GetTermStructureResponses];

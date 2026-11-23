@@ -1,8 +1,8 @@
 # STATUS
 
-**Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada, com BRD 1.4 / PRD 1.5; **não iniciar até o usuário pedir**)
-**Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (bloqueada até o fechamento da Etapa 3)
+**Atualizado em:** 2026-11-23
+**Etapa atual:** Etapa 3 — Volatilidade e eventos: **concluída e aprovada (2026-11-23)**; PR da branch `etapa-3-volatilidade-eventos` aberto
+**Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (liberada; **não iniciar até o usuário pedir**)
 
 ## Aprovações
 
@@ -19,6 +19,8 @@
 | Fechamento da Etapa 2 (Dados): CI verde (run 45062752607), revisões de segurança e performance com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 | BRD 1.3 / PRD 1.4 / PLANO: estimadores do livro-base (Parkinson, Garman-Klass, Rogers-Satchell, intradiária 5 min + overnight) e GARCH(1,1) explícito | 1.3 / 1.4 | Aprovado (janelas padrão 20 e 60 pregões; cobertura mínima de 80%) | 2026-11-22 |
 | Referência técnica `docs/referencia/volatility-trading.md` (com Errata) / BRD 1.4 / PRD 1.5: close-to-close de média zero, prêmio absoluto, edge relativo e spread normal | 1.4 / 1.5 | Aprovado (decisões do usuário) | 2026-11-22 |
+| PRD 1.6: detalhes físicos e métodos da Etapa 3 (§5.5.1, §6.2, §6.4, §7, §8.1) | 1.6 | Aprovado | 2026-11-23 |
+| Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado (CI no GitHub a conferir no PR) | 2026-11-23 |
 
 ## Feito
 
@@ -58,6 +60,16 @@
   - Revisão de segurança: **aprovada com ressalvas**. Bloqueantes corrigidos com teste: M-1 (linha sem quebra lida inteira na memória) e M-2 (exceções não classificadas derrubavam a coleta e ecoavam conteúdo no log, B-5 do backlog da Etapa 1). Corrigidos também M-3 (CSRF no POST da coleta: `proxy.ts` e engine recusam escrita de outra origem), M-4 (consultas de dados do usuário por `user_id`), B-1 (temporário do cache com `mkstemp`), B-2 (só stored/deflate), B-3 (`fullmatch` no ticker), B-4 (parser do Yahoo), B-5 (upserts em lotes, sem duplicatas).
   - Revisão de performance: bloqueantes corrigidos: ordem da chave de `trades` (instrumento primeiro; série em 63 pregões 363 ms → 3 ms) e `/collection/pending` (consulta única com filtro no banco; 26 ms após a coleta das fixtures; polling reduzido a 30 s com coleta ativa). Também: partições criadas no planejamento (fora da transação do item), índice do próximo item com `trade_date DESC`, `React.memo` no relatório. Carga inicial estimada em ~5,0 h, como no PRD-NF-04.
 
+- **Etapa 3 concluída e aprovada (2026-11-23)**, branch `etapa-3-volatilidade-eventos`:
+  - Motor puro (`quant/`): `pricing` (BS europeu com dividendos discretos, Greeks nas unidades do PRD, IV vetorizada por Newton protegido por bisseção com falha explícita), `vol` (os 7 estimadores na forma corrigida da Errata, janelas móveis estritas, `bias_b`, `bias_b_zero_mean`, c₄), `intraday` (barras de 5 min e variância intradiária), `implied` (sincronização, IV de referência, ATM, prazo constante, eqs. 5.2–5.4, salto histórico).
+  - Migration `0004`: `intraday_bars`, `intraday_sessions`, `realized_vols`, `implied_vols`, `option_daily_quotes`, `atm_term_structure`, `constant_maturity_vols`, `events`; `corporate_actions.event_id`. Parâmetros no bloco `vol` de `config_versions` (versão nova criada automaticamente com os padrões).
+  - Worker: job `vol_recompute` enfileirado ao fim de cada coleta e ao editar provento; um laço por pregão (negócios do ativo lidos uma vez); idempotente e retomável. Com as fixtures: ~1,4 s.
+  - API (contrato 0.3.0): `/underlyings/{t}/summary|prices|series|vol/realized|vol/implied/smile|vol/term-structure|vol/constant-maturity|event-jumps`, `GET/POST/PATCH/DELETE /events` (vencimentos derivados das séries). Nenhuma rota lê negócios brutos.
+  - Telas: `/app/ativos` (lista), `/app/ativos/[ticker]` (dados e qualidade, RV lado a lado com a hipótese de cada estimador, gráfico com lacunas, prazo constante com e sem salto e fallback com prazo efetivo, estrutura a termo, smile, saltos, séries) e `/app/eventos` (CRUD com RHF + Zod). Plotly parcial (core + scatter + bar) por `next/dynamic` sem SSR: chunk de 1,1 MB (379 KB gzip) só na rota do ativo; botão "Share chart" (envio para a nuvem da Plotly) desligado.
+  - Testes: **T-REF-01..05 passando** (60 testes `reference`: Hull/Haug + mpmath a 1e-8, ida e volta da IV com hypothesis, paridade com dividendos, Greeks × diferenças finitas, estimadores × laço ingênuo em 221 pregões reais, planilha mpmath, casos da §7, MBG sintético); engine 181, web 65 (inclui `EstimatedValueView` e formulário de eventos), Playwright 5 (novo: tela do ativo + evento). Lint, mypy estrito, `next build` e contrato determinístico ok.
+  - Com as fixtures (PETR4, 19/11/2026): IV ≈ 32%; RV 20 du: close-to-close 49,5%, Yang-Zhang 60,3%, Parkinson 33,7% — diferença explicada pelo gap de −13,6% em 26/10 (RN-VOL-09); intradiária "dados insuficientes" (11 pregões < 20). Prazo constante indisponível (só um vencimento com ATM) → ATM de 18/12 com prazo efetivo de 20 du.
+  - Revisão de performance: **sem bloqueantes**, metas atendidas (telas 4–26 ms; IV de 100 mil negócios em 63 ms; carga inicial ≈ 50 s de recálculo para 3 ativos). Corrigidos os 4 itens importantes: N+1 no prazo constante ex-evento (+ `days`), pregões refeitos a cada job, recálculo completo por edição de provento (agora sem o intradiário e sem duplicar jobs) e leitura dupla dos negócios do ativo.
+
 ## Decisões registradas
 
 | Data | Decisão | Onde |
@@ -94,6 +106,8 @@
 | 2026-11-22 | **Referência técnica de fórmulas adotada:** `docs/referencia/volatility-trading.md` (Sinclair, 2ª ed., fórmulas corrigidas). Nunca usar a forma impressa de fórmula listada na Errata (§2). PRD §5.5 conferido: Garman-Klass com ln(C/O), Rogers-Satchell com O = abertura, Yang-Zhang com ln(O/C₋₁) e ln(C/O), 1º retorno intradiário a partir da abertura, todos na forma corrigida | AGENTS.md |
 | 2026-11-22 | **Close-to-close padrão: média zero, divisor *n*** (eq. 2.1b); forma com média subtraída e *n* − 1 como opção configurável (`close_to_close_mode`), as duas gravadas para comparação. Viés da vol corrigido por `bias_b_zero_mean` (b₀(*n*)); `bias_b` nunca no estimador de média zero; *n*/(*n* − 1) não se aplica à média zero. Fatores conferidos por simulação (N = 20: 0,98741 simulado × 0,98758 teórico) | PRD 1.5 §5.5 |
 | 2026-11-22 | **Edge:** RN-EDG-01 = prêmio absoluto em pontos (semáforo e P&L esperado ≈ vega × pontos); **novo RN-EDG-02 = edge relativo** (IV − previsão)/previsão, métrica principal do ranking e dos alertas; ambos descontam o **spread normal** do produto (RN-EDG-07, regra S1 da referência). Spread normal definido uma vez, em termos relativos (*s*), de modo que prêmio = IV − σ̂(1 + *s*) e edge relativo = prêmio ÷ σ̂. Regras do semáforo renumeradas RN-EDG-02..05 → 03..06 (nenhum código dependia delas). Método e valor padrão do spread normal: **QA-14, aberta**, para a Etapa 5 | BRD 1.4 §7.4, PRD 1.5 §5.6 |
+| 2026-11-23 | **QA-03 resolvida (aprovada):** prazo constante padrão de 21 du, configurável (`vol.constant_maturity_bd`) | PRD 1.6 §5.5.1 |
+| 2026-11-23 | **Etapa 3 — métodos aprovados** (PRD 1.6 §5.5.1): janela estrita; correção de viés só no close-to-close; fim da sessão = hora cheia do leilão de fechamento; **strike efetivo = K − proventos até o vencimento** (proteção da B3); ATM por interpolação em ln(K/F) com strikes OTM dos dois lados (K/F 0,9–1,1); intervalo do salto provisório pelo qui-quadrado do histórico até o QA-07; salto e IV ex-evento calculados na leitura | PRD 1.6 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -110,9 +124,13 @@
 - Backlog da revisão de segurança da Etapa 2 (não bloqueante): B-6 (gravar a fonte `live`/`fixtures` em `collection_runs`/`raw_files` e impedir misturar no mesmo banco), B-7 (prazo total de download e pico de memória do COTAHIST anual, ~2× o arquivo), B-8 (corrida no limite de 10 ativos). Ao hospedar: rever o que `/health` e `/collection/pending` expõem.
 - Backlog da revisão de performance da Etapa 2 (não bloqueante): `executemany` nos upserts do COTAHIST (compilação do SQLAlchemy domina ~0,6 s por pregão); `r4_mask` calculado duas vezes por arquivo do ativo; evitar a cópia `bytes(body)` no download. Para a Etapa 3: não agregar negócios brutos na requisição (PETR4 em 63 pregões = 4,4 milhões de linhas, ~1,2 s); gravar agregados no worker após a coleta.
 - Retenção de `trades` não definida (~8 GB/ano com 3 ativos).
+- Backlog da revisão de performance da Etapa 3 (não bloqueante): "data mais recente" por seq scan em `/series` e no smile (usar a PK de `atm_term_structure`); laços O(séries × negócios) e `count_business_days` dia a dia em `implied_day`; inserts de `realized_vols`/`intraday_bars` por executemany (COPY se crescer); GZip no FastAPI; `staleTime` maior nas consultas de vol; `useMemo` na estrutura a termo; pregão com `IntradayError` volta ao escopo a cada job (raro).
+- Plotly 4 traz o botão "Share chart" (envia o gráfico à nuvem da Plotly): desligado em `lib/charts/theme.ts`; manter desligado em qualquer gráfico novo.
 
 ## Próximos passos
 
 1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
-3. Quando o usuário pedir, iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO e o BRD 1.4 / PRD 1.5 (fórmulas pela referência técnica, nunca na forma impressa da Errata): incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
+3. Conferir o CI no GitHub do PR da Etapa 3 e mesclar em `main`.
+4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
+5. Quando o usuário pedir, iniciar a Etapa 4 (Previsão de RV e avaliação de modelos).

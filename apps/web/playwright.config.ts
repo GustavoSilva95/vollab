@@ -16,7 +16,16 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // Fluxo 1 (coleta) primeiro: os demais usam os dados que ele coleta na stack do E2E.
+    { name: 'coleta', testMatch: /coleta\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      testIgnore: /coleta\.spec\.ts/,
+      dependencies: ['coleta'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
   webServer: {
     command: `npx next start -p ${PORT} -H 127.0.0.1`,
     url: `http://127.0.0.1:${PORT}`,

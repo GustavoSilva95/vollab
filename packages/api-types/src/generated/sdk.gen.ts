@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetHealthData, GetHealthErrors, GetHealthResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
-import { zCreateCollectionRunResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetHealthResponse, zListUnderlyingsResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
+import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetConstantMaturityData, GetConstantMaturityErrors, GetConstantMaturityResponses, GetEventJumpsData, GetEventJumpsErrors, GetEventJumpsResponses, GetHealthData, GetHealthErrors, GetHealthResponses, GetPriceHistoryData, GetPriceHistoryErrors, GetPriceHistoryResponses, GetRealizedVolData, GetRealizedVolErrors, GetRealizedVolResponses, GetSmileData, GetSmileErrors, GetSmileResponses, GetTermStructureData, GetTermStructureErrors, GetTermStructureResponses, GetUnderlyingSeriesData, GetUnderlyingSeriesErrors, GetUnderlyingSeriesResponses, GetUnderlyingSummaryData, GetUnderlyingSummaryErrors, GetUnderlyingSummaryResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, UpdateEventData, UpdateEventErrors, UpdateEventResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
+import { zCreateCollectionRunResponse, zCreateEventBody, zCreateEventResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zDeleteEventPath, zDeleteEventResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetConstantMaturityPath, zGetConstantMaturityQuery, zGetConstantMaturityResponse, zGetEventJumpsPath, zGetEventJumpsResponse, zGetHealthResponse, zGetPriceHistoryPath, zGetPriceHistoryQuery, zGetPriceHistoryResponse, zGetRealizedVolPath, zGetRealizedVolQuery, zGetRealizedVolResponse, zGetSmilePath, zGetSmileQuery, zGetSmileResponse, zGetTermStructurePath, zGetTermStructureQuery, zGetTermStructureResponse, zGetUnderlyingSeriesPath, zGetUnderlyingSeriesQuery, zGetUnderlyingSeriesResponse, zGetUnderlyingSummaryPath, zGetUnderlyingSummaryResponse, zListEventsQuery, zListEventsResponse, zListUnderlyingsResponse, zUpdateEventBody, zUpdateEventPath, zUpdateEventResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -78,6 +78,70 @@ export const getCollectionRun = <ThrowOnError extends boolean = false>(options: 
 });
 
 /**
+ * Eventos do usuário e vencimentos de opções
+ */
+export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>): RequestResult<ListEventsResponses, ListEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zListEventsQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListEventsResponse.parseAsync(data),
+    url: '/events',
+    ...options
+});
+
+/**
+ * Cadastra um evento
+ */
+export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>): RequestResult<CreateEventResponses, CreateEventErrors, ThrowOnError> => (options.client ?? client).post<CreateEventResponses, CreateEventErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zCreateEventBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zCreateEventResponse.parseAsync(data),
+    url: '/events',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Apaga um evento
+ */
+export const deleteEvent = <ThrowOnError extends boolean = false>(options: Options<DeleteEventData, ThrowOnError>): RequestResult<DeleteEventResponses, DeleteEventErrors, ThrowOnError> => (options.client ?? client).delete<DeleteEventResponses, DeleteEventErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zDeleteEventPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zDeleteEventResponse.parseAsync(data),
+    url: '/events/{event_id}',
+    ...options
+});
+
+/**
+ * Altera data, situação, valor ou nota
+ */
+export const updateEvent = <ThrowOnError extends boolean = false>(options: Options<UpdateEventData, ThrowOnError>): RequestResult<UpdateEventResponses, UpdateEventErrors, ThrowOnError> => (options.client ?? client).patch<UpdateEventResponses, UpdateEventErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zUpdateEventBody,
+        path: zUpdateEventPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zUpdateEventResponse.parseAsync(data),
+    url: '/events/{event_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Saúde do engine e do banco
  */
 export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>): RequestResult<GetHealthResponses, GetHealthErrors, ThrowOnError> => (options?.client ?? client).get<GetHealthResponses, GetHealthErrors, ThrowOnError>({
@@ -139,4 +203,116 @@ export const updateUnderlying = <ThrowOnError extends boolean = false>(options: 
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * Salto dos eventos futuros
+ */
+export const getEventJumps = <ThrowOnError extends boolean = false>(options: Options<GetEventJumpsData, ThrowOnError>): RequestResult<GetEventJumpsResponses, GetEventJumpsErrors, ThrowOnError> => (options.client ?? client).get<GetEventJumpsResponses, GetEventJumpsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetEventJumpsPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetEventJumpsResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/event-jumps',
+    ...options
+});
+
+/**
+ * OHLC oficial diário
+ */
+export const getPriceHistory = <ThrowOnError extends boolean = false>(options: Options<GetPriceHistoryData, ThrowOnError>): RequestResult<GetPriceHistoryResponses, GetPriceHistoryErrors, ThrowOnError> => (options.client ?? client).get<GetPriceHistoryResponses, GetPriceHistoryErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetPriceHistoryPath,
+        query: zGetPriceHistoryQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetPriceHistoryResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/prices',
+    ...options
+});
+
+/**
+ * Séries de opção do pregão
+ */
+export const getUnderlyingSeries = <ThrowOnError extends boolean = false>(options: Options<GetUnderlyingSeriesData, ThrowOnError>): RequestResult<GetUnderlyingSeriesResponses, GetUnderlyingSeriesErrors, ThrowOnError> => (options.client ?? client).get<GetUnderlyingSeriesResponses, GetUnderlyingSeriesErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetUnderlyingSeriesPath,
+        query: zGetUnderlyingSeriesQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetUnderlyingSeriesResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/series',
+    ...options
+});
+
+/**
+ * Resumo do ativo
+ */
+export const getUnderlyingSummary = <ThrowOnError extends boolean = false>(options: Options<GetUnderlyingSummaryData, ThrowOnError>): RequestResult<GetUnderlyingSummaryResponses, GetUnderlyingSummaryErrors, ThrowOnError> => (options.client ?? client).get<GetUnderlyingSummaryResponses, GetUnderlyingSummaryErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetUnderlyingSummaryPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetUnderlyingSummaryResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/summary',
+    ...options
+});
+
+/**
+ * IV ATM de prazo constante, com e sem salto de eventos
+ */
+export const getConstantMaturity = <ThrowOnError extends boolean = false>(options: Options<GetConstantMaturityData, ThrowOnError>): RequestResult<GetConstantMaturityResponses, GetConstantMaturityErrors, ThrowOnError> => (options.client ?? client).get<GetConstantMaturityResponses, GetConstantMaturityErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetConstantMaturityPath,
+        query: zGetConstantMaturityQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetConstantMaturityResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/vol/constant-maturity',
+    ...options
+});
+
+/**
+ * Smile por vencimento
+ */
+export const getSmile = <ThrowOnError extends boolean = false>(options: Options<GetSmileData, ThrowOnError>): RequestResult<GetSmileResponses, GetSmileErrors, ThrowOnError> => (options.client ?? client).get<GetSmileResponses, GetSmileErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetSmilePath,
+        query: zGetSmileQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetSmileResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/vol/implied/smile',
+    ...options
+});
+
+/**
+ * RV por estimador e janela
+ */
+export const getRealizedVol = <ThrowOnError extends boolean = false>(options: Options<GetRealizedVolData, ThrowOnError>): RequestResult<GetRealizedVolResponses, GetRealizedVolErrors, ThrowOnError> => (options.client ?? client).get<GetRealizedVolResponses, GetRealizedVolErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetRealizedVolPath,
+        query: zGetRealizedVolQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetRealizedVolResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/vol/realized',
+    ...options
+});
+
+/**
+ * Estrutura a termo da IV ATM
+ */
+export const getTermStructure = <ThrowOnError extends boolean = false>(options: Options<GetTermStructureData, ThrowOnError>): RequestResult<GetTermStructureResponses, GetTermStructureErrors, ThrowOnError> => (options.client ?? client).get<GetTermStructureResponses, GetTermStructureErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetTermStructurePath,
+        query: zGetTermStructureQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetTermStructureResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/vol/term-structure',
+    ...options
 });
