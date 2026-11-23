@@ -1034,6 +1034,7 @@ export const zConfigParamsInput = z.object({
  * ConfigCreate
  */
 export const zConfigCreate = z.object({
+    base_version_id: z.int().gte(1),
     note: z.string().min(1).max(500),
     params: zConfigParamsInput
 });

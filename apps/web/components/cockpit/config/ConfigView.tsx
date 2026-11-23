@@ -76,12 +76,15 @@ export function ConfigForm({
     ...postConfigMutation(),
     onSuccess: (out) => {
       onSaved(out.created ? `Versão ${formatNumber(out.id)} criada.` : 'Nada mudou: nenhuma versão criada.');
+      if (!out.created) return;
       return queryClient.invalidateQueries({ predicate: (q) => dependsOnConfig(q.queryKey) });
     },
   });
   const onSubmit = form.handleSubmit((values) => {
     onSaved(null);
-    save.mutate({ body: { params: toConfigParams(values, current.params), note: values.note.trim() } });
+    save.mutate({
+      body: { params: toConfigParams(values, current.params), note: values.note.trim(), base_version_id: current.id },
+    });
   });
   const errors = form.formState.errors;
 

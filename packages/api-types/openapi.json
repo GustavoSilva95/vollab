@@ -272,6 +272,12 @@
       "ConfigCreate": {
         "additionalProperties": false,
         "properties": {
+          "base_version_id": {
+            "description": "Versão sobre a qual a edição foi feita; 409 se não for mais a vigente (evita desfazer em silêncio uma mudança feita em outra tela, como a troca do modelo do edge).",
+            "minimum": 1.0,
+            "title": "Base Version Id",
+            "type": "integer"
+          },
           "note": {
             "description": "O que mudou e por quê.",
             "maxLength": 500,
@@ -285,7 +291,8 @@
         },
         "required": [
           "params",
-          "note"
+          "note",
+          "base_version_id"
         ],
         "title": "ConfigCreate",
         "type": "object"
@@ -4445,6 +4452,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "A versão-base não é mais a vigente."
           },
           "default": {
             "content": {

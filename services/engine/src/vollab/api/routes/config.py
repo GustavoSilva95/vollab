@@ -51,9 +51,17 @@ def get_config(session: SessionDep) -> ConfigVersionOut:
     response_model=ConfigCreateOut,
     status_code=status.HTTP_201_CREATED,
     summary="Criar uma versão nova da configuração",
+    responses={409: {"model": ProblemDetails, "description": "A versão-base não é mais a vigente."}},
 )
 def post_config(body: ConfigCreate, session: SessionDep) -> ConfigCreateOut:
     current = ensure_config_version(session, user_id=FIXED_USER_ID)
+    if body.base_version_id != current.id:
+        session.commit()
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"A configuração mudou desde que a tela foi aberta (vigente: versão {current.id}; "
+            f"editada: versão {body.base_version_id}). Recarregue e refaça a alteração.",
+        )
     params: dict[str, Any] = body.params.model_dump(mode="json")
     if ConfigParams.model_validate(current.params).model_dump(mode="json") == params:
         session.commit()
@@ -67,8 +75,9 @@ def post_config(body: ConfigCreate, session: SessionDep) -> ConfigCreateOut:
 def list_config_versions(session: SessionDep) -> list[ConfigVersionSummary]:
     current = ensure_config_version(session, user_id=FIXED_USER_ID)
     session.commit()
-    rows = session.scalars(
-        select(ConfigVersion)
+    # Só as colunas da lista: o JSONB `params` não é lido (revisão de performance da Etapa 5, M-5).
+    rows = session.execute(
+        select(ConfigVersion.id, ConfigVersion.created_at, ConfigVersion.note)
         .where(ConfigVersion.user_id == FIXED_USER_ID)
         .order_by(ConfigVersion.id.desc())
         .limit(MAX_VERSIONS)

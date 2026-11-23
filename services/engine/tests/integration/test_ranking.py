@@ -128,12 +128,17 @@ def test_config_versioning_changes_the_ranking(
     assert current["params"]["edge"]["threshold_vol_pts"] == 0.01
     assert current["params"]["costs"]["brokerage_per_order_brl"] == 0.0
     # Mesmos parâmetros: nada gravado.
-    same = api_client.post("/config", json={"params": current["params"], "note": "sem mudança"})
+    base = current["id"]
+    same = api_client.post(
+        "/config", json={"params": current["params"], "note": "sem mudança", "base_version_id": base}
+    )
     assert same.status_code == 201 and same.json() == {"id": current["id"], "created": False}
     # Limiar enorme: nenhuma direção pode dar edge líquido.
     params = current["params"]
     params["edge"]["threshold_vol_pts"] = 0.2
-    created = api_client.post("/config", json={"params": params, "note": "limiar de teste"})
+    created = api_client.post(
+        "/config", json={"params": params, "note": "limiar de teste", "base_version_id": base}
+    )
     assert created.status_code == 201 and created.json()["created"] is True
     new_id = created.json()["id"]
     petr = next(r for r in api_client.get("/ranking").json()["rows"] if r["ticker"] == "PETR4")
@@ -146,16 +151,32 @@ def test_config_versioning_changes_the_ranking(
         == 0.01
     )
     assert api_client.get("/config/versions/999999").status_code == 404
+    # Edição sobre uma versão que não é mais a vigente (ex.: o modelo foi trocado em outra tela): 409,
+    # nunca desfazer a mudança em silêncio (revisão da Etapa 5, I-1).
+    stale = api_client.post("/config", json={"params": params, "note": "antiga", "base_version_id": base})
+    assert stale.status_code == 409
+    assert "Recarregue" in stale.json()["detail"]
+    base = new_id
     # O Pydantic valida o snapshot inteiro (422 com o campo).
     params["edge"]["threshold_vol_pts"] = -1
-    bad = api_client.post("/config", json={"params": params, "note": "inválido"})
+    bad = api_client.post("/config", json={"params": params, "note": "inválido", "base_version_id": base})
     assert bad.status_code == 422
     params["edge"]["threshold_vol_pts"] = 0.01
     params["costs"]["moneyness_bands"] = [1.05, 0.95]
-    assert api_client.post("/config", json={"params": params, "note": "inválido"}).status_code == 422
+    assert (
+        api_client.post(
+            "/config", json={"params": params, "note": "inválido", "base_version_id": base}
+        ).status_code
+        == 422
+    )
     params["costs"]["moneyness_bands"] = [0.95, 1.05]
     params["costs"]["unknown"] = 1
-    assert api_client.post("/config", json={"params": params, "note": "inválido"}).status_code == 422
+    assert (
+        api_client.post(
+            "/config", json={"params": params, "note": "inválido", "base_version_id": base}
+        ).status_code
+        == 422
+    )
 
 
 def test_spreads_endpoint(

@@ -179,6 +179,12 @@ export type CollectionWindow = {
  */
 export type ConfigCreate = {
     /**
+     * Base Version Id
+     *
+     * Versão sobre a qual a edição foi feita; 409 se não for mais a vigente (evita desfazer em silêncio uma mudança feita em outra tela, como a troca do modelo do edge).
+     */
+    base_version_id: number;
+    /**
      * Note
      *
      * O que mudou e por quê.
@@ -2602,6 +2608,10 @@ export type PostConfigData = {
 };
 
 export type PostConfigErrors = {
+    /**
+     * A versão-base não é mais a vigente.
+     */
+    409: ProblemDetails;
     /**
      * Erro (RFC 9457)
      */

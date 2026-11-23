@@ -40,6 +40,11 @@ class ConfigCreate(BaseModel):
 
     params: ConfigParams
     note: str = Field(min_length=1, max_length=500, description="O que mudou e por quê.")
+    base_version_id: int = Field(
+        ge=1,
+        description="Versão sobre a qual a edição foi feita; 409 se não for mais a vigente (evita desfazer "
+        "em silêncio uma mudança feita em outra tela, como a troca do modelo do edge).",
+    )
 
 
 class ConfigCreateOut(BaseModel):

@@ -624,7 +624,7 @@ class RankingComputer:
                 FROM option_daily_stats st
                 JOIN option_series s ON s.id = st.series_id
                 JOIN underlyings u ON u.isin = s.underlying_isin AND u.ticker = :t AND u.user_id = :uid
-                WHERE st.trade_date = :d
+                WHERE st.trade_date = :d AND s.expiry >= :d
                 """
             ),
             {

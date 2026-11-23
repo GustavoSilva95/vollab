@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -198,10 +198,9 @@ export function RankingTable({ data }: { data: RankingResponse }) {
   // fica fora da compilação (no máximo 10 linhas).
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
-  const rows = useMemo(() => data.rows, [data.rows]);
   // eslint-disable-next-line react-hooks/incompatible-library -- fora do compilador pela diretiva acima
   const table = useReactTable({
-    data: rows,
+    data: data.rows,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
