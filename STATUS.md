@@ -22,7 +22,7 @@
 | PRD 1.6: detalhes físicos e métodos da Etapa 3 (§5.5.1, §6.2, §6.4, §7, §8.1) | 1.6 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado; CI verde nos 6 jobs (runs 45107621540 e 45107787201, PR #5) | 2026-11-23 |
 | PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
-| Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário | 2026-11-23 |
+| Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário; CI verde nos 6 jobs (run 45271823943) | 2026-11-23 |
 
 ## Feito
 
@@ -154,4 +154,4 @@
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
 3. Mesclar o PR #5 (`etapa-3-volatilidade-eventos` → `main`); CI já verde.
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
-5. Etapa 4 mesclada na `main`: conferir o CI do push. Próxima: Etapa 5 (custos, edge e ranking; QA-14), quando o usuário pedir.
+5. Etapa 4 mesclada na `main` (d91b899); **CI verde nos 6 jobs (run 45271823943)**. Próxima: Etapa 5 (custos, edge e ranking; QA-14), quando o usuário pedir.
