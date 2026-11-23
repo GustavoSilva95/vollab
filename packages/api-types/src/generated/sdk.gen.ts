@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetConstantMaturityData, GetConstantMaturityErrors, GetConstantMaturityResponses, GetEventJumpsData, GetEventJumpsErrors, GetEventJumpsResponses, GetForecastsData, GetForecastsErrors, GetForecastsResponses, GetHealthData, GetHealthErrors, GetHealthResponses, GetModelsEvaluationData, GetModelsEvaluationErrors, GetModelsEvaluationPointsData, GetModelsEvaluationPointsErrors, GetModelsEvaluationPointsResponses, GetModelsEvaluationResponses, GetPriceHistoryData, GetPriceHistoryErrors, GetPriceHistoryResponses, GetRealizedVolData, GetRealizedVolErrors, GetRealizedVolResponses, GetSmileData, GetSmileErrors, GetSmileResponses, GetTermStructureData, GetTermStructureErrors, GetTermStructureResponses, GetUnderlyingSeriesData, GetUnderlyingSeriesErrors, GetUnderlyingSeriesResponses, GetUnderlyingSummaryData, GetUnderlyingSummaryErrors, GetUnderlyingSummaryResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, PutModelSelectionData, PutModelSelectionErrors, PutModelSelectionResponses, UpdateEventData, UpdateEventErrors, UpdateEventResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
-import { zCreateCollectionRunResponse, zCreateEventBody, zCreateEventResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zDeleteEventPath, zDeleteEventResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetConstantMaturityPath, zGetConstantMaturityQuery, zGetConstantMaturityResponse, zGetEventJumpsPath, zGetEventJumpsResponse, zGetForecastsQuery, zGetForecastsResponse, zGetHealthResponse, zGetModelsEvaluationPointsQuery, zGetModelsEvaluationPointsResponse, zGetModelsEvaluationQuery, zGetModelsEvaluationResponse, zGetPriceHistoryPath, zGetPriceHistoryQuery, zGetPriceHistoryResponse, zGetRealizedVolPath, zGetRealizedVolQuery, zGetRealizedVolResponse, zGetSmilePath, zGetSmileQuery, zGetSmileResponse, zGetTermStructurePath, zGetTermStructureQuery, zGetTermStructureResponse, zGetUnderlyingSeriesPath, zGetUnderlyingSeriesQuery, zGetUnderlyingSeriesResponse, zGetUnderlyingSummaryPath, zGetUnderlyingSummaryResponse, zListEventsQuery, zListEventsResponse, zListUnderlyingsResponse, zPutModelSelectionBody, zPutModelSelectionResponse, zUpdateEventBody, zUpdateEventPath, zUpdateEventResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
+import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetConfigData, GetConfigErrors, GetConfigResponses, GetConfigVersionData, GetConfigVersionErrors, GetConfigVersionResponses, GetConstantMaturityData, GetConstantMaturityErrors, GetConstantMaturityResponses, GetEventJumpsData, GetEventJumpsErrors, GetEventJumpsResponses, GetForecastsData, GetForecastsErrors, GetForecastsResponses, GetHealthData, GetHealthErrors, GetHealthResponses, GetModelsEvaluationData, GetModelsEvaluationErrors, GetModelsEvaluationPointsData, GetModelsEvaluationPointsErrors, GetModelsEvaluationPointsResponses, GetModelsEvaluationResponses, GetPriceHistoryData, GetPriceHistoryErrors, GetPriceHistoryResponses, GetRankingData, GetRankingErrors, GetRankingResponses, GetRealizedVolData, GetRealizedVolErrors, GetRealizedVolResponses, GetSmileData, GetSmileErrors, GetSmileResponses, GetSpreadsData, GetSpreadsErrors, GetSpreadsResponses, GetTermStructureData, GetTermStructureErrors, GetTermStructureResponses, GetUnderlyingSeriesData, GetUnderlyingSeriesErrors, GetUnderlyingSeriesResponses, GetUnderlyingSummaryData, GetUnderlyingSummaryErrors, GetUnderlyingSummaryResponses, ListConfigVersionsData, ListConfigVersionsErrors, ListConfigVersionsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, PostConfigData, PostConfigErrors, PostConfigResponses, PutModelSelectionData, PutModelSelectionErrors, PutModelSelectionResponses, UpdateEventData, UpdateEventErrors, UpdateEventResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
+import { zCreateCollectionRunResponse, zCreateEventBody, zCreateEventResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zDeleteEventPath, zDeleteEventResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetConfigResponse, zGetConfigVersionPath, zGetConfigVersionResponse, zGetConstantMaturityPath, zGetConstantMaturityQuery, zGetConstantMaturityResponse, zGetEventJumpsPath, zGetEventJumpsResponse, zGetForecastsQuery, zGetForecastsResponse, zGetHealthResponse, zGetModelsEvaluationPointsQuery, zGetModelsEvaluationPointsResponse, zGetModelsEvaluationQuery, zGetModelsEvaluationResponse, zGetPriceHistoryPath, zGetPriceHistoryQuery, zGetPriceHistoryResponse, zGetRankingQuery, zGetRankingResponse, zGetRealizedVolPath, zGetRealizedVolQuery, zGetRealizedVolResponse, zGetSmilePath, zGetSmileQuery, zGetSmileResponse, zGetSpreadsPath, zGetSpreadsQuery, zGetSpreadsResponse, zGetTermStructurePath, zGetTermStructureQuery, zGetTermStructureResponse, zGetUnderlyingSeriesPath, zGetUnderlyingSeriesQuery, zGetUnderlyingSeriesResponse, zGetUnderlyingSummaryPath, zGetUnderlyingSummaryResponse, zListConfigVersionsResponse, zListEventsQuery, zListEventsResponse, zListUnderlyingsResponse, zPostConfigBody, zPostConfigResponse, zPutModelSelectionBody, zPutModelSelectionResponse, zUpdateEventBody, zUpdateEventPath, zUpdateEventResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -74,6 +74,66 @@ export const getCollectionRun = <ThrowOnError extends boolean = false>(options: 
     }).parseAsync(data),
     responseValidator: async (data) => await zGetCollectionRunResponse.parseAsync(data),
     url: '/collection/runs/{run_id}',
+    ...options
+});
+
+/**
+ * Configuração vigente
+ */
+export const getConfig = <ThrowOnError extends boolean = false>(options?: Options<GetConfigData, ThrowOnError>): RequestResult<GetConfigResponses, GetConfigErrors, ThrowOnError> => (options?.client ?? client).get<GetConfigResponses, GetConfigErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetConfigResponse.parseAsync(data),
+    url: '/config',
+    ...options
+});
+
+/**
+ * Criar uma versão nova da configuração
+ */
+export const postConfig = <ThrowOnError extends boolean = false>(options: Options<PostConfigData, ThrowOnError>): RequestResult<PostConfigResponses, PostConfigErrors, ThrowOnError> => (options.client ?? client).post<PostConfigResponses, PostConfigErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zPostConfigBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zPostConfigResponse.parseAsync(data),
+    url: '/config',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Histórico de versões
+ */
+export const listConfigVersions = <ThrowOnError extends boolean = false>(options?: Options<ListConfigVersionsData, ThrowOnError>): RequestResult<ListConfigVersionsResponses, ListConfigVersionsErrors, ThrowOnError> => (options?.client ?? client).get<ListConfigVersionsResponses, ListConfigVersionsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zListConfigVersionsResponse.parseAsync(data),
+    url: '/config/versions',
+    ...options
+});
+
+/**
+ * Uma versão da configuração
+ */
+export const getConfigVersion = <ThrowOnError extends boolean = false>(options: Options<GetConfigVersionData, ThrowOnError>): RequestResult<GetConfigVersionResponses, GetConfigVersionErrors, ThrowOnError> => (options.client ?? client).get<GetConfigVersionResponses, GetConfigVersionErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetConfigVersionPath,
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetConfigVersionResponse.parseAsync(data),
+    url: '/config/versions/{version_id}',
     ...options
 });
 
@@ -216,6 +276,20 @@ export const putModelSelection = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
+ * Ranking dos ativos com semáforo de edge
+ */
+export const getRanking = <ThrowOnError extends boolean = false>(options?: Options<GetRankingData, ThrowOnError>): RequestResult<GetRankingResponses, GetRankingErrors, ThrowOnError> => (options?.client ?? client).get<GetRankingResponses, GetRankingErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zGetRankingQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetRankingResponse.parseAsync(data),
+    url: '/ranking',
+    ...options
+});
+
+/**
  * Ativos cadastrados
  */
 export const listUnderlyings = <ThrowOnError extends boolean = false>(options?: Options<ListUnderlyingsData, ThrowOnError>): RequestResult<ListUnderlyingsResponses, ListUnderlyingsErrors, ThrowOnError> => (options?.client ?? client).get<ListUnderlyingsResponses, ListUnderlyingsErrors, ThrowOnError>({
@@ -304,6 +378,20 @@ export const getUnderlyingSeries = <ThrowOnError extends boolean = false>(option
     }).parseAsync(data),
     responseValidator: async (data) => await zGetUnderlyingSeriesResponse.parseAsync(data),
     url: '/underlyings/{ticker}/series',
+    ...options
+});
+
+/**
+ * Spread estimado por faixa de moneyness
+ */
+export const getSpreads = <ThrowOnError extends boolean = false>(options: Options<GetSpreadsData, ThrowOnError>): RequestResult<GetSpreadsResponses, GetSpreadsErrors, ThrowOnError> => (options.client ?? client).get<GetSpreadsResponses, GetSpreadsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: zGetSpreadsPath,
+        query: zGetSpreadsQuery.optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetSpreadsResponse.parseAsync(data),
+    url: '/underlyings/{ticker}/spreads',
     ...options
 });
 

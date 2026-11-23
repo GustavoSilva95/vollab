@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 4 — Previsão de RV e avaliação de modelos: **concluída (2026-11-23)**: revisão de performance sem bloqueantes; mesclada direto na `main` sem PR, por decisão do usuário
-**Etapa anterior:** Etapa 3 concluída e aprovada (2026-11-23), PR #5 mesclado
+**Etapa atual:** Etapa 5 — Custos, edge e ranking: **implementada (2026-11-23)** na branch `etapa-5-custos-edge` (BRD 1.5 / PRD 1.8.1); aguardando commit, CI e aprovação do fechamento
+**Etapa anterior:** Etapa 4 concluída e aprovada (2026-11-23), mesclada direto na `main`
 
 ## Aprovações
 
@@ -23,6 +23,7 @@
 | Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado; CI verde nos 6 jobs (runs 45107621540 e 45107787201, PR #5) | 2026-11-23 |
 | PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário; CI verde nos 6 jobs (run 45271823943) | 2026-11-23 |
+| BRD 1.5 (semáforo nas duas direções, QA-14, QA-11 parcial) / PRD 1.8 (§5.6.1 métodos da Etapa 5, `option_spread_estimates`, `/ranking`, `/config`, telas e testes) | 1.5 / 1.8 | Aprovado | 2026-11-23 |
 
 ## Feito
 
@@ -82,6 +83,16 @@
   - **Revisão de performance (2026-11-23): sem bloqueantes, dentro das metas.** Job: ~21 ms por ativo com 1 ano; projetado ~0,32 s por ativo com 5 anos (60 ajustes GARCH de ~4 ms; ~3,2 s para 10 ativos; ~14 s com 4 horizontes); rotas em < 1 ms no banco (PKs cobrem todos os acessos); Plotly fora do bundle inicial. Corrigidos: M-2 (uma invalidação só após trocar o modelo) e M-3 (quantis do χ² em cache).
   - Com as fixtures (221 pregões, h = 21 → 10 origens): EWMA 7 janelas (**dados insuficientes**, < 8), combinação e RV C2C 20 com 9 (ok), GARCH sem previsão (220 retornos < 240), IV sem nenhuma origem (só há IV nos pregões com opções coletadas). **CS-03 verificável** na tela: todos os modelos ativos com n, erro e razão contra os dois baselines. PETR4: EWMA 42,5% [31,5–53,0, aproximado], combinação 48,4% [35,5–66,8].
 
+- **Etapa 5 implementada (2026-11-23)**, branch `etapa-5-custos-edge` (BRD 1.5, PRD 1.8.1 §5.6.1):
+  - Configuração: blocos `costs` (taxas B3 0,134% opções e 0,03% ações **a conferir**, corretagem R$ 0, tick R$ 0,01, ≥ 20 negócios, 5 pregões, faixas K/F 0,95/1,05, hedge diário) e `edge` (spread normal 15% e limiar 1 ponto, não calibrados; IV rank ≥ 60 pregões; skew 0,95/1,05). Versão nova criada automaticamente com os padrões.
+  - `quant/costs` (puro): spread por série (mediana de |ΔP| entre negócios consecutivos com preço diferente, piso do tick), faixas de moneyness, agregação (mediana e p75), Leland (eqs. 6.7–6.8), straddle ATM teórico em pontos de vol. `quant/edge`: spread normal (mediana + bootstrap, corte de 8 pares), prêmio, semáforo nas duas direções com comparações estritas, ordenação, IV rank. `quant/implied.iv_at_moneyness` (generaliza a ATM; skew).
+  - Migration `0006`: `option_spread_estimates` (uma linha por ativo, pregão e faixa, sempre). Gravado no `vol_recompute` reaproveitando os negócios já lidos (~2 ms por pregão); pregões anteriores à Etapa 5 voltam ao escopo uma vez.
+  - Ranking calculado na leitura (`analytics/ranking.py`, ~15 ms com as fixtures): IV ex-evento ou fallback ATM "aproximado", σ̂ do modelo escolhido só com avaliação, *s* das origens do baseline `implied`, custos discriminados, contexto (IV rank, skew, estrutura a termo, eventos, liquidez). Não grava nada.
+  - API (contrato 0.5.0): `GET /ranking`, `GET /underlyings/{t}/spreads`, `GET/POST /config`, `GET /config/versions`, `GET /config/versions/{id}`. `vol_from_state` movido para `analytics/forecasting`.
+  - Telas: `/app/ranking` (TanStack Table, estado com texto e cor, intervalos, rótulos "não calibrado", "estimativa" e "aproximado", painel de detalhes com custos) e `/app/configuracoes` (RHF + Zod; entradas em % e pontos convertidas só no `lib/format`; histórico com diferenças entre versões). Navegação habilitada. Trocar o modelo do edge invalida o ranking.
+  - Testes: engine 251 (23 novos da Etapa 5 em `tests/reference/test_etapa5_edge.py`: semáforo nos três estados, nas duas direções e nos limites, monotonicidade por hypothesis, Leland × §7 ≈ 0,159, spread, *s*, straddle à mão, unidades; 5 de integração com fixtures reais: spread por faixa e idempotência, ranking indisponível com EWMA, ranking com combinação, configuração versionada mudando o ranking com 422, spreads); web 82 (format, formulário, ranking, navegação); Playwright 7 (novo: ranking → ativo e limiar editado criando versão). Ruff, mypy estrito, ESLint, tsc, `next build` e contrato determinístico ok.
+  - Com as fixtures (PETR4, 19/11/2026, modelo combinação): IV 32,6% (ATM de 18/12, 20 du, aproximado) × σ̂ 48,4% [35,5–66,8] → prêmio −23,0 pts [−44,2; −8,2] com *s* = 15% → **edge líquido de compra de vol**, edge relativo líquido 45,5%; custos 0,43 pts nas opções (spread ATM 1,04% conservador) + 0,52 pts de hedge. A previsão está inflada pelos gaps de 26/10 das fixtures (ver riscos): não é sinal real. BBAS3 e BOVA11 sem IV nas fixtures (indisponível).
+
 ## Decisões registradas
 
 | Data | Decisão | Onde |
@@ -124,6 +135,10 @@
 | 2026-11-23 | GARCH: previsão escrita a partir de σ²ₜ₊₁ (já conhecido em *t*), E[σ²ₜ₊τ] = V + (α+β)^(τ−1)(σ²ₜ₊₁ − V), equivalente à eq. 4.9; texto do PRD 1.7 corrigido (o rascunho tinha o expoente τ). GARCH ajustado só nas origens da avaliação e no último pregão | PRD 1.7 §5.7 |
 | 2026-11-23 | Intervalos históricos de `rv_forecasts` usam os quantis da avaliação inteira (inclui janelas posteriores): servem à exibição; a avaliação nunca usa dado posterior à origem | PRD 1.7 §5.7 |
 | 2026-11-23 | `PUT /models/selection` recusa (409) modelo sem avaliação disponível em nenhum ativo ativo (RF-PRV-02); o padrão EWMA vale até a primeira escolha, e o edge por ativo só usa o modelo onde houver avaliação | PRD 1.7 §5.7 |
+| 2026-11-23 | **Etapa 5 — decisões do usuário:** spread normal padrão **15%** não calibrado (QA-14 resolvida: mediana de (IV − RV)/RV nas janelas não sobrepostas do baseline `implied`, ≥ 8 pares para calibrar); semáforo **nas duas direções** (venda e compra de vol); corretagem padrão **R$ 0 por ordem**; limiar de edge **1 ponto de vol** (QA-11 parcial, com hedge diário como premissa do custo de hedge) | BRD 1.5, PRD 1.8 §5.6.1 |
+| 2026-11-23 | **PRD 1.8.1 (decisão do usuário):** spread de fechamento do COTAHIST só como conferência, fora do custo conservador; nas fixtures vinha ~10× o spread dos negócios (PETR4 ATM 19/11: 15,7% × 1,26%; faixa alta 18/11: 46,9% × 1,7%) | PRD 1.8.1 §5.6.1 |
+| 2026-11-23 | Ranking com compra inviável (hedge de Leland consome tudo, a ≥ 1) e venda sem pagar custos = **sem edge** (nenhuma direção paga); edge relativo líquido de compra fica nulo | PRD 1.8 §5.6.1 |
+| 2026-11-23 | TanStack Table adotado no ranking (`@tanstack/react-table` 8.21); componente fora do React Compiler (`'use no memo'`) por incompatibilidade conhecida | PRD §3.1 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -139,6 +154,8 @@
 - Yahoo bruto × líquido: não confirmável sem dados novos; o Yahoo segue como `estimado` e o ajuste de strike do COTAHIST é a referência oficial (`b3_strike_adjustment`).
 - Backlog da revisão de segurança da Etapa 2 (não bloqueante): B-6 (gravar a fonte `live`/`fixtures` em `collection_runs`/`raw_files` e impedir misturar no mesmo banco), B-7 (prazo total de download e pico de memória do COTAHIST anual, ~2× o arquivo), B-8 (corrida no limite de 10 ativos). Ao hospedar: rever o que `/health` e `/collection/pending` expõem.
 - Backlog da revisão de performance da Etapa 2 (não bloqueante): `executemany` nos upserts do COTAHIST (compilação do SQLAlchemy domina ~0,6 s por pregão); `r4_mask` calculado duas vezes por arquivo do ativo; evitar a cópia `bytes(body)` no download. Para a Etapa 3: não agregar negócios brutos na requisição (PETR4 em 63 pregões = 4,4 milhões de linhas, ~1,2 s); gravar agregados no worker após a coleta.
+- Etapa 5: o sinal das fixtures (edge de compra em PETR4) vem de σ̂ inflado pelos gaps de 26/10; conferir o ranking depois da carga real. O spread normal fica "não calibrado" até ~8 meses de IV de prazo constante (mesma limitação do baseline `implied`).
+- Rodar o E2E exige parar o Postgres de dev (as duas stacks usam 127.0.0.1:5432).
 - Retenção de `trades` não definida (~8 GB/ano com 3 ativos).
 - Backlog da revisão de performance da Etapa 3 (não bloqueante): "data mais recente" por seq scan em `/series` e no smile (usar a PK de `atm_term_structure`); laços O(séries × negócios) e `count_business_days` dia a dia em `implied_day`; inserts de `realized_vols`/`intraday_bars` por executemany (COPY se crescer); GZip no FastAPI; `staleTime` maior nas consultas de vol; `useMemo` na estrutura a termo; pregão com `IntradayError` volta ao escopo a cada job (raro).
 - Plotly 4 traz o botão "Share chart" (envia o gráfico à nuvem da Plotly): desligado em `lib/charts/theme.ts`; manter desligado em qualquer gráfico novo.
@@ -154,4 +171,6 @@
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
 3. Mesclar o PR #5 (`etapa-3-volatilidade-eventos` → `main`); CI já verde.
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
-5. Etapa 4 mesclada na `main` (d91b899); **CI verde nos 6 jobs (run 45271823943)**. Próxima: Etapa 5 (custos, edge e ranking; QA-14), quando o usuário pedir.
+5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
+6. **Etapa 5:** commit e push da branch `etapa-5-custos-edge`, CI no GitHub, aprovação do fechamento. Medição de performance feita (ranking ~15 ms, spread ~2 ms por pregão); revisão formal pelos revisores só se o usuário pedir.
+7. Conferir as tarifas da B3 (0,1340% opções PF; 0,03% ações) na tabela vigente: a vigência da página consultada não foi confirmada.

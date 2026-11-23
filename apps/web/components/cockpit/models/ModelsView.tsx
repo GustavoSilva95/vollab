@@ -146,7 +146,8 @@ function ForecastCard({ ticker, horizon }: { ticker: string; horizon: number | n
 
 function isForecastQuery(key: readonly unknown[]): boolean {
   const first = key[0] as { _id?: string } | undefined;
-  return first?._id === 'getForecasts' || first?._id === 'getModelsEvaluation';
+  // O ranking usa o modelo escolhido (RF-PRV-04): também é invalidado.
+  return first?._id === 'getForecasts' || first?._id === 'getModelsEvaluation' || first?._id === 'getRanking';
 }
 
 function problemDetail(error: unknown): string {

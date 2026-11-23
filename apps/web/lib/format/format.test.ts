@@ -188,3 +188,34 @@ describe('formatFraction, formatReturn e formatRatio (Etapa 3)', () => {
     expect(formatRatio(null)).toBe(EMPTY);
   });
 });
+
+describe('Etapa 5: edge relativo, taxas e entradas de formulário (PRD 1.8)', async () => {
+  const f = await import('./index');
+
+  it('formatRelative aceita valores fora de 0..1 e negativos, em decimal', () => {
+    expect(f.formatRelative(0.25)).toBe(`25,0%`);
+    expect(f.formatRelative(-0.475)).toBe(`-47,5%`);
+    expect(f.formatRelative(1.5)).toBe(`150,0%`);
+    expect(f.formatRelative(null)).toBe(EMPTY);
+    expect(() => f.formatRelative(25)).toThrow(RangeError); // percentual por engano
+  });
+
+  it('formatSmallRate mostra taxas pequenas sem zeros à direita', () => {
+    expect(f.formatSmallRate(0.00134)).toBe(`0,134%`);
+    expect(f.formatSmallRate(0)).toBe(`0%`);
+    expect(() => f.formatSmallRate(1.34)).toThrow(RangeError);
+  });
+
+  it('entradas em % e em pontos viram decimal, e voltam', () => {
+    expect(f.parsePercentInput('0,134')).toBe(0.00134);
+    expect(f.parsePercentInput('15')).toBe(0.15);
+    expect(f.parsePercentInput('0.03')).toBe(0.0003);
+    expect(f.parsePercentInput('abc')).toBeNull();
+    expect(f.parsePercentInput('1,2,3')).toBeNull();
+    expect(f.parseVolPointsInput('1')).toBe(0.01);
+    expect(f.toPercentInput(0.00134)).toBe('0,134');
+    expect(f.toVolPointsInput(0.01)).toBe('1');
+    expect(f.parsePlainInput('0,95')).toBe(0.95);
+    expect(f.toPlainInput(0.95)).toBe('0,95');
+  });
+});

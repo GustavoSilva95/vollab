@@ -3,6 +3,98 @@
 import * as z from 'zod';
 
 /**
+ * CollectionWindow
+ *
+ * Janelas da carga (RF-DAD-05).
+ */
+export const zCollectionWindow = z.object({
+    daily_bars_bd: z.int().gte(21).lte(1260).optional().default(252),
+    intraday_bd: z.int().gte(1).lte(504).optional().default(63)
+});
+
+/**
+ * ConfigCreateOut
+ */
+export const zConfigCreateOut = z.object({
+    created: z.boolean(),
+    id: z.int()
+});
+
+/**
+ * ConfigVersionSummary
+ */
+export const zConfigVersionSummary = z.object({
+    created_at: z.iso.datetime({ offset: true }),
+    current: z.boolean(),
+    id: z.int(),
+    note: z.string().nullable()
+});
+
+/**
+ * CostBreakdown
+ *
+ * Custos da estrutura de referência (straddle ATM teórico, ida e volta) e do hedge.
+ */
+export const zCostBreakdown = z.object({
+    brokerage_brl: z.string(),
+    fees_brl: z.string(),
+    hedge_buy_vol_pts: z.number().nullable(),
+    hedge_half_spread: z.number(),
+    hedge_interval_bd: z.int(),
+    hedge_sell_vol_pts: z.number(),
+    option_spread_central: z.number(),
+    option_spread_conservative: z.number(),
+    option_spread_quoted: z.number().nullable(),
+    options_vol_pts: z.number(),
+    reference_contracts: z.int(),
+    spread_brl: z.string(),
+    spread_days: z.int(),
+    spread_series: z.int(),
+    straddle_premium_brl: z.string(),
+    straddle_vega_brl: z.string(),
+    total_buy_vol_pts: z.number().nullable(),
+    total_sell_vol_pts: z.number(),
+    underlying_spread: z.number(),
+    underlying_spread_estimated: z.boolean()
+});
+
+/**
+ * CostParams
+ *
+ * Bloco `costs` de `config_versions.params` (PRD 1.8 §5.6.1; RN-CST-01..03, QA-11 parcial).
+ *
+ * Taxas da B3 em decimal sobre o volume financeiro; **a conferir na tabela vigente da B3** (a
+ * vigência da página consultada em 2026-11-23 não foi confirmada). Corretagem padrão R$ 0 por ordem
+ * (decisão do usuário). O IR fica fora do edge (RN-CST-04).
+ */
+export const zCostParams = z.object({
+    brokerage_per_order_brl: z.number().gte(0).lte(1000).optional().default(0),
+    brokerage_rate: z.number().gte(0).lte(0.05).optional().default(0),
+    hedge_interval_bd: z.int().gte(1).lte(21).optional().default(1),
+    moneyness_bands: z.tuple([z.number(), z.number()]).optional().default([0.95, 1.05]),
+    option_fee_rate: z.number().gte(0).lte(0.01).optional().default(0.00134),
+    reference_contracts: z.int().gte(1).lte(1000000).optional().default(100),
+    spread_floors_brl: z.record(z.string(), z.record(z.string(), z.number())).optional(),
+    spread_lookback_bd: z.int().gte(1).lte(63).optional().default(5),
+    spread_min_trades: z.int().gte(2).lte(10000).optional().default(20),
+    tick_brl: z.number().gt(0).lte(1).optional().default(0.01),
+    underlying_fee_rate: z.number().gte(0).lte(0.01).optional().default(0.0003)
+});
+
+/**
+ * EdgeParams
+ *
+ * Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.
+ */
+export const zEdgeParams = z.object({
+    iv_rank_min_days: z.int().gte(20).lte(252).optional().default(60),
+    normal_spread_default: z.number().gte(-0.5).lte(2).optional().default(0.15),
+    normal_spread_lookback_bd: z.int().gte(63).lte(1260).optional().default(252),
+    skew_moneyness: z.tuple([z.number(), z.number()]).optional().default([0.95, 1.05]),
+    threshold_vol_pts: z.number().gte(0).lte(0.2).optional().default(0.01)
+});
+
+/**
  * EstimatedValue
  *
  * Valor com proveniência (PRD §5.2). `insufficient_data` → a interface nunca mostra número.
@@ -174,6 +266,27 @@ export const zEventUpdate = z.object({
 });
 
 /**
+ * ForecastParams
+ *
+ * Bloco `forecast` de `config_versions.params` (PRD 1.7 §5.7; QA-07 e QA-08 resolvidas).
+ */
+export const zForecastParams = z.object({
+    bootstrap_reps: z.int().gte(200).lte(20000).optional().default(2000),
+    combination_window_bd: z.int().gte(5).lte(252).optional().default(20),
+    evaluation_horizons_bd: z.array(z.int()).min(1).max(4).optional().default([21]),
+    ewma_lambda: z.number().gte(0.9).lte(0.99).optional().default(0.94),
+    ewma_min_returns: z.int().gte(20).lte(1260).optional().default(60),
+    garch_max_returns: z.int().gte(240).lte(5040).optional().default(1260),
+    garch_min_returns: z.int().gte(100).lte(1260).optional().default(240),
+    min_evaluation_windows: z.int().gte(3).lte(100).optional().default(8),
+    selected_model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ]).optional().default('ewma')
+});
+
+/**
  * GapOut
  */
 export const zGapOut = z.object({
@@ -252,6 +365,25 @@ export const zHealthResponse = z.object({
 });
 
 /**
+ * ImpliedParams
+ */
+export const zImpliedParams = z.object({
+    dividend_protected_strikes: z.boolean().optional().default(true),
+    reference_min_trades: z.int().gte(1).lte(100).optional().default(3),
+    reference_window_min: z.int().gte(5).lte(480).optional().default(60),
+    sync_window_s: z.number().gt(0).lte(600).optional().default(10)
+});
+
+/**
+ * IntradayParams
+ */
+export const zIntradayParams = z.object({
+    bar_minutes: z.int().gte(1).lte(60).optional().default(5),
+    min_coverage: z.number().gt(0).lte(1).optional().default(0.8),
+    session_open: z.iso.time().optional().default('10:00:00')
+});
+
+/**
  * IntradayQuality
  */
 export const zIntradayQuality = z.object({
@@ -314,6 +446,63 @@ export const zIvQuality = z.object({
     trades_no_solution: z.int(),
     trades_synced: z.int(),
     trades_valid: z.int()
+});
+
+/**
+ * LiquidityFilter
+ *
+ * Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).
+ */
+export const zLiquidityFilterInput = z.object({
+    include_weeklies: z.boolean().optional().default(false),
+    min_trades: z.int().gte(1).optional().default(20),
+    moneyness_max: z.union([
+        z.number().gt(0),
+        z.string()
+    ]).optional().default('1.1'),
+    moneyness_min: z.union([
+        z.number().gt(0),
+        z.string()
+    ]).optional().default('0.9'),
+    monthly_expiries: z.int().gte(1).lte(6).optional().default(2)
+});
+
+/**
+ * CollectionParams
+ */
+export const zCollectionParamsInput = z.object({
+    liquidity: zLiquidityFilterInput.optional(),
+    window: zCollectionWindow.optional()
+});
+
+/**
+ * LiquidityFilter
+ *
+ * Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).
+ */
+export const zLiquidityFilterOutput = z.object({
+    include_weeklies: z.boolean().optional().default(false),
+    min_trades: z.int().gte(1).optional().default(20),
+    moneyness_max: z.string().optional().default('1.1'),
+    moneyness_min: z.string().optional().default('0.9'),
+    monthly_expiries: z.int().gte(1).lte(6).optional().default(2)
+});
+
+/**
+ * CollectionParams
+ */
+export const zCollectionParamsOutput = z.object({
+    liquidity: zLiquidityFilterOutput.optional(),
+    window: zCollectionWindow.optional()
+});
+
+/**
+ * LiquidityOut
+ */
+export const zLiquidityOut = z.object({
+    liquid_series: z.int(),
+    option_trades: z.int(),
+    option_volume_brl: z.string()
 });
 
 /**
@@ -437,6 +626,17 @@ export const zProgressCounts = z.object({
     ok: z.int(),
     pending: z.int(),
     total: z.int()
+});
+
+/**
+ * RankingEvent
+ */
+export const zRankingEvent = z.object({
+    event_date: z.iso.date(),
+    id: z.int(),
+    kind: z.string(),
+    status: z.string(),
+    ticker: z.string().nullable()
 });
 
 /**
@@ -647,6 +847,34 @@ export const zSmileResponse = z.object({
 });
 
 /**
+ * SpreadDayOut
+ */
+export const zSpreadDayOut = z.object({
+    band: z.enum([
+        'low',
+        'atm',
+        'high',
+        'underlying'
+    ]),
+    n_series: z.int(),
+    n_trades: z.int(),
+    quoted_rel_median: z.number().nullable(),
+    rel_median: z.number().nullable(),
+    rel_p75: z.number().nullable(),
+    trade_date: z.iso.date()
+});
+
+/**
+ * SpreadsResponse
+ */
+export const zSpreadsResponse = z.object({
+    days: z.array(zSpreadDayOut),
+    lookback_bd: z.int(),
+    moneyness_bands: z.tuple([z.number(), z.number()]),
+    ticker: z.string()
+});
+
+/**
  * TermPointOut
  */
 export const zTermPointOut = z.object({
@@ -654,6 +882,81 @@ export const zTermPointOut = z.object({
     days_to_expiry_bd: z.int(),
     expiry: z.iso.date(),
     is_weekly: z.boolean()
+});
+
+/**
+ * TermSlope
+ */
+export const zTermSlope = z.object({
+    days1_bd: z.int().nullish(),
+    days2_bd: z.int().nullish(),
+    expiry1: z.iso.date().nullish(),
+    expiry2: z.iso.date().nullish(),
+    value: zEstimatedValue
+});
+
+/**
+ * RankingRow
+ */
+export const zRankingRow = z.object({
+    approximate: z.boolean(),
+    as_of: z.iso.date().nullable(),
+    costs: zCostBreakdown.nullable(),
+    direction: z.enum(['sell', 'buy']).nullable(),
+    events: z.array(zRankingEvent),
+    events_removed: z.array(z.int()),
+    expected_pnl_brl: z.string().nullable(),
+    forecast: zEstimatedValue,
+    horizon_bd: z.int(),
+    iv: zEstimatedValue,
+    iv_percentile: zEstimatedValue,
+    iv_rank: zEstimatedValue,
+    iv_rank_days: z.int(),
+    iv_with_events: zEstimatedValue,
+    liquidity: zLiquidityOut.nullable(),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ]),
+    net_premium: z.number().nullable(),
+    net_relative_edge: z.number().nullable(),
+    normal_spread: zEstimatedValue,
+    normal_spread_pairs: z.int(),
+    position: z.int(),
+    premium: zEstimatedValue,
+    reason: z.string().nullable(),
+    relative_edge: zEstimatedValue,
+    required_buy: z.number().nullable(),
+    required_sell: z.number().nullable(),
+    skew: zEstimatedValue,
+    skew_expiry: z.iso.date().nullable(),
+    state: z.enum([
+        'edge',
+        'inconclusive',
+        'no_edge',
+        'unavailable'
+    ]),
+    term_slope: zTermSlope,
+    threshold: zEstimatedValue,
+    ticker: z.string()
+});
+
+/**
+ * RankingResponse
+ */
+export const zRankingResponse = z.object({
+    ci_level: z.number(),
+    config_version_id: z.int(),
+    engine_version: z.string(),
+    expected_as_of: z.iso.date(),
+    horizon_bd: z.int(),
+    rows: z.array(zRankingRow),
+    selected_model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ])
 });
 
 /**
@@ -702,6 +1005,62 @@ export const zUnderlyingUpdate = z.object({
     active: z.boolean()
 });
 
+/**
+ * VolParams
+ */
+export const zVolParams = z.object({
+    ci_level: z.number().gt(0.5).lt(1).optional().default(0.9),
+    close_to_close_mode: z.enum(['zero_mean', 'demeaned']).optional().default('zero_mean'),
+    constant_maturity_bd: z.int().gte(5).lte(252).optional().default(21),
+    implied: zImpliedParams.optional(),
+    intraday: zIntradayParams.optional(),
+    windows_bd: z.array(z.int()).min(1).max(4).optional().default([20, 60])
+});
+
+/**
+ * ConfigParams
+ *
+ * Todos os blocos de parâmetros, com os padrões preenchidos.
+ */
+export const zConfigParamsInput = z.object({
+    collection: zCollectionParamsInput.optional(),
+    costs: zCostParams.optional(),
+    edge: zEdgeParams.optional(),
+    forecast: zForecastParams.optional(),
+    vol: zVolParams.optional()
+});
+
+/**
+ * ConfigCreate
+ */
+export const zConfigCreate = z.object({
+    note: z.string().min(1).max(500),
+    params: zConfigParamsInput
+});
+
+/**
+ * ConfigParams
+ *
+ * Todos os blocos de parâmetros, com os padrões preenchidos.
+ */
+export const zConfigParamsOutput = z.object({
+    collection: zCollectionParamsOutput.optional(),
+    costs: zCostParams.optional(),
+    edge: zEdgeParams.optional(),
+    forecast: zForecastParams.optional(),
+    vol: zVolParams.optional()
+});
+
+/**
+ * ConfigVersionOut
+ */
+export const zConfigVersionOut = z.object({
+    created_at: z.iso.datetime({ offset: true }),
+    id: z.int(),
+    note: z.string().nullable(),
+    params: zConfigParamsOutput
+});
+
 export const zGetCollectionGapsQuery = z.object({
     limit: z.int().gte(1).lte(2000).optional().default(300)
 });
@@ -729,6 +1088,34 @@ export const zGetCollectionRunPath = z.object({
  * Successful Response
  */
 export const zGetCollectionRunResponse = zCollectionRunResponse;
+
+/**
+ * Successful Response
+ */
+export const zGetConfigResponse = zConfigVersionOut;
+
+export const zPostConfigBody = zConfigCreate;
+
+/**
+ * Successful Response
+ */
+export const zPostConfigResponse = zConfigCreateOut;
+
+/**
+ * Response List Config Versions
+ *
+ * Successful Response
+ */
+export const zListConfigVersionsResponse = z.array(zConfigVersionSummary);
+
+export const zGetConfigVersionPath = z.object({
+    version_id: z.int().gte(1)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetConfigVersionResponse = zConfigVersionOut;
 
 export const zListEventsQuery = z.object({
     ticker: z.string().regex(/^[A-Z0-9]{4,12}$/).nullish(),
@@ -824,6 +1211,15 @@ export const zPutModelSelectionBody = zModelSelectionIn;
  */
 export const zPutModelSelectionResponse = zModelSelectionOut;
 
+export const zGetRankingQuery = z.object({
+    underlying: z.string().min(1).max(12).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetRankingResponse = zRankingResponse;
+
 /**
  * Response List Underlyings
  *
@@ -883,6 +1279,19 @@ export const zGetUnderlyingSeriesQuery = z.object({
  * Successful Response
  */
 export const zGetUnderlyingSeriesResponse = zSeriesResponse;
+
+export const zGetSpreadsPath = z.object({
+    ticker: z.string()
+});
+
+export const zGetSpreadsQuery = z.object({
+    days: z.int().gte(1).lte(252).optional().default(21)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetSpreadsResponse = zSpreadsResponse;
 
 export const zGetUnderlyingSummaryPath = z.object({
     ticker: z.string()

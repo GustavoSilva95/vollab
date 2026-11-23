@@ -447,3 +447,19 @@ def forecast_interval(
         "approximate",
         f"intervalo só com o erro de amostragem (< {min_windows} janelas avaliadas)",
     )
+
+
+def vol_from_state(model: str, state: dict[str, Any], h: int) -> float:
+    """Previsão em outro horizonte a partir do estado gravado (PRD §5.7): EWMA e combinação são
+    planas; GARCH pela eq. 4.9 a partir de σ²ₜ₊₁."""
+    if model == Model.GARCH:
+        return annualized_vol(
+            garch_term_variance(
+                float(state["next_var"]),
+                float(state["omega"]),
+                float(state["alpha"]),
+                float(state["beta"]),
+                h,
+            )
+        )
+    return annualized_vol(float(state["next_var"]))

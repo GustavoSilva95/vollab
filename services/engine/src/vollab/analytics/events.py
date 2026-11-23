@@ -285,3 +285,25 @@ class EventContext:
         ]
         cm = constant_maturity(points, self.params.constant_maturity_bd / BUSINESS_DAYS_PER_YEAR)
         return cm.iv, cm.reason, [e.id for e in relevant]
+
+    # Leitura pontual (ranking, PRD 1.8 §5.6.1) ---------------------------------------------
+
+    def ex_event_iv(self, as_of: date, raw_iv: float | None) -> tuple[float | None, str | None, list[int]]:
+        """IV de prazo constante ex-evento no pregão (RN-EVT-03)."""
+        return self._ex_event(as_of, raw_iv)
+
+    def ex_event_atm(
+        self, as_of: date, expiry: date, days_bd: int, iv: float
+    ) -> tuple[float | None, str | None, list[int]]:
+        """IV ATM de um vencimento sem os saltos dos eventos até ele (fallback do RN-VOL-05)."""
+        relevant = [e for e in self.events if as_of < e.event_date < expiry]
+        if not relevant:
+            return iv, None, []
+        jumps = {j.event_id: j for j in self.jumps(as_of)}
+        if any(jumps[e.id].value is None for e in relevant):
+            return None, "salto de evento sem estimativa", []
+        t = days_bd / BUSINESS_DAYS_PER_YEAR
+        w = iv * iv * t - sum((jumps[e.id].value or 0.0) ** 2 for e in relevant)
+        if w <= 0:
+            return None, "variância ex-evento não positiva", []
+        return math.sqrt(w / t), None, [e.id for e in relevant]

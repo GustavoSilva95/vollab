@@ -101,6 +101,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Entregáveis:** custos configuráveis e spread estimado (RN-CST-01..03); prêmio de vol absoluto e edge relativo com intervalo, descontados do spread normal (RN-EDG-01/02/07, PRD §5.6; resolver QA-14); semáforo de 3 estados (RN-EDG-03..06); ranking (`/app/ranking`); tela de configurações versionadas; valores padrão definidos com o usuário (QA-11).
 **Critérios de saída:** testes do semáforo nos três estados e nos limites; rótulo "não calibrado".
+**Gate:** implementada em 2026-11-23 (branch `etapa-5-custos-edge`, BRD 1.5, PRD 1.8.1); testes do semáforo nos três estados, nas duas direções e nos limites passando; rótulos "não calibrado" na tela e na API. Aguardando CI e aprovação do fechamento.
 
 ---
 

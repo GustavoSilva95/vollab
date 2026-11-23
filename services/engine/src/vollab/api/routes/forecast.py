@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from vollab.analytics.forecasting import forecast_interval
+from vollab.analytics.forecasting import forecast_interval, vol_from_state
 from vollab.analytics.market import load_holidays
 from vollab.analytics.params import (
     ForecastParams,
@@ -48,7 +48,7 @@ from vollab.db.models import (
 )
 from vollab.db.session import get_session
 from vollab.quant.calendar import previous_business_day
-from vollab.quant.forecast import ANNUALIZATION, Baseline, Model, annualized_vol, garch_term_variance
+from vollab.quant.forecast import ANNUALIZATION, Baseline, Model
 from vollab.quant.vol import Estimator
 from vollab.settings import get_settings
 
@@ -143,21 +143,6 @@ def _state(model: str, state: dict[str, Any]) -> ModelState:
     return out
 
 
-def _vol_from_state(model: str, state: dict[str, Any], h: int) -> float:
-    """Outro horizonte a partir do estado (PRD §5.7): EWMA e combinação são planas; GARCH, eq. 4.9."""
-    if model == Model.GARCH:
-        return annualized_vol(
-            garch_term_variance(
-                float(state["next_var"]),
-                float(state["omega"]),
-                float(state["alpha"]),
-                float(state["beta"]),
-                h,
-            )
-        )
-    return annualized_vol(float(state["next_var"]))
-
-
 def _eligibility(
     ev: ForecastEvaluation | None, min_windows: int, evaluated_h: int
 ) -> tuple[bool, str | None]:
@@ -198,7 +183,7 @@ def get_forecasts(
             ev = evaluations.get(row.model)
             eligible, why = _eligibility(ev, ctx.params.min_evaluation_windows, eval_h)
             if row.status == "ok" and row.vol is not None and h != stored_h:
-                vol = _vol_from_state(row.model, row.state, h)
+                vol = vol_from_state(row.model, row.state, h)
                 ci, ci_origin, ci_reason = forecast_interval(
                     vol,
                     h,

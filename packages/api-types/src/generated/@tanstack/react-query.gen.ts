@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getCollectionGaps, getCollectionPending, getCollectionRun, getConstantMaturity, getEventJumps, getForecasts, getHealth, getModelsEvaluation, getModelsEvaluationPoints, getPriceHistory, getRealizedVol, getSmile, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listEvents, listUnderlyings, type Options, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
-import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListEventsData, ListEventsError, ListEventsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
+import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getEventJumps, getForecasts, getHealth, getModelsEvaluation, getModelsEvaluationPoints, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listUnderlyings, type Options, postConfig, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
+import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -108,6 +108,77 @@ export const getCollectionRunOptions = (options: Options<GetCollectionRunData>) 
         return data;
     },
     queryKey: getCollectionRunQueryKey(options)
+});
+
+export const getConfigQueryKey = (options?: Options<GetConfigData>) => createQueryKey('getConfig', options);
+
+/**
+ * Configuração vigente
+ */
+export const getConfigOptions = (options?: Options<GetConfigData>) => queryOptions<GetConfigResponse, GetConfigError, GetConfigResponse, ReturnType<typeof getConfigQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getConfig({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getConfigQueryKey(options)
+});
+
+/**
+ * Criar uma versão nova da configuração
+ */
+export const postConfigMutation = (options?: Partial<Options<PostConfigData>>): UseMutationOptions<PostConfigResponse, PostConfigError, Options<PostConfigData>> => {
+    const mutationOptions: UseMutationOptions<PostConfigResponse, PostConfigError, Options<PostConfigData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postConfig({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const listConfigVersionsQueryKey = (options?: Options<ListConfigVersionsData>) => createQueryKey('listConfigVersions', options);
+
+/**
+ * Histórico de versões
+ */
+export const listConfigVersionsOptions = (options?: Options<ListConfigVersionsData>) => queryOptions<ListConfigVersionsResponse, ListConfigVersionsError, ListConfigVersionsResponse, ReturnType<typeof listConfigVersionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listConfigVersions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listConfigVersionsQueryKey(options)
+});
+
+export const getConfigVersionQueryKey = (options: Options<GetConfigVersionData>) => createQueryKey('getConfigVersion', options);
+
+/**
+ * Uma versão da configuração
+ */
+export const getConfigVersionOptions = (options: Options<GetConfigVersionData>) => queryOptions<GetConfigVersionResponse, GetConfigVersionError, GetConfigVersionResponse, ReturnType<typeof getConfigVersionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getConfigVersion({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getConfigVersionQueryKey(options)
 });
 
 export const listEventsQueryKey = (options?: Options<ListEventsData>) => createQueryKey('listEvents', options);
@@ -327,6 +398,24 @@ export const putModelSelectionMutation = (options?: Partial<Options<PutModelSele
     return mutationOptions;
 };
 
+export const getRankingQueryKey = (options?: Options<GetRankingData>) => createQueryKey('getRanking', options);
+
+/**
+ * Ranking dos ativos com semáforo de edge
+ */
+export const getRankingOptions = (options?: Options<GetRankingData>) => queryOptions<GetRankingResponse, GetRankingError, GetRankingResponse, ReturnType<typeof getRankingQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getRanking({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getRankingQueryKey(options)
+});
+
 export const listUnderlyingsQueryKey = (options?: Options<ListUnderlyingsData>) => createQueryKey('listUnderlyings', options);
 
 /**
@@ -431,6 +520,24 @@ export const getUnderlyingSeriesOptions = (options: Options<GetUnderlyingSeriesD
         return data;
     },
     queryKey: getUnderlyingSeriesQueryKey(options)
+});
+
+export const getSpreadsQueryKey = (options: Options<GetSpreadsData>) => createQueryKey('getSpreads', options);
+
+/**
+ * Spread estimado por faixa de moneyness
+ */
+export const getSpreadsOptions = (options: Options<GetSpreadsData>) => queryOptions<GetSpreadsResponse, GetSpreadsError, GetSpreadsResponse, ReturnType<typeof getSpreadsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getSpreads({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getSpreadsQueryKey(options)
 });
 
 export const getUnderlyingSummaryQueryKey = (options: Options<GetUnderlyingSummaryData>) => createQueryKey('getUnderlyingSummary', options);

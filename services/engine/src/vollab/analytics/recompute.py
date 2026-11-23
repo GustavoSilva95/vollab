@@ -6,7 +6,8 @@ ativo ativo:
 1. barras de 5 min e resumo do pregão (RN-VOL-08) dos pregões novos ou sem resumo;
 2. RV por estimador e janela, sempre a série inteira (barato: só agregados diários);
 3. IV por negócio, sincronizada (RN-VOL-03), e IV de referência diária (RN-VOL-06);
-4. IV ATM por vencimento e de prazo constante (RF-VOL-03/05, RN-VOL-05).
+4. IV ATM por vencimento e de prazo constante (RF-VOL-03/05, RN-VOL-05);
+5. spread estimado por faixa de moneyness e do ativo-objeto (RN-CST-03, PRD 1.8 §5.6.1).
 
 Idempotente: cada passo apaga e regrava o que calcula. Commit por pregão; se o worker parar, o
 job volta para a fila e refaz só o que faltou (os pregões sem resultado entram no escopo).
@@ -41,7 +42,7 @@ from vollab.analytics.market import (
     load_underlying_trades,
     underlying_isin,
 )
-from vollab.analytics.params import VolParams, vol_params_from_config
+from vollab.analytics.params import CostParams, VolParams, cost_params_from_config, vol_params_from_config
 from vollab.collection.params import CollectionParams, ensure_config_version, params_from_config
 from vollab.collection.planner import PHASE_OPTIONS, PHASE_UNDERLYING
 from vollab.db.models import (
@@ -56,12 +57,22 @@ from vollab.db.models import (
     JobStatus,
     OptionDailyQuote,
     OptionSeries,
+    OptionSpreadEstimate,
     RealizedVol,
 )
 from vollab.jobs import queue
 from vollab.jobs.control import JobInterruptedError, stop_requested
 from vollab.jobs.handlers import register
 from vollab.quant.calendar import count_business_days
+from vollab.quant.costs import (
+    OPTION_BANDS,
+    Band,
+    SeriesSpread,
+    aggregate_band,
+    moneyness_band,
+    quoted_relative_spread,
+    series_spread,
+)
 from vollab.quant.implied import (
     SmilePoint,
     TermPoint,
@@ -130,6 +141,7 @@ def run_recompute_job(session: Session, payload: dict[str, Any]) -> None:
         version_id=version.id,
         vol=vol_params_from_config(version),
         collection=params_from_config(version),
+        costs=cost_params_from_config(version),
     )
     recomputer.run(
         tickers=list(tickers) if isinstance(tickers, list) else None,
@@ -158,6 +170,19 @@ class _SeriesDay:
     is_weekly: bool
     strike: float
     trades_count: int
+    best_bid: float
+    best_ask: float
+    avg_price: float
+
+
+@dataclass(frozen=True, slots=True)
+class _OptionDay:
+    """O que o passo da IV já calculou e o spread reaproveita (sem reler negócios)."""
+
+    series: list[_SeriesDay]
+    k_over_f: NDArray[np.float64]
+    sidx: NDArray[np.int64]
+    price: NDArray[np.float64]
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,12 +211,14 @@ class Recomputer:
         version_id: int,
         vol: VolParams,
         collection: CollectionParams,
+        costs: CostParams | None = None,
         stop: Any = stop_requested,
     ) -> None:
         self.session = session
         self.version_id = version_id
         self.vol = vol
         self.collection = collection
+        self.costs = costs or CostParams()
         self.stop = stop
         self.holidays = load_holidays(session)
         self.rates: RateCurve = load_rates(session)
@@ -213,8 +240,9 @@ class Recomputer:
                 if d in intraday_days:
                     self.intraday_day(ticker, d, trades)
                 if d in iv_days:
-                    self.implied_day(ticker, d, dividends, trades)
+                    options = self.implied_day(ticker, d, dividends, trades)
                     self.term_structure_day(ticker, d, dividends)
+                    self.spread_day(ticker, d, trades, options)
                 self.session.commit()
             self.realized(ticker, dividends)
             self.session.commit()
@@ -247,10 +275,17 @@ class Recomputer:
                 )
             )
         else:
-            # O prazo constante é sempre gravado (mesmo indisponível): marca o pregão como feito.
+            # O prazo constante e o spread são sempre gravados (mesmo indisponíveis): marcam o pregão
+            # como feito. Pregões anteriores à Etapa 5 (sem spread) voltam ao escopo uma vez.
             done = set(
                 self.session.scalars(
                     select(ConstantMaturityVol.as_of).where(ConstantMaturityVol.ticker == ticker).distinct()
+                )
+            ) & set(
+                self.session.scalars(
+                    select(OptionSpreadEstimate.trade_date)
+                    .where(OptionSpreadEstimate.ticker == ticker)
+                    .distinct()
                 )
             )
         return sorted((candidates & days) | (candidates - done))
@@ -374,7 +409,8 @@ class Recomputer:
             text(
                 """
                 SELECT s.id, s.code, s.expiry, s.option_type = 'call', s.is_weekly,
-                       st.strike::float8, st.trades_count
+                       st.strike::float8, st.trades_count, st.best_bid::float8, st.best_ask::float8,
+                       st.avg_price::float8
                 FROM option_series s
                 JOIN option_daily_stats st ON st.series_id = s.id AND st.trade_date = :d
                 WHERE s.underlying_isin = :isin AND s.expiry > :d
@@ -398,11 +434,11 @@ class Recomputer:
 
     def implied_day(
         self, ticker: str, day: date, dividends: dict[date, DividendInfo], trades: UnderlyingTrades
-    ) -> None:
+    ) -> _OptionDay | None:
         s = self.session
         isin = underlying_isin(s, ticker)
         if isin is None:
-            return
+            return None
         series = self._series_of_day(isin, day)
         ids = [x.series_id for x in series]
         if ids:
@@ -420,17 +456,17 @@ class Recomputer:
         if not series or bar is None or rate is None:
             if series and rate is None:
                 log.warning("vol.iv_skipped_no_rate", ticker=ticker, day=str(day))
-            return
+            return None
         und_t, und_ids, und_p, _ = trades
         if und_t.size == 0:
-            return
+            return None
         by_code = {x.code: i for i, x in enumerate(series)}
         opt_rows = s.execute(
             text(OPTION_TRADES_SQL),
             {"codes": list(by_code), "d": day},
         ).all()
         if not opt_rows:
-            return
+            return None
         rate_c = continuous_rate(rate)
         params = self.vol.implied
         n = len(opt_rows)
@@ -529,6 +565,8 @@ class Recomputer:
             )
         if quotes:
             s.execute(insert(OptionDailyQuote), quotes)
+        forward = (close - pvd) * np.exp(rate_c * du / BUSINESS_DAYS_PER_YEAR)
+        return _OptionDay(series, k_eff / forward, sidx, opt_price)
 
     def _copy_implied(
         self, day: date, rows: Sequence[Any], trade: "_PerTrade", per: "_PerSeries", rate_c: float
@@ -669,6 +707,67 @@ class Recomputer:
             expiry, du, p = min(term, key=lambda x: abs(x[1] - target))
             row |= {"fallback_expiry": expiry, "fallback_bd": du, "fallback_iv": p.iv}
         s.execute(insert(ConstantMaturityVol), [row])
+
+    # 5. Spread estimado (RN-CST-03) ------------------------------------------------------------
+
+    def _floor(self, ticker: str, band: Band) -> float:
+        custom = self.costs.spread_floors_brl.get(ticker, {}).get(band.value, 0.0)
+        return max(self.costs.tick_brl, custom)
+
+    def spread_day(
+        self, ticker: str, day: date, trades: UnderlyingTrades, options: _OptionDay | None
+    ) -> None:
+        """Uma linha por faixa (sempre, mesmo vazia). Séries com ≥ `spread_min_trades` negócios
+        válidos pela R4; faixa pelo K/F com o strike efetivo (PRD 1.8 §5.6.1)."""
+        s = self.session
+        s.execute(
+            delete(OptionSpreadEstimate).where(
+                OptionSpreadEstimate.ticker == ticker, OptionSpreadEstimate.trade_date == day
+            )
+        )
+        min_trades = self.costs.spread_min_trades
+        by_band: dict[Band, list[SeriesSpread]] = {b: [] for b in (*OPTION_BANDS, Band.UNDERLYING)}
+        quoted: dict[Band, list[float]] = {b: [] for b in by_band}
+        und = series_spread(trades[2], floor_brl=self._floor(ticker, Band.UNDERLYING), min_trades=min_trades)
+        if und is not None:
+            by_band[Band.UNDERLYING].append(und)
+        if options is not None:
+            order = np.argsort(options.sidx, kind="stable")  # mantém horário e ID dentro da série
+            sidx, price = options.sidx[order], options.price[order]
+            bounds = np.flatnonzero(np.diff(sidx)) + 1
+            for chunk_i, chunk_p in zip(np.split(sidx, bounds), np.split(price, bounds), strict=True):
+                if chunk_i.size == 0:
+                    continue
+                i = int(chunk_i[0])
+                kf = float(options.k_over_f[i])
+                if not math.isfinite(kf) or kf <= 0:
+                    continue
+                band = moneyness_band(kf, self.costs.moneyness_bands)
+                est = series_spread(chunk_p, floor_brl=self._floor(ticker, band), min_trades=min_trades)
+                if est is None:
+                    continue
+                by_band[band].append(est)
+                x = options.series[i]
+                q = quoted_relative_spread(x.best_bid, x.best_ask, x.avg_price)
+                if q is not None:
+                    quoted[band].append(q)
+        rows = []
+        for band, spreads in by_band.items():
+            agg = aggregate_band(spreads, quoted[band])
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "trade_date": day,
+                    "band": band.value,
+                    "n_series": agg.n_series,
+                    "n_trades": agg.n_trades,
+                    "rel_median": agg.rel_median,
+                    "rel_p75": agg.rel_p75,
+                    "quoted_rel_median": agg.quoted_rel_median,
+                    "config_version_id": self.version_id,
+                }
+            )
+        s.execute(insert(OptionSpreadEstimate), rows)
 
 
 def _time(seconds: int) -> time:
