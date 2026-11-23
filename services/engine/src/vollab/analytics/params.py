@@ -71,3 +71,37 @@ class VolParams(BaseModel):
 def vol_params_from_config(version: ConfigVersion) -> VolParams:
     raw: dict[str, Any] = dict(version.params.get("vol", {}))
     return VolParams.model_validate(raw)
+
+
+class ForecastParams(BaseModel):
+    """Bloco `forecast` de `config_versions.params` (PRD 1.7 §5.7; QA-07 e QA-08 resolvidas)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    ewma_lambda: float = Field(default=0.94, ge=0.90, le=0.99, description="λ da EWMA (eq. 4.1).")
+    ewma_min_returns: int = Field(default=60, ge=20, le=1260, description="Amostra mínima da EWMA (QA-08).")
+    combination_window_bd: int = Field(
+        default=20, ge=5, le=252, description="Janela dos estimadores combinados (PRD §5.7)."
+    )
+    garch_min_returns: int = Field(default=240, ge=100, le=1260, description="Amostra mínima do GARCH.")
+    garch_max_returns: int = Field(default=1260, ge=240, le=5040, description="Retornos usados no ajuste.")
+    evaluation_horizons_bd: list[int] = Field(default=[21], min_length=1, max_length=4)
+    min_evaluation_windows: int = Field(
+        default=8, ge=3, le=100, description="Janelas não sobrepostas mínimas (QA-08, RN-PRV-02)."
+    )
+    bootstrap_reps: int = Field(default=2000, ge=200, le=20000)
+    selected_model: Literal["ewma", "combination", "garch"] = Field(
+        default="ewma", description="Modelo que alimenta o edge (RF-PRV-04), escolhido pelo usuário."
+    )
+
+    @field_validator("evaluation_horizons_bd")
+    @classmethod
+    def _horizons(cls, v: list[int]) -> list[int]:
+        if any(h < 1 or h > 252 for h in v):
+            raise ValueError("Horizontes entre 1 e 252 pregões.")
+        return sorted(set(v))
+
+
+def forecast_params_from_config(version: ConfigVersion) -> ForecastParams:
+    raw: dict[str, Any] = dict(version.params.get("forecast", {}))
+    return ForecastParams.model_validate(raw)

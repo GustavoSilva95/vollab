@@ -19,7 +19,7 @@ export const COCKPIT_ROUTES: readonly CockpitRoute[] = [
   { href: '/app/carteira', label: 'Carteira', stage: 7, available: false },
   { href: '/app/diario', label: 'Diário', stage: 7, available: false },
   { href: '/app/performance', label: 'Performance', stage: 9, available: false },
-  { href: '/app/modelos', label: 'Modelos', stage: 4, available: false },
+  { href: '/app/modelos', label: 'Modelos', stage: 4, available: true },
   { href: '/app/eventos', label: 'Eventos', stage: 3, available: true },
   { href: '/app/configuracoes', label: 'Configurações', stage: 5, available: false },
 ];

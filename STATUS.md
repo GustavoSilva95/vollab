@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 3 — Volatilidade e eventos: **concluída e aprovada (2026-11-23)**; PR da branch `etapa-3-volatilidade-eventos` aberto
-**Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (liberada; **não iniciar até o usuário pedir**)
+**Etapa atual:** Etapa 4 — Previsão de RV e avaliação de modelos: **concluída (2026-11-23)**: revisão de performance sem bloqueantes; mesclada direto na `main` sem PR, por decisão do usuário
+**Etapa anterior:** Etapa 3 concluída e aprovada (2026-11-23), PR #5 mesclado
 
 ## Aprovações
 
@@ -21,6 +21,8 @@
 | Referência técnica `docs/referencia/volatility-trading.md` (com Errata) / BRD 1.4 / PRD 1.5: close-to-close de média zero, prêmio absoluto, edge relativo e spread normal | 1.4 / 1.5 | Aprovado (decisões do usuário) | 2026-11-22 |
 | PRD 1.6: detalhes físicos e métodos da Etapa 3 (§5.5.1, §6.2, §6.4, §7, §8.1) | 1.6 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado; CI verde nos 6 jobs (runs 45107621540 e 45107787201, PR #5) | 2026-11-23 |
+| PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
+| Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário | 2026-11-23 |
 
 ## Feito
 
@@ -70,6 +72,16 @@
   - Com as fixtures (PETR4, 19/11/2026): IV ≈ 32%; RV 20 du: close-to-close 49,5%, Yang-Zhang 60,3%, Parkinson 33,7% — diferença explicada pelo gap de −13,6% em 26/10 (RN-VOL-09); intradiária "dados insuficientes" (11 pregões < 20). Prazo constante indisponível (só um vencimento com ATM) → ATM de 18/12 com prazo efetivo de 20 du.
   - Revisão de performance: **sem bloqueantes**, metas atendidas (telas 4–26 ms; IV de 100 mil negócios em 63 ms; carga inicial ≈ 50 s de recálculo para 3 ativos). Corrigidos os 4 itens importantes: N+1 no prazo constante ex-evento (+ `days`), pregões refeitos a cada job, recálculo completo por edição de provento (agora sem o intradiário e sem duplicar jobs) e leitura dupla dos negócios do ativo.
 
+- **Etapa 4 implementada (2026-11-23)**, branch `etapa-4-previsao` (PRD 1.7 §5.7):
+  - `quant/forecast` (puro): EWMA (eq. 4.1), GARCH(1,1) pela `arch` 9.0 com validação de domínio e persistência < 0,999, previsão agregada no horizonte (eq. 4.9 a partir de σ²ₜ₊₁, forma fechada), combinação de estimadores, origens não sobrepostas ancoradas no fim, RV realizada alvo, métricas (viés, MAE, RMSE), razão de RMSE pareada, bootstrap percentil com semente fixa, intervalos empírico (quantis do erro log) e χ² (previsão e vol amostral).
+  - Migration `0005`: `rv_forecasts` (com o estado do modelo, `config_version_id` e `engine_version`), `forecast_evaluations`, `forecast_evaluation_points`. Bloco `forecast` em `config_versions` (versão nova criada automaticamente com os padrões).
+  - Worker: job `forecast_recompute` enfileirado ao fim de cada `vol_recompute`; idempotente; ~1 s para os 3 ativos das fixtures. GARCH ajustado só nas origens da avaliação e no último pregão.
+  - API (contrato 0.4.0): `GET /forecasts` (outros horizontes calculados do estado, intervalo `approximate`), `GET /models/evaluation`, `GET /models/evaluation/points` (com a banda do intervalo), `PUT /models/selection` (409 para modelo sem avaliação em nenhum ativo; cria versão de configuração). RV close-to-close ganhou intervalo χ²; os outros estimadores levam o motivo da ausência.
+  - Tela `/app/modelos` (habilitada na navegação): previsão atual com intervalo e parâmetros, escolha do modelo do edge, tabela de erro × baselines com "dados insuficientes", gráfico previsto × realizado por janela com banda (PRD-UI-04, `connectgaps: false`).
+  - Testes: **T-REF-09 passando** (34 testes `reference`: janelas disjuntas por hypothesis, sem olhar à frente, EWMA × laço, GARCH × eq. 4.9 da referência e caso MSFT ≈ 0,142, recuperação de parâmetros em série sintética, métricas à mão, cobertura do χ² por simulação); engine 223 (8 novos de integração com fixtures reais, incluindo T-REF-09 sobre o que foi gravado e idempotência); web 70 (5 novos); Playwright 6 (novo: fluxo da tela de modelos contra a stack do E2E). Ruff, mypy estrito, ESLint, tsc, `next build` e contrato determinístico ok.
+  - **Revisão de performance (2026-11-23): sem bloqueantes, dentro das metas.** Job: ~21 ms por ativo com 1 ano; projetado ~0,32 s por ativo com 5 anos (60 ajustes GARCH de ~4 ms; ~3,2 s para 10 ativos; ~14 s com 4 horizontes); rotas em < 1 ms no banco (PKs cobrem todos os acessos); Plotly fora do bundle inicial. Corrigidos: M-2 (uma invalidação só após trocar o modelo) e M-3 (quantis do χ² em cache).
+  - Com as fixtures (221 pregões, h = 21 → 10 origens): EWMA 7 janelas (**dados insuficientes**, < 8), combinação e RV C2C 20 com 9 (ok), GARCH sem previsão (220 retornos < 240), IV sem nenhuma origem (só há IV nos pregões com opções coletadas). **CS-03 verificável** na tela: todos os modelos ativos com n, erro e razão contra os dois baselines. PETR4: EWMA 42,5% [31,5–53,0, aproximado], combinação 48,4% [35,5–66,8].
+
 ## Decisões registradas
 
 | Data | Decisão | Onde |
@@ -108,6 +120,10 @@
 | 2026-11-22 | **Edge:** RN-EDG-01 = prêmio absoluto em pontos (semáforo e P&L esperado ≈ vega × pontos); **novo RN-EDG-02 = edge relativo** (IV − previsão)/previsão, métrica principal do ranking e dos alertas; ambos descontam o **spread normal** do produto (RN-EDG-07, regra S1 da referência). Spread normal definido uma vez, em termos relativos (*s*), de modo que prêmio = IV − σ̂(1 + *s*) e edge relativo = prêmio ÷ σ̂. Regras do semáforo renumeradas RN-EDG-02..05 → 03..06 (nenhum código dependia delas). Método e valor padrão do spread normal: **QA-14, aberta**, para a Etapa 5 | BRD 1.4 §7.4, PRD 1.5 §5.6 |
 | 2026-11-23 | **QA-03 resolvida (aprovada):** prazo constante padrão de 21 du, configurável (`vol.constant_maturity_bd`) | PRD 1.6 §5.5.1 |
 | 2026-11-23 | **Etapa 3 — métodos aprovados** (PRD 1.6 §5.5.1): janela estrita; correção de viés só no close-to-close; fim da sessão = hora cheia do leilão de fechamento; **strike efetivo = K − proventos até o vencimento** (proteção da B3); ATM por interpolação em ln(K/F) com strikes OTM dos dois lados (K/F 0,9–1,1); intervalo do salto provisório pelo qui-quadrado do histórico até o QA-07; salto e IV ex-evento calculados na leitura | PRD 1.6 |
+| 2026-11-23 | **Etapa 4 — decisões do usuário:** histórico diário mantido em **1 ano** (BRD RF-DAD-05 inalterado; GARCH com ~250 retornos, motivo registrado, LC-04); **QA-07 resolvida:** intervalo da previsão empírico (quantis do erro log nas janelas não sobrepostas) com fallback χ² rotulado "aproximado"; combinação = média simples de close-to-close, Yang-Zhang, Rogers-Satchell e intradiária (sem Parkinson e Garman-Klass); modelo do edge escolhido pelo usuário (padrão EWMA), sem troca automática. **QA-08 resolvida:** EWMA 60 retornos, GARCH 240, avaliação 8 janelas | PRD 1.7 §5.7 |
+| 2026-11-23 | GARCH: previsão escrita a partir de σ²ₜ₊₁ (já conhecido em *t*), E[σ²ₜ₊τ] = V + (α+β)^(τ−1)(σ²ₜ₊₁ − V), equivalente à eq. 4.9; texto do PRD 1.7 corrigido (o rascunho tinha o expoente τ). GARCH ajustado só nas origens da avaliação e no último pregão | PRD 1.7 §5.7 |
+| 2026-11-23 | Intervalos históricos de `rv_forecasts` usam os quantis da avaliação inteira (inclui janelas posteriores): servem à exibição; a avaliação nunca usa dado posterior à origem | PRD 1.7 §5.7 |
+| 2026-11-23 | `PUT /models/selection` recusa (409) modelo sem avaliação disponível em nenhum ativo ativo (RF-PRV-02); o padrão EWMA vale até a primeira escolha, e o edge por ativo só usa o modelo onde houver avaliação | PRD 1.7 §5.7 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -127,10 +143,15 @@
 - Backlog da revisão de performance da Etapa 3 (não bloqueante): "data mais recente" por seq scan em `/series` e no smile (usar a PK de `atm_term_structure`); laços O(séries × negócios) e `count_business_days` dia a dia em `implied_day`; inserts de `realized_vols`/`intraday_bars` por executemany (COPY se crescer); GZip no FastAPI; `staleTime` maior nas consultas de vol; `useMemo` na estrutura a termo; pregão com `IntradayError` volta ao escopo a cada job (raro).
 - Plotly 4 traz o botão "Share chart" (envia o gráfico à nuvem da Plotly): desligado em `lib/charts/theme.ts`; manter desligado em qualquer gráfico novo.
 
+- Etapa 4: com 1 ano de histórico, o GARCH só ganha janelas avaliáveis depois de ~1 ano a mais de coleta, e o baseline IV só depois de ~8 meses de IV de prazo constante (63 pregões intradiários hoje). Até lá, aparecem como "dados insuficientes" (LC-04).
+- Fixtures: o OHLC de 26/10/2026 tem gaps grandes (BBAS3 −34,7%, BOVA11 −15,7%, PETR4 −8,5%), o que infla as previsões nas fixtures; conferir contra a carga real.
+- Backlog da revisão de performance da Etapa 4 (não bloqueante): I-1 (os ajustes GARCH são refeitos a cada job porque as origens ancoradas no fim mudam todo dia; reaproveitar os `starting_values` da origem anterior corta ~23% e iterações; limitar o GARCH ao horizonte do edge se ativar mais horizontes); M-1 (histórico de `rv_forecasts` regravado por inteiro e nunca lido; se nenhuma etapa ler, gravar sem intervalo e calcular na leitura); M-4 (`/models/evaluation/points` traz as 5 séries e o gráfico mostra uma); M-5 (pedido "todos os ativos" na fila não absorve um pedido de ativo específico).
+- B-6 (Etapa 1) se manifestou: um `.next` antigo apontava o rewrite para a porta 18000; o E2E só passou depois de `next build` com o `.env`.
+
 ## Próximos passos
 
 1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
 3. Mesclar o PR #5 (`etapa-3-volatilidade-eventos` → `main`); CI já verde.
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
-5. Quando o usuário pedir, iniciar a Etapa 4 (Previsão de RV e avaliação de modelos).
+5. Etapa 4 mesclada na `main`: conferir o CI do push. Próxima: Etapa 5 (custos, edge e ranking; QA-14), quando o usuário pedir.

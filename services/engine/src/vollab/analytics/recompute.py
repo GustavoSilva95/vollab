@@ -36,6 +36,7 @@ from vollab.analytics.market import (
     load_daily_series,
     load_dividends,
     load_holidays,
+    load_intraday_variance,
     load_rates,
     load_underlying_trades,
     underlying_isin,
@@ -136,6 +137,16 @@ def run_recompute_job(session: Session, payload: dict[str, Any]) -> None:
         full=bool(payload.get("full")),
         skip_intraday=bool(payload.get("skip_intraday")),
     )
+    # A previsão depende dos retornos, da RV e da IV recém-gravados (PRD §5.7).
+    from vollab.analytics.forecasting import enqueue_forecast
+
+    enqueue_forecast(
+        session,
+        user_id=user_id,
+        tickers=list(tickers) if isinstance(tickers, list) else None,
+        reason=f"vol_recompute ({payload.get('reason', '')})",
+    )
+    session.commit()
 
 
 @dataclass(frozen=True, slots=True)
@@ -317,23 +328,8 @@ class Recomputer:
             return
         terms = daily_terms(series.open, series.high, series.low, series.close, series.prev_close_adj)
         n = len(series.days)
-        intraday_var = np.full(n, np.nan)
-        incomplete = np.zeros(n, dtype=bool)
-        first_intraday: int | None = None
-        sessions = s.execute(
-            select(
-                IntradaySession.trade_date, IntradaySession.intraday_variance, IntradaySession.complete
-            ).where(IntradaySession.ticker == ticker)
-        )
-        for day, variance, complete in sessions:
-            i = series.index(day)
-            if i is None:
-                continue
-            first_intraday = i if first_intraday is None else min(first_intraday, i)
-            if complete:
-                intraday_var[i] = variance
-            else:
-                incomplete[i] = True
+        iv_day = load_intraday_variance(s, ticker, series)
+        intraday_var, incomplete, first_intraday = iv_day.variance, iv_day.incomplete, iv_day.first_index
         rows: list[dict[str, Any]] = []
         for window in self.vol.windows_bd:
             for est in Estimator:

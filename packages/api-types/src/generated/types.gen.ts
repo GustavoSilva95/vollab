@@ -289,6 +289,183 @@ export type EstimatorSeries = {
 };
 
 /**
+ * EvaluationPointOut
+ */
+export type EvaluationPointOut = {
+    /**
+     * Discard Reason
+     */
+    discard_reason: 'no_forecast' | 'incomplete_realized' | null;
+    /**
+     * Forecast
+     */
+    forecast: number | null;
+    /**
+     * Forecast Ci High
+     */
+    forecast_ci_high: number | null;
+    /**
+     * Forecast Ci Low
+     *
+     * Intervalo da previsão (QA-07), para a banda do gráfico.
+     */
+    forecast_ci_low: number | null;
+    /**
+     * Origin
+     */
+    origin: string;
+    /**
+     * Realized
+     */
+    realized: number | null;
+    /**
+     * Window End
+     */
+    window_end: string;
+};
+
+/**
+ * EvaluationPointsResponse
+ */
+export type EvaluationPointsResponse = {
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Series
+     */
+    series: Array<EvaluationSeries>;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * EvaluationResponse
+ */
+export type EvaluationResponse = {
+    /**
+     * Ci Level
+     */
+    ci_level: number;
+    /**
+     * Computed At
+     */
+    computed_at: string | null;
+    /**
+     * Config Version Id
+     */
+    config_version_id: number | null;
+    /**
+     * Engine Version
+     */
+    engine_version: string | null;
+    /**
+     * Evaluated Horizons Bd
+     */
+    evaluated_horizons_bd: Array<number>;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Min Windows
+     *
+     * Amostra mínima para sair de 'dados insuficientes' (QA-08).
+     */
+    min_windows: number;
+    /**
+     * Rows
+     */
+    rows: Array<EvaluationRow>;
+    /**
+     * Selected Model
+     */
+    selected_model: 'ewma' | 'combination' | 'garch';
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * EvaluationRow
+ */
+export type EvaluationRow = {
+    /**
+     * Bias
+     *
+     * Média de previsão − realizada (decimal; > 0 = superestima).
+     */
+    bias: number | null;
+    /**
+     * Discarded Incomplete Realized
+     */
+    discarded_incomplete_realized: number;
+    /**
+     * Discarded No Forecast
+     */
+    discarded_no_forecast: number;
+    /**
+     * First Origin
+     */
+    first_origin: string | null;
+    /**
+     * Kind
+     */
+    kind: 'model' | 'baseline';
+    /**
+     * Last Origin
+     */
+    last_origin: string | null;
+    /**
+     * Mae
+     */
+    mae: number | null;
+    /**
+     * Model
+     */
+    model: 'ewma' | 'combination' | 'garch' | 'rv_c2c_20' | 'implied';
+    /**
+     * N Windows
+     *
+     * Janelas não sobrepostas avaliadas.
+     */
+    n_windows: number;
+    /**
+     * Ratios
+     */
+    ratios: Array<RatioOut>;
+    rmse: EstimatedValue;
+    /**
+     * Status
+     */
+    status: 'ok' | 'insufficient_data';
+};
+
+/**
+ * EvaluationSeries
+ */
+export type EvaluationSeries = {
+    /**
+     * Ci Origin
+     *
+     * estimated = quantis do erro avaliado; approximate = só o erro de amostragem (χ²).
+     */
+    ci_origin: 'estimated' | 'approximate';
+    /**
+     * Model
+     */
+    model: 'ewma' | 'combination' | 'garch' | 'rv_c2c_20' | 'implied';
+    /**
+     * Points
+     */
+    points: Array<EvaluationPointOut>;
+};
+
+/**
  * EventCreate
  */
 export type EventCreate = {
@@ -455,6 +632,77 @@ export type EventUpdate = {
      * Status
      */
     status?: 'confirmed' | 'estimated' | null;
+};
+
+/**
+ * ForecastOut
+ */
+export type ForecastOut = {
+    /**
+     * Eligibility Reason
+     */
+    eligibility_reason?: string | null;
+    /**
+     * Eligible
+     *
+     * Tem avaliação disponível no horizonte (RF-PRV-02, RN-PRV-02).
+     */
+    eligible: boolean;
+    /**
+     * RV prevista para o horizonte (vol anualizada, decimal).
+     */
+    forecast: EstimatedValue;
+    /**
+     * Kind
+     */
+    kind: 'model' | 'baseline';
+    /**
+     * Model
+     */
+    model: 'ewma' | 'combination' | 'garch' | 'rv_c2c_20' | 'implied';
+    /**
+     * Selected
+     *
+     * É o modelo em uso no edge (RF-PRV-04).
+     */
+    selected: boolean;
+    state?: ModelState | null;
+};
+
+/**
+ * ForecastsResponse
+ */
+export type ForecastsResponse = {
+    /**
+     * As Of
+     *
+     * Pregão de origem da previsão.
+     */
+    as_of: string | null;
+    /**
+     * Ci Level
+     */
+    ci_level: number;
+    /**
+     * Evaluated Horizons Bd
+     */
+    evaluated_horizons_bd: Array<number>;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Items
+     */
+    items: Array<ForecastOut>;
+    /**
+     * Selected Model
+     */
+    selected_model: 'ewma' | 'combination' | 'garch';
+    /**
+     * Ticker
+     */
+    ticker: string;
 };
 
 /**
@@ -684,6 +932,94 @@ export type IvQuality = {
 };
 
 /**
+ * ModelSelectionIn
+ */
+export type ModelSelectionIn = {
+    /**
+     * Model
+     */
+    model: 'ewma' | 'combination' | 'garch';
+};
+
+/**
+ * ModelSelectionOut
+ */
+export type ModelSelectionOut = {
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    /**
+     * Created
+     *
+     * Uma versão nova de configuração foi criada.
+     */
+    created: boolean;
+    /**
+     * Selected Model
+     */
+    selected_model: 'ewma' | 'combination' | 'garch';
+};
+
+/**
+ * ModelState
+ *
+ * Estado do modelo na origem (o que gera a previsão em qualquer horizonte).
+ */
+export type ModelState = {
+    /**
+     * Alpha
+     */
+    alpha?: number | null;
+    /**
+     * Beta
+     */
+    beta?: number | null;
+    /**
+     * Components
+     *
+     * Estimadores na combinação.
+     */
+    components?: Array<string> | null;
+    /**
+     * Ewma Lambda
+     *
+     * λ da EWMA (eq. 4.1).
+     */
+    ewma_lambda?: number | null;
+    /**
+     * Long Run Vol
+     *
+     * √(252·V), V = ω/(1 − α − β).
+     */
+    long_run_vol?: number | null;
+    /**
+     * N Returns
+     *
+     * Retornos diários válidos usados.
+     */
+    n_returns?: number | null;
+    /**
+     * Omega
+     *
+     * ω do GARCH (variância diária, decimal).
+     */
+    omega?: number | null;
+    /**
+     * Persistence
+     *
+     * α + β.
+     */
+    persistence?: number | null;
+    /**
+     * Window Bd
+     *
+     * Janela dos estimadores combinados.
+     */
+    window_bd?: number | null;
+};
+
+/**
  * PriceHistory
  */
 export type PriceHistory = {
@@ -807,6 +1143,26 @@ export type ProgressCounts = {
      * Total
      */
     total: number;
+};
+
+/**
+ * RatioOut
+ */
+export type RatioOut = {
+    /**
+     * Baseline
+     */
+    baseline: 'rv_c2c_20' | 'implied';
+    /**
+     * N Windows
+     *
+     * Origens em que modelo e baseline existem (pareadas).
+     */
+    n_windows: number;
+    /**
+     * RMSE do modelo ÷ RMSE do baseline (< 1 = melhor).
+     */
+    ratio: EstimatedValue;
 };
 
 /**
@@ -1460,6 +1816,54 @@ export type UpdateEventResponses = {
 
 export type UpdateEventResponse = UpdateEventResponses[keyof UpdateEventResponses];
 
+export type GetForecastsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Horizon Bd
+         *
+         * Padrão: o prazo constante.
+         */
+        horizon_bd?: number | null;
+        /**
+         * Model
+         *
+         * Filtra um modelo.
+         */
+        model?: 'ewma' | 'combination' | 'garch' | null;
+        /**
+         * Underlying
+         *
+         * Ticker.
+         */
+        underlying: string;
+    };
+    url: '/forecasts';
+};
+
+export type GetForecastsErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetForecastsError = GetForecastsErrors[keyof GetForecastsErrors];
+
+export type GetForecastsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ForecastsResponse;
+};
+
+export type GetForecastsResponse = GetForecastsResponses[keyof GetForecastsResponses];
+
 export type GetHealthData = {
     body?: never;
     path?: never;
@@ -1484,6 +1888,125 @@ export type GetHealthResponses = {
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type GetModelsEvaluationData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Horizon Bd
+         *
+         * Padrão: o prazo constante.
+         */
+        horizon_bd?: number | null;
+        /**
+         * Underlying
+         *
+         * Ticker.
+         */
+        underlying: string;
+    };
+    url: '/models/evaluation';
+};
+
+export type GetModelsEvaluationErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetModelsEvaluationError = GetModelsEvaluationErrors[keyof GetModelsEvaluationErrors];
+
+export type GetModelsEvaluationResponses = {
+    /**
+     * Successful Response
+     */
+    200: EvaluationResponse;
+};
+
+export type GetModelsEvaluationResponse = GetModelsEvaluationResponses[keyof GetModelsEvaluationResponses];
+
+export type GetModelsEvaluationPointsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Horizon Bd
+         *
+         * Padrão: o prazo constante.
+         */
+        horizon_bd?: number | null;
+        /**
+         * Model
+         *
+         * Padrão: todos.
+         */
+        model?: 'ewma' | 'combination' | 'garch' | 'rv_c2c_20' | 'implied' | null;
+        /**
+         * Underlying
+         *
+         * Ticker.
+         */
+        underlying: string;
+    };
+    url: '/models/evaluation/points';
+};
+
+export type GetModelsEvaluationPointsErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetModelsEvaluationPointsError = GetModelsEvaluationPointsErrors[keyof GetModelsEvaluationPointsErrors];
+
+export type GetModelsEvaluationPointsResponses = {
+    /**
+     * Successful Response
+     */
+    200: EvaluationPointsResponse;
+};
+
+export type GetModelsEvaluationPointsResponse = GetModelsEvaluationPointsResponses[keyof GetModelsEvaluationPointsResponses];
+
+export type PutModelSelectionData = {
+    body: ModelSelectionIn;
+    path?: never;
+    query?: never;
+    url: '/models/selection';
+};
+
+export type PutModelSelectionErrors = {
+    /**
+     * Modelo sem avaliação disponível.
+     */
+    409: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PutModelSelectionError = PutModelSelectionErrors[keyof PutModelSelectionErrors];
+
+export type PutModelSelectionResponses = {
+    /**
+     * Successful Response
+     */
+    200: ModelSelectionOut;
+};
+
+export type PutModelSelectionResponse = PutModelSelectionResponses[keyof PutModelSelectionResponses];
 
 export type ListUnderlyingsData = {
     body?: never;

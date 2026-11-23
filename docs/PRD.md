@@ -3,11 +3,11 @@
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base:** [BRD 1.4 — Fase 1](./BRD.md) (aprovado em 2026-11-22)
 **Referência técnica de fórmulas:** [`referencia/volatility-trading.md`](./referencia/volatility-trading.md) — sempre a forma corrigida; nunca a forma impressa no livro de fórmula listada na Errata (§2 da referência)
-**Versão:** 1.6
+**Versão:** 1.7
 **Data:** 2026-11-23
-**Status:** Aprovado (1.6, 2026-11-23)
+**Status:** Aprovado (1.7, 2026-11-23)
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06. 1.6 (2026-11-23, Etapa 3, aprovado): detalhes físicos e de método da volatilidade — `intraday_sessions` e `constant_maturity_vols` (§6.2), salto de evento e IV ex-evento calculados na leitura em vez de `event_jumps` (§6.4), `corporate_actions.event_id`, endpoints `/summary` e `/prices` e a lista `/app/ativos` (§7, §8.1), métodos da §5.5.1; nenhuma mudança de escopo do BRD.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): adaptador COTAHIST, regra R4, IV de referência, filtros de liquidez padrão, feriados com fonte/confirmação, volume de carga revisado e universo inicial de 3 ativos. 1.2 (2026-11-22): filtro de liquidez padrão de ≥ 20 negócios (QA-06) e PRD-NF-04 recalculado. 1.3 (2026-11-22, Etapa 2, aprovado): proventos do Yahoo por httpx na API de gráficos, sem `yfinance` (decisão do usuário); nomes físicos das tabelas de dados confirmados (§6); stack separada do E2E com fonte simulada (§10.3). 1.4 (2026-11-22, aprovado): estimadores de RV do BRD 1.3 (§5.5, §6.2 `intraday_bars` e `realized_vols`, T-REF-05 ampliado) e GARCH(1,1) explícito (§9). 1.5 (2026-11-22, decisão do usuário): referência técnica de fórmulas com Errata; close-to-close padrão com **média zero e divisor n** (eq. 2.1b), forma com média subtraída e *n* − 1 mantida como opção de comparação, correção de viés com `bias_b_zero_mean` (§5.5); prêmio absoluto, edge relativo e spread normal (§5.6, BRD RN-EDG-01/02/07); renumeração RN-EDG-03..06. 1.6 (2026-11-23, Etapa 3, aprovado): detalhes físicos e de método da volatilidade — `intraday_sessions` e `constant_maturity_vols` (§6.2), salto de evento e IV ex-evento calculados na leitura em vez de `event_jumps` (§6.4), `corporate_actions.event_id`, endpoints `/summary` e `/prices` e a lista `/app/ativos` (§7, §8.1), métodos da §5.5.1; nenhuma mudança de escopo do BRD. 1.7 (2026-11-23, Etapa 4, aprovado): métodos de previsão e avaliação (§5.7) com as decisões do usuário — histórico diário mantido em 1 ano (BRD inalterado), intervalo empírico com fallback χ² (QA-07), combinação por média simples sem Parkinson e Garman-Klass, modelo do edge escolhido pelo usuário; amostras mínimas (QA-08); `forecast_evaluation_points` (§6.4); `/models/evaluation/points` e `PUT /models/selection` (§7); T-REF-09 detalhado (§10.2).
 
 ---
 
@@ -227,6 +227,47 @@ Notação no mesmo horizonte *h*: IV = IV de prazo constante ex-evento (RN-EVT-0
 - Sem histórico suficiente, *s* vem de `config_versions` com `calibrated = false` e rótulo "não calibrado"; nunca zero implícito.
 - Todas as métricas saem em `EstimatedValue` com intervalo (QA-07), herdado do intervalo de σ̂.
 
+### 5.7 Previsão de RV e avaliação de modelos (RF-PRV-01..04, RN-PRV-01/02, Etapa 4) *(1.7)*
+
+Fórmulas conforme a referência técnica (cap. 4: eqs. 4.1, 4.4–4.5, 4.9). Notação: rₜ = ln(Cₜ / (Cₜ₋₁ − D)), retorno diário **ajustado por proventos** (RN-VOL-07), **média zero**; *t* = pregão de origem (fechamento conhecido); *h* = horizonte em dias úteis (`horizon_bd`, RF-PRV-01). A previsão σ̂(*t*, *h*) é a **vol anualizada média esperada nos pregões *t*+1 … *t*+*h***: √(252 · média das variâncias diárias previstas). Só entram dados até *t* (sem olhar à frente). Variâncias **sem** correção de viés (§5.5).
+
+**Modelos (RF-PRV-02)**
+
+| Modelo | Definição | Amostra mínima (QA-08) |
+|--------|-----------|------------------------|
+| EWMA (`ewma`) | v₍ₜ₊₁₎ = λ·vₜ + (1 − λ)·rₜ² (eq. 4.1), iniciada pela média de r² dos 20 primeiros retornos; previsão **plana**: σ̂ = √(252·v₍ₜ₊₁₎) para qualquer *h* (a EWMA ignora a reversão à média). λ padrão **0,94**, configurável em [0,90; 0,99]. | 60 retornos (peso do início 0,94⁶⁰ ≈ 2%) |
+| Combinação de estimadores (`combination`) | Média simples das variâncias diárias de **janela 20** de close-to-close oficial, Yang-Zhang, Rogers-Satchell e intradiária (esta só nos pregões em que estiver disponível); previsão plana. **Parkinson e Garman-Klass ficam fora** (supõem ausência de gap, RN-VOL-09). Os componentes usados são gravados. | close-to-close, Yang-Zhang e Rogers-Satchell disponíveis na data |
+| GARCH(1,1) (`garch`) | Biblioteca `arch`: média zero, inovação normal, retornos × 100 (escala numérica), máxima verossimilhança com todos os retornos válidos até *t* (no máximo 1.260). Previsão: E[σ²ₜ₊τ] = V + (α + β)^(τ−1)·(σ²₍ₜ₊₁₎ − V), V = ω/(1 − α − β) — a eq. 4.9 escrita a partir de σ²₍ₜ₊₁₎ = ω + α·rₜ² + β·σ²ₜ, já conhecido em *t* (eqs. 4.4, 4.5 e 4.9); σ̂ = √(252 · média para τ = 1…*h*). Ajustado nas origens da avaliação e no último pregão (não em todo pregão, pelo custo do ajuste). **"Indisponível" com motivo** se não convergir, se ω ≤ 0, α ou β fora de [0, 1) ou α + β ≥ 0,999. Com menos de 1.000 retornos (sempre, com 1 ano de histórico — LC-04), o motivo registra "estimado com *N* retornos; a referência recomenda ≥ 1.000". | 240 retornos |
+
+Para cada pregão e modelo, o worker grava o **estado** (v, ou ω, α, β e σ²₍ₜ₊₁₎, e os componentes da combinação) e as previsões dos horizontes de avaliação. Outros horizontes (o prazo de cada vencimento, RF-PRV-01) são calculados **na leitura** a partir do estado, por fórmula fechada.
+
+**Baselines (RF-PRV-03)** — usados como previsões e avaliados do mesmo jeito:
+
+| Baseline | Previsão em *t* |
+|----------|-----------------|
+| `rv_c2c_20` | close-to-close oficial de 20 pregões em *t*, sem correção de viés |
+| `implied` | IV de prazo constante em *t* (§5.5.1), só quando *h* = `vol.constant_maturity_bd`; o fallback "ATM do vencimento disponível" **não** entra na avaliação (origem descartada e contada). IV **com** o evento: é a previsão do mercado |
+
+**Alvo:** RV realizada(*t*, *h*) = √((252/*h*)·Σᵢ₌₁..ₕ r²ₜ₊ᵢ), close-to-close de média zero, sem correção de viés. A janela que não tiver os *h* retornos é descartada e contada.
+
+**Avaliação (RN-PRV-01, T-REF-09)**
+
+- Horizontes avaliados: `forecast.evaluation_horizons_bd`, padrão **[21]** (= prazo constante, o que alimenta o edge na Etapa 5).
+- **Origens não sobrepostas, ancoradas no fim:** a última origem *t*_K é o pregão tal que *t*_K + *h* = último pregão com fechamento; as anteriores são *t*_K − *h*, *t*_K − 2*h*, … (contadas em pregões do calendário). As janelas realizadas (*t*ₖ, *t*ₖ + *h*] são disjuntas: nenhum dia aparece em duas. Todas as previsões (modelos e baselines) usam as **mesmas origens**.
+- Erro eₖ = σ̂ₖ − RVₖ, em pontos de vol (decimal). Métricas por modelo: **n** (e descartes, com motivo), **viés** (média de e), **MAE**, **RMSE** e, contra cada baseline, a **razão de RMSE** nas origens em que os dois existem (pareadas). < 1 = melhor que o baseline.
+- Intervalos das métricas: **bootstrap percentil** (2.000 reamostragens das origens, semente fixa, nível `ci_level`).
+- Abaixo da **amostra mínima de 8 janelas** (QA-08) a métrica é `insufficient_data` e o modelo **não pode ser escolhido** para o edge (RF-PRV-02, RN-PRV-02). Com 1 ano de histórico e *h* = 21, EWMA e combinação chegam a ~9–11 janelas; o GARCH só acumula janelas avaliáveis à medida que o histórico passa de 240 retornos antes da origem (LC-04).
+- Recalculado no worker (job `forecast_recompute`) ao fim de cada `vol_recompute`; as telas só leem.
+
+**Intervalo da previsão (QA-07, nível `vol.ci_level` = 90%)**
+
+- **Empírico:** com ≥ 8 janelas avaliadas do mesmo modelo e horizonte, [σ̂·e^q_low, σ̂·e^q_high], com q = quantis (5% e 95% a 90%) de ln(RVₖ/σ̂ₖ). `origin = estimated`.
+- **Fallback analítico:** abaixo disso, só o erro de amostragem da RV em *h* dias, supondo o modelo correto: *h*·RV²/σ̂² ~ χ²ₕ ⇒ [σ̂·√(χ²ₕ;₀,₀₅/*h*), σ̂·√(χ²ₕ;₀,₉₅/*h*)]. `origin = approximate`, motivo "intervalo só com o erro de amostragem (< 8 janelas avaliadas)": é estreito demais por ignorar o erro do modelo.
+- Horizonte não avaliado (lido do estado): usa os quantis do horizonte avaliado mais próximo, `origin = approximate`, com o motivo.
+- O mesmo método vale para a **RV close-to-close** da Etapa 3 (χ² com *n* da janela) e confirma o intervalo provisório do salto de evento (§5.5.1). Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang e intradiária seguem sem intervalo, com o motivo "sem distribuição fechada".
+
+**Escolha do modelo (RF-PRV-04):** `forecast.selected_model` na configuração versionada (padrão **`ewma`**), escolhido pelo usuário em `/app/modelos` (cria uma versão nova de `config_versions`). O modelo escolhido só alimenta o edge num ativo e horizonte em que tiver avaliação disponível; sem ela, o edge fica "indisponível" com o motivo (Etapa 5). Não há troca automática pelo menor erro.
+
 ---
 
 ## 6. Modelo de dados (lógico)
@@ -282,8 +323,9 @@ Detalhes confirmados na Etapa 2:
 |--------|----------|-----|
 | `events` | tipo (resultado, ex-dividendo, ex-JCP, Copom, macro), data, confirmada/estimada, valor por ação (ex-dividendo/ex-JCP). *(1.6)* Vencimentos não são gravados: derivados das séries mensais na leitura. Ex-dividendo/ex-JCP criam um provento `manual` em `corporate_actions` (`event_id`, apagado junto) e enfileiram o recálculo do ativo | RF-EVT-01/02, RS-02 |
 | `event_jumps` | salto estimado por evento: pela estrutura a termo e pelo histórico, com intervalo. *(1.6: não persistida na Etapa 3 — calculado na leitura a partir de `atm_term_structure`, `daily_bars` e `realized_vols`, pois depende do calendário do usuário e é barato; volta a ser gravado no retrato da decisão, Etapa 6)* | RN-EVT-01/02 |
-| `rv_forecasts` | previsão por modelo, ativo, data e horizonte, com intervalo | RF-PRV-01/02 |
-| `forecast_evaluations` | erro por modelo e baseline, apenas janelas não sobrepostas, nº de observações | RF-PRV-03, RN-PRV-01 |
+| `rv_forecasts` | previsão por modelo, ativo, data e horizonte, com intervalo. *(1.7)* Chave (ativo, pregão, modelo, `horizon_bd`); guarda também o **estado** do modelo (JSONB: λ e v; ω, α, β e σ²; componentes da combinação; nº de retornos), status, motivo, `config_version_id` e `engine_version` | RF-PRV-01/02 |
+| `forecast_evaluations` | erro por modelo e baseline, apenas janelas não sobrepostas, nº de observações. *(1.7)* Chave (ativo, modelo, `horizon_bd`): n, descartes, viés, MAE, RMSE com intervalo, razão de RMSE contra cada baseline com intervalo, quantis do erro log (para o intervalo da previsão), status, `config_version_id`, `engine_version` | RF-PRV-03, RN-PRV-01 |
+| `forecast_evaluation_points` | *(1.7)* uma linha por origem avaliada: origem, fim da janela, previsão, RV realizada (gráfico previsto × realizado e auditoria do T-REF-09) | RF-PRV-03, CS-03 |
 
 ### 6.5 Configuração, operações e risco
 
@@ -310,7 +352,7 @@ Base: `/api/engine` no navegador (via `rewrites`) e `http://127.0.0.1:8000` para
 | Ativos e séries | `GET/POST/PATCH /underlyings` · `GET /underlyings/{t}/series` · *(1.6)* `GET /underlyings/{t}/summary` (último pregão, qualidade do intradiário e da sincronização) · `GET /underlyings/{t}/prices` | §5.1, RN-DAD-02, RN-VOL-03 |
 | Volatilidade | `GET /underlyings/{t}/vol/realized` · `/vol/implied/smile?expiry=` · `/vol/term-structure` · `/vol/constant-maturity` | RF-VOL-01..05 |
 | Eventos | `GET/POST/PATCH/DELETE /events` · `GET /underlyings/{t}/event-jumps` | §7.3 |
-| Previsão | `GET /forecasts?underlying=&horizon_bd=&model=` · `GET /models/evaluation` | §7.1 Previsão |
+| Previsão | `GET /forecasts?underlying=&horizon_bd=&model=` · `GET /models/evaluation` · *(1.7)* `GET /models/evaluation/points?underlying=&model=&horizon_bd=` · `PUT /models/selection` (grava `forecast.selected_model` numa versão nova de configuração; a única escrita desta etapa) | §7.1 Previsão |
 | Ranking | `GET /ranking` | §7.4 |
 | Simulação | `POST /simulations` (estrutura, séries, preços manuais opcionais) → payoff, Greeks, custos, distribuição de P&L, P&L esperado | §7.6 |
 | Dimensionamento | `POST /sizing` (simulação, capital, margem manual) → Kelly, teto, tamanho final e regra que prevaleceu | §7.7 |
@@ -349,7 +391,7 @@ Regra geral: **Server Components para a casca e para telas de leitura que só mu
 | `/app/operacoes/[id]` | Detalhe, lançamentos, marcações, atribuição | Server (leitura) + formulário de lançamento em Client | Misto |
 | `/app/diario` | Lista de operações | Server + TanStack Table no cliente | Leitura |
 | `/app/performance` | Previsto × realizado, análise agregada, IR | Server + Client para gráficos | Leitura |
-| `/app/modelos` | Erro de previsão por modelo × baselines | Server + Client para gráficos | Leitura |
+| `/app/modelos` | Erro de previsão por modelo × baselines | Server + Client para gráficos | Leitura; *(1.7)* seletor de ativo e horizonte, tabela com n, viés, MAE, RMSE e razão contra os baselines (com intervalos e "dados insuficientes"), previsão atual de cada modelo com intervalo, gráfico previsto × realizado por janela e escolha do modelo em uso (RF-PRV-04) |
 | `/app/eventos` | Calendário e cadastro manual | TanStack Query + RHF/Zod | CRUD |
 | `/app/configuracoes` | Parâmetros e histórico de versões | TanStack Query + RHF/Zod | CRUD versionado |
 
@@ -417,7 +459,7 @@ No lugar de uma meta de cobertura percentual, **a etapa não fecha sem estes tes
 | T-REF-06 | **Unidades e escalas**: vol decimal × %, dias úteis × corridos, anualização 252, taxa exponencial; nenhuma função aceita ou devolve % | testes dedicados no engine e no `lib/format` |
 | T-REF-07 | **Kelly e teto** em casos montados à mão (prevalece Kelly; prevalece teto; zero sem edge) | igualdade exata |
 | T-REF-08 | **Atribuição de P&L**: em série sintética gerada pelo próprio modelo, o resíduo tende a zero | resíduo < limite |
-| T-REF-09 | **Avaliação de modelos**: janelas não sobrepostas verificadas (nenhum dia compartilhado) | propriedade |
+| T-REF-09 | **Avaliação de modelos**: janelas não sobrepostas verificadas (nenhum dia compartilhado). *(1.7)* Também: espaçamento de *h* pregões e ancoragem no fim; nenhuma previsão usa dado posterior à origem (perturbar o futuro não muda a previsão); EWMA × laço ingênuo; previsão do GARCH × eq. 4.9 da referência e vol de longo prazo do caso MSFT (≈ 0,142); recuperação dos parâmetros do GARCH em série sintética; métricas × cálculo manual; cobertura do intervalo χ² em simulação | propriedade (hypothesis) e referência |
 
 ### 10.3 Fluxos ponta a ponta (Playwright)
 
@@ -506,7 +548,7 @@ O detalhamento, com entregáveis e critérios de saída, está em [`PLANO.md`](.
 |----|---------|-----------------|
 | PRD-QA-01 | O Hey API gera Zod e hooks do TanStack Query de forma estável a partir do OpenAPI do FastAPI? | **Resolvida na Etapa 1 (2026-11-22):** sim. `@hey-api/openapi-ts` 0.99 gera tipos, Zod, SDK com validação de resposta e `queryOptions` do TanStack Query; saída determinística (verificada pelo `contract-drift`). Plano B não usado. |
 | PRD-QA-02 | Particionar `trades` por mês é suficiente para o volume real? Dados da Etapa 0: PETR4 tem 35–97 mil negócios/dia; universo inicial ≈ 10 milhões de linhas em 3 meses (ativos) + ~2 milhões (opções). | **Resolvida na Etapa 2 (2026-11-22):** sim. Medido com 10,08 milhões de linhas sintéticas em 63 pregões: ~174 B/linha (1,05 GB de dados + 0,69 GB de índices), ~3,4 milhões de linhas e ~580 MB por mês; pruning por pregão funciona (DELETE por pregão × ticker em 24 ms, COPY de 97 mil linhas em ~0,3 s). O que importa é a **ordem da chave**: instrumento primeiro (leitura de uma série em 63 pregões: 363 ms → 3 ms). Ler negócios brutos de um ativo inteiro (4,4 milhões de linhas, ~1,2 s) não cabe numa requisição: a Etapa 3 grava agregados no worker após a coleta (PRD-NF-06). Sem retenção definida: ~8 GB/ano com 3 ativos; partições mensais permitem `DROP` barato quando ela for decidida. |
-| PRD-QA-03 | Método do intervalo de confiança por métrica (bootstrap × analítico) | Etapa 4 (QA-07) |
+| PRD-QA-03 | Método do intervalo de confiança por métrica (bootstrap × analítico) | **Resolvida na 1.7 (Etapa 4, QA-07, 2026-11-23):** previsão — empírico pelos quantis do erro log nas janelas não sobrepostas, com fallback χ² rotulado "aproximado"; métricas de erro — bootstrap percentil; RV close-to-close e salto — χ² (§5.7). |
 | PRD-QA-04 | O usuário deseja a superfície 3D de IV na fase 1? | Após a Etapa 3 (opcional) |
 
 ---

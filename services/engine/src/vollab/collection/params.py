@@ -57,7 +57,7 @@ def params_from_config(version: ConfigVersion) -> CollectionParams:
 
 def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
     # Import tardio: o bloco de volatilidade (Etapa 3) vive em `analytics`.
-    from vollab.analytics.params import VolParams
+    from vollab.analytics.params import ForecastParams, VolParams
 
     return {
         "collection": (
@@ -67,6 +67,10 @@ def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
         "vol": (
             VolParams().model_dump(mode="json"),
             "volatilidade (janelas 20 e 60, cobertura 80%, média zero, sincronização 10 s, prazo 21 du)",
+        ),
+        "forecast": (
+            ForecastParams().model_dump(mode="json"),
+            "previsão (EWMA λ 0,94, horizonte 21 du, 8 janelas mínimas, modelo do edge: EWMA)",
         ),
     }
 

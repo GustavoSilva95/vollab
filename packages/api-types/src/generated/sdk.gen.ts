@@ -4,8 +4,8 @@ import * as z from 'zod';
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetConstantMaturityData, GetConstantMaturityErrors, GetConstantMaturityResponses, GetEventJumpsData, GetEventJumpsErrors, GetEventJumpsResponses, GetHealthData, GetHealthErrors, GetHealthResponses, GetPriceHistoryData, GetPriceHistoryErrors, GetPriceHistoryResponses, GetRealizedVolData, GetRealizedVolErrors, GetRealizedVolResponses, GetSmileData, GetSmileErrors, GetSmileResponses, GetTermStructureData, GetTermStructureErrors, GetTermStructureResponses, GetUnderlyingSeriesData, GetUnderlyingSeriesErrors, GetUnderlyingSeriesResponses, GetUnderlyingSummaryData, GetUnderlyingSummaryErrors, GetUnderlyingSummaryResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, UpdateEventData, UpdateEventErrors, UpdateEventResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
-import { zCreateCollectionRunResponse, zCreateEventBody, zCreateEventResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zDeleteEventPath, zDeleteEventResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetConstantMaturityPath, zGetConstantMaturityQuery, zGetConstantMaturityResponse, zGetEventJumpsPath, zGetEventJumpsResponse, zGetHealthResponse, zGetPriceHistoryPath, zGetPriceHistoryQuery, zGetPriceHistoryResponse, zGetRealizedVolPath, zGetRealizedVolQuery, zGetRealizedVolResponse, zGetSmilePath, zGetSmileQuery, zGetSmileResponse, zGetTermStructurePath, zGetTermStructureQuery, zGetTermStructureResponse, zGetUnderlyingSeriesPath, zGetUnderlyingSeriesQuery, zGetUnderlyingSeriesResponse, zGetUnderlyingSummaryPath, zGetUnderlyingSummaryResponse, zListEventsQuery, zListEventsResponse, zListUnderlyingsResponse, zUpdateEventBody, zUpdateEventPath, zUpdateEventResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
+import type { CreateCollectionRunData, CreateCollectionRunErrors, CreateCollectionRunResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateUnderlyingData, CreateUnderlyingErrors, CreateUnderlyingResponses, DeleteEventData, DeleteEventErrors, DeleteEventResponses, GetCollectionGapsData, GetCollectionGapsErrors, GetCollectionGapsResponses, GetCollectionPendingData, GetCollectionPendingErrors, GetCollectionPendingResponses, GetCollectionRunData, GetCollectionRunErrors, GetCollectionRunResponses, GetConstantMaturityData, GetConstantMaturityErrors, GetConstantMaturityResponses, GetEventJumpsData, GetEventJumpsErrors, GetEventJumpsResponses, GetForecastsData, GetForecastsErrors, GetForecastsResponses, GetHealthData, GetHealthErrors, GetHealthResponses, GetModelsEvaluationData, GetModelsEvaluationErrors, GetModelsEvaluationPointsData, GetModelsEvaluationPointsErrors, GetModelsEvaluationPointsResponses, GetModelsEvaluationResponses, GetPriceHistoryData, GetPriceHistoryErrors, GetPriceHistoryResponses, GetRealizedVolData, GetRealizedVolErrors, GetRealizedVolResponses, GetSmileData, GetSmileErrors, GetSmileResponses, GetTermStructureData, GetTermStructureErrors, GetTermStructureResponses, GetUnderlyingSeriesData, GetUnderlyingSeriesErrors, GetUnderlyingSeriesResponses, GetUnderlyingSummaryData, GetUnderlyingSummaryErrors, GetUnderlyingSummaryResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListUnderlyingsData, ListUnderlyingsErrors, ListUnderlyingsResponses, PutModelSelectionData, PutModelSelectionErrors, PutModelSelectionResponses, UpdateEventData, UpdateEventErrors, UpdateEventResponses, UpdateUnderlyingData, UpdateUnderlyingErrors, UpdateUnderlyingResponses } from './types.gen';
+import { zCreateCollectionRunResponse, zCreateEventBody, zCreateEventResponse, zCreateUnderlyingBody, zCreateUnderlyingResponse, zDeleteEventPath, zDeleteEventResponse, zGetCollectionGapsQuery, zGetCollectionGapsResponse, zGetCollectionPendingResponse, zGetCollectionRunPath, zGetCollectionRunResponse, zGetConstantMaturityPath, zGetConstantMaturityQuery, zGetConstantMaturityResponse, zGetEventJumpsPath, zGetEventJumpsResponse, zGetForecastsQuery, zGetForecastsResponse, zGetHealthResponse, zGetModelsEvaluationPointsQuery, zGetModelsEvaluationPointsResponse, zGetModelsEvaluationQuery, zGetModelsEvaluationResponse, zGetPriceHistoryPath, zGetPriceHistoryQuery, zGetPriceHistoryResponse, zGetRealizedVolPath, zGetRealizedVolQuery, zGetRealizedVolResponse, zGetSmilePath, zGetSmileQuery, zGetSmileResponse, zGetTermStructurePath, zGetTermStructureQuery, zGetTermStructureResponse, zGetUnderlyingSeriesPath, zGetUnderlyingSeriesQuery, zGetUnderlyingSeriesResponse, zGetUnderlyingSummaryPath, zGetUnderlyingSummaryResponse, zListEventsQuery, zListEventsResponse, zListUnderlyingsResponse, zPutModelSelectionBody, zPutModelSelectionResponse, zUpdateEventBody, zUpdateEventPath, zUpdateEventResponse, zUpdateUnderlyingBody, zUpdateUnderlyingPath, zUpdateUnderlyingResponse } from './zod.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -142,6 +142,20 @@ export const updateEvent = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
+ * RV prevista por modelo
+ */
+export const getForecasts = <ThrowOnError extends boolean = false>(options: Options<GetForecastsData, ThrowOnError>): RequestResult<GetForecastsResponses, GetForecastsErrors, ThrowOnError> => (options.client ?? client).get<GetForecastsResponses, GetForecastsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zGetForecastsQuery
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetForecastsResponse.parseAsync(data),
+    url: '/forecasts',
+    ...options
+});
+
+/**
  * Saúde do engine e do banco
  */
 export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>): RequestResult<GetHealthResponses, GetHealthErrors, ThrowOnError> => (options?.client ?? client).get<GetHealthResponses, GetHealthErrors, ThrowOnError>({
@@ -153,6 +167,52 @@ export const getHealth = <ThrowOnError extends boolean = false>(options?: Option
     responseValidator: async (data) => await zGetHealthResponse.parseAsync(data),
     url: '/health',
     ...options
+});
+
+/**
+ * Erro de previsão por modelo × baselines
+ */
+export const getModelsEvaluation = <ThrowOnError extends boolean = false>(options: Options<GetModelsEvaluationData, ThrowOnError>): RequestResult<GetModelsEvaluationResponses, GetModelsEvaluationErrors, ThrowOnError> => (options.client ?? client).get<GetModelsEvaluationResponses, GetModelsEvaluationErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zGetModelsEvaluationQuery
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetModelsEvaluationResponse.parseAsync(data),
+    url: '/models/evaluation',
+    ...options
+});
+
+/**
+ * Previsto × realizado por janela não sobreposta
+ */
+export const getModelsEvaluationPoints = <ThrowOnError extends boolean = false>(options: Options<GetModelsEvaluationPointsData, ThrowOnError>): RequestResult<GetModelsEvaluationPointsResponses, GetModelsEvaluationPointsErrors, ThrowOnError> => (options.client ?? client).get<GetModelsEvaluationPointsResponses, GetModelsEvaluationPointsErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: z.never().optional(),
+        path: z.never().optional(),
+        query: zGetModelsEvaluationPointsQuery
+    }).parseAsync(data),
+    responseValidator: async (data) => await zGetModelsEvaluationPointsResponse.parseAsync(data),
+    url: '/models/evaluation/points',
+    ...options
+});
+
+/**
+ * Escolher o modelo do edge (RF-PRV-04)
+ */
+export const putModelSelection = <ThrowOnError extends boolean = false>(options: Options<PutModelSelectionData, ThrowOnError>): RequestResult<PutModelSelectionResponses, PutModelSelectionErrors, ThrowOnError> => (options.client ?? client).put<PutModelSelectionResponses, PutModelSelectionErrors, ThrowOnError>({
+    requestValidator: async (data) => await z.object({
+        body: zPutModelSelectionBody,
+        path: z.never().optional(),
+        query: z.never().optional()
+    }).parseAsync(data),
+    responseValidator: async (data) => await zPutModelSelectionResponse.parseAsync(data),
+    url: '/models/selection',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

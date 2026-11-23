@@ -93,6 +93,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Entregáveis:** EWMA, combinação de estimadores e GARCH(1,1) explícito (BRD 1.3 RF-PRV-02); horizonte igual à vida da opção; avaliação com janelas não sobrepostas contra os baselines; método dos intervalos (QA-07, QA-08); tela `/app/modelos`.
 **Critérios de saída:** T-REF-09; "dados insuficientes" funcionando; CS-03 verificável.
+**Gate:** implementada em 2026-11-23 (branch `etapa-4-previsao`, PRD 1.7); T-REF-09 passando; revisão de performance sem bloqueantes (M-2 e M-3 corrigidos). ✅ **Concluída em 2026-11-23** (merge direto na `main`, decisão do usuário).
 
 ---
 

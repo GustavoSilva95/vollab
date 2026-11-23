@@ -3,6 +3,7 @@
 from vollab.db.models.collection import CollectionItem, CollectionRun
 from vollab.db.models.config_version import ConfigVersion
 from vollab.db.models.events import Event
+from vollab.db.models.forecast import ForecastEvaluation, ForecastEvaluationPoint, RvForecast
 from vollab.db.models.job import Job, JobStatus
 from vollab.db.models.market import DailyBar, OptionDailyStat, RawFile, trades
 from vollab.db.models.reference import (
@@ -35,6 +36,8 @@ __all__ = [
     "DailyBar",
     "Event",
     "ExchangeHoliday",
+    "ForecastEvaluation",
+    "ForecastEvaluationPoint",
     "ImpliedVol",
     "IntradayBar",
     "IntradaySession",
@@ -46,6 +49,7 @@ __all__ = [
     "RawFile",
     "RealizedVol",
     "RiskFreeRate",
+    "RvForecast",
     "SeriesAdjustment",
     "Underlying",
     "User",

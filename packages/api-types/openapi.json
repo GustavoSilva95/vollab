@@ -503,6 +503,364 @@
         "title": "EstimatorSeries",
         "type": "object"
       },
+      "EvaluationPointOut": {
+        "properties": {
+          "discard_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_forecast",
+                  "incomplete_realized"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Discard Reason"
+          },
+          "forecast": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast"
+          },
+          "forecast_ci_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forecast Ci High"
+          },
+          "forecast_ci_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Intervalo da previsão (QA-07), para a banda do gráfico.",
+            "title": "Forecast Ci Low"
+          },
+          "origin": {
+            "format": "date",
+            "title": "Origin",
+            "type": "string"
+          },
+          "realized": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Realized"
+          },
+          "window_end": {
+            "format": "date",
+            "title": "Window End",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin",
+          "window_end",
+          "forecast",
+          "forecast_ci_low",
+          "forecast_ci_high",
+          "realized",
+          "discard_reason"
+        ],
+        "title": "EvaluationPointOut",
+        "type": "object"
+      },
+      "EvaluationPointsResponse": {
+        "properties": {
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "horizon_bd",
+          "series"
+        ],
+        "title": "EvaluationPointsResponse",
+        "type": "object"
+      },
+      "EvaluationResponse": {
+        "properties": {
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "computed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computed At"
+          },
+          "config_version_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config Version Id"
+          },
+          "engine_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Version"
+          },
+          "evaluated_horizons_bd": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Evaluated Horizons Bd",
+            "type": "array"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "min_windows": {
+            "description": "Amostra mínima para sair de 'dados insuficientes' (QA-08).",
+            "title": "Min Windows",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "selected_model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Selected Model",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "horizon_bd",
+          "evaluated_horizons_bd",
+          "min_windows",
+          "ci_level",
+          "selected_model",
+          "computed_at",
+          "config_version_id",
+          "engine_version",
+          "rows"
+        ],
+        "title": "EvaluationResponse",
+        "type": "object"
+      },
+      "EvaluationRow": {
+        "properties": {
+          "bias": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Média de previsão − realizada (decimal; > 0 = superestima).",
+            "title": "Bias"
+          },
+          "discarded_incomplete_realized": {
+            "title": "Discarded Incomplete Realized",
+            "type": "integer"
+          },
+          "discarded_no_forecast": {
+            "title": "Discarded No Forecast",
+            "type": "integer"
+          },
+          "first_origin": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Origin"
+          },
+          "kind": {
+            "enum": [
+              "model",
+              "baseline"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_origin": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Origin"
+          },
+          "mae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mae"
+          },
+          "model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch",
+              "rv_c2c_20",
+              "implied"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "n_windows": {
+            "description": "Janelas não sobrepostas avaliadas.",
+            "title": "N Windows",
+            "type": "integer"
+          },
+          "ratios": {
+            "items": {
+              "$ref": "#/components/schemas/RatioOut"
+            },
+            "title": "Ratios",
+            "type": "array"
+          },
+          "rmse": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "insufficient_data"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "kind",
+          "status",
+          "n_windows",
+          "discarded_no_forecast",
+          "discarded_incomplete_realized",
+          "first_origin",
+          "last_origin",
+          "bias",
+          "mae",
+          "rmse",
+          "ratios"
+        ],
+        "title": "EvaluationRow",
+        "type": "object"
+      },
+      "EvaluationSeries": {
+        "properties": {
+          "ci_origin": {
+            "description": "estimated = quantis do erro avaliado; approximate = só o erro de amostragem (χ²).",
+            "enum": [
+              "estimated",
+              "approximate"
+            ],
+            "title": "Ci Origin",
+            "type": "string"
+          },
+          "model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch",
+              "rv_c2c_20",
+              "implied"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationPointOut"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model",
+          "ci_origin",
+          "points"
+        ],
+        "title": "EvaluationSeries",
+        "type": "object"
+      },
       "EventCreate": {
         "properties": {
           "amount": {
@@ -891,6 +1249,136 @@
         "title": "EventUpdate",
         "type": "object"
       },
+      "ForecastOut": {
+        "properties": {
+          "eligibility_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligibility Reason"
+          },
+          "eligible": {
+            "description": "Tem avaliação disponível no horizonte (RF-PRV-02, RN-PRV-02).",
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "RV prevista para o horizonte (vol anualizada, decimal)."
+          },
+          "kind": {
+            "enum": [
+              "model",
+              "baseline"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch",
+              "rv_c2c_20",
+              "implied"
+            ],
+            "title": "Model",
+            "type": "string"
+          },
+          "selected": {
+            "description": "É o modelo em uso no edge (RF-PRV-04).",
+            "title": "Selected",
+            "type": "boolean"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "model",
+          "kind",
+          "forecast",
+          "selected",
+          "eligible"
+        ],
+        "title": "ForecastOut",
+        "type": "object"
+      },
+      "ForecastsResponse": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pregão de origem da previsão.",
+            "title": "As Of"
+          },
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "evaluated_horizons_bd": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Evaluated Horizons Bd",
+            "type": "array"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "selected_model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Selected Model",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "as_of",
+          "horizon_bd",
+          "evaluated_horizons_bd",
+          "selected_model",
+          "ci_level",
+          "items"
+        ],
+        "title": "ForecastsResponse",
+        "type": "object"
+      },
       "GapOut": {
         "properties": {
           "count": {
@@ -1251,6 +1739,170 @@
         "title": "IvQuality",
         "type": "object"
       },
+      "ModelSelectionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "ModelSelectionIn",
+        "type": "object"
+      },
+      "ModelSelectionOut": {
+        "properties": {
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "created": {
+            "description": "Uma versão nova de configuração foi criada.",
+            "title": "Created",
+            "type": "boolean"
+          },
+          "selected_model": {
+            "enum": [
+              "ewma",
+              "combination",
+              "garch"
+            ],
+            "title": "Selected Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selected_model",
+          "config_version_id",
+          "created"
+        ],
+        "title": "ModelSelectionOut",
+        "type": "object"
+      },
+      "ModelState": {
+        "description": "Estado do modelo na origem (o que gera a previsão em qualquer horizonte).",
+        "properties": {
+          "alpha": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alpha"
+          },
+          "beta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Beta"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Estimadores na combinação.",
+            "title": "Components"
+          },
+          "ewma_lambda": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "λ da EWMA (eq. 4.1).",
+            "title": "Ewma Lambda"
+          },
+          "long_run_vol": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "√(252·V), V = ω/(1 − α − β).",
+            "title": "Long Run Vol"
+          },
+          "n_returns": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Retornos diários válidos usados.",
+            "title": "N Returns"
+          },
+          "omega": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ω do GARCH (variância diária, decimal).",
+            "title": "Omega"
+          },
+          "persistence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "α + β.",
+            "title": "Persistence"
+          },
+          "window_bd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Janela dos estimadores combinados.",
+            "title": "Window Bd"
+          }
+        },
+        "title": "ModelState",
+        "type": "object"
+      },
       "PriceHistory": {
         "properties": {
           "calendar": {
@@ -1428,6 +2080,34 @@
           "failed"
         ],
         "title": "ProgressCounts",
+        "type": "object"
+      },
+      "RatioOut": {
+        "properties": {
+          "baseline": {
+            "enum": [
+              "rv_c2c_20",
+              "implied"
+            ],
+            "title": "Baseline",
+            "type": "string"
+          },
+          "n_windows": {
+            "description": "Origens em que modelo e baseline existem (pareadas).",
+            "title": "N Windows",
+            "type": "integer"
+          },
+          "ratio": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "RMSE do modelo ÷ RMSE do baseline (< 1 = melhor)."
+          }
+        },
+        "required": [
+          "baseline",
+          "n_windows",
+          "ratio"
+        ],
+        "title": "RatioOut",
         "type": "object"
       },
       "RealizedPoint": {
@@ -2155,7 +2835,7 @@
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.3.0"
+    "version": "0.4.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2584,6 +3264,105 @@
         ]
       }
     },
+    "/forecasts": {
+      "get": {
+        "operationId": "get_forecasts",
+        "parameters": [
+          {
+            "description": "Padrão: o prazo constante.",
+            "in": "query",
+            "name": "horizon_bd",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 252,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Padrão: o prazo constante.",
+              "title": "Horizon Bd"
+            }
+          },
+          {
+            "description": "Filtra um modelo.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ewma",
+                    "combination",
+                    "garch"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra um modelo.",
+              "title": "Model"
+            }
+          },
+          {
+            "description": "Ticker.",
+            "in": "query",
+            "name": "underlying",
+            "required": true,
+            "schema": {
+              "description": "Ticker.",
+              "maxLength": 12,
+              "minLength": 1,
+              "title": "Underlying",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "RV prevista por modelo",
+        "tags": [
+          "previsão"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "get_health",
@@ -2612,6 +3391,234 @@
         "summary": "Saúde do engine e do banco",
         "tags": [
           "saude"
+        ]
+      }
+    },
+    "/models/evaluation": {
+      "get": {
+        "operationId": "get_models_evaluation",
+        "parameters": [
+          {
+            "description": "Padrão: o prazo constante.",
+            "in": "query",
+            "name": "horizon_bd",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 252,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Padrão: o prazo constante.",
+              "title": "Horizon Bd"
+            }
+          },
+          {
+            "description": "Ticker.",
+            "in": "query",
+            "name": "underlying",
+            "required": true,
+            "schema": {
+              "description": "Ticker.",
+              "maxLength": 12,
+              "minLength": 1,
+              "title": "Underlying",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Erro de previsão por modelo × baselines",
+        "tags": [
+          "previsão"
+        ]
+      }
+    },
+    "/models/evaluation/points": {
+      "get": {
+        "operationId": "get_models_evaluation_points",
+        "parameters": [
+          {
+            "description": "Padrão: o prazo constante.",
+            "in": "query",
+            "name": "horizon_bd",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 252,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Padrão: o prazo constante.",
+              "title": "Horizon Bd"
+            }
+          },
+          {
+            "description": "Padrão: todos.",
+            "in": "query",
+            "name": "model",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ewma",
+                    "combination",
+                    "garch",
+                    "rv_c2c_20",
+                    "implied"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Padrão: todos.",
+              "title": "Model"
+            }
+          },
+          {
+            "description": "Ticker.",
+            "in": "query",
+            "name": "underlying",
+            "required": true,
+            "schema": {
+              "description": "Ticker.",
+              "maxLength": 12,
+              "minLength": 1,
+              "title": "Underlying",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationPointsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Previsto × realizado por janela não sobreposta",
+        "tags": [
+          "previsão"
+        ]
+      }
+    },
+    "/models/selection": {
+      "put": {
+        "operationId": "put_model_selection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelSelectionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelSelectionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Modelo sem avaliação disponível."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Escolher o modelo do edge (RF-PRV-04)",
+        "tags": [
+          "previsão"
         ]
       }
     },

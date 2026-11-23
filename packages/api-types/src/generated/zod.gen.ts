@@ -55,6 +55,43 @@ export const zConstantMaturityResponse = z.object({
 });
 
 /**
+ * EvaluationPointOut
+ */
+export const zEvaluationPointOut = z.object({
+    discard_reason: z.enum(['no_forecast', 'incomplete_realized']).nullable(),
+    forecast: z.number().nullable(),
+    forecast_ci_high: z.number().nullable(),
+    forecast_ci_low: z.number().nullable(),
+    origin: z.iso.date(),
+    realized: z.number().nullable(),
+    window_end: z.iso.date()
+});
+
+/**
+ * EvaluationSeries
+ */
+export const zEvaluationSeries = z.object({
+    ci_origin: z.enum(['estimated', 'approximate']),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch',
+        'rv_c2c_20',
+        'implied'
+    ]),
+    points: z.array(zEvaluationPointOut)
+});
+
+/**
+ * EvaluationPointsResponse
+ */
+export const zEvaluationPointsResponse = z.object({
+    horizon_bd: z.int(),
+    series: z.array(zEvaluationSeries),
+    ticker: z.string()
+});
+
+/**
  * EventCreate
  */
 export const zEventCreate = z.object({
@@ -280,6 +317,83 @@ export const zIvQuality = z.object({
 });
 
 /**
+ * ModelSelectionIn
+ */
+export const zModelSelectionIn = z.object({
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ])
+});
+
+/**
+ * ModelSelectionOut
+ */
+export const zModelSelectionOut = z.object({
+    config_version_id: z.int(),
+    created: z.boolean(),
+    selected_model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ])
+});
+
+/**
+ * ModelState
+ *
+ * Estado do modelo na origem (o que gera a previsão em qualquer horizonte).
+ */
+export const zModelState = z.object({
+    alpha: z.number().nullish(),
+    beta: z.number().nullish(),
+    components: z.array(z.string()).nullish(),
+    ewma_lambda: z.number().nullish(),
+    long_run_vol: z.number().nullish(),
+    n_returns: z.int().nullish(),
+    omega: z.number().nullish(),
+    persistence: z.number().nullish(),
+    window_bd: z.int().nullish()
+});
+
+/**
+ * ForecastOut
+ */
+export const zForecastOut = z.object({
+    eligibility_reason: z.string().nullish(),
+    eligible: z.boolean(),
+    forecast: zEstimatedValue,
+    kind: z.enum(['model', 'baseline']),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch',
+        'rv_c2c_20',
+        'implied'
+    ]),
+    selected: z.boolean(),
+    state: zModelState.nullish()
+});
+
+/**
+ * ForecastsResponse
+ */
+export const zForecastsResponse = z.object({
+    as_of: z.iso.date().nullable(),
+    ci_level: z.number(),
+    evaluated_horizons_bd: z.array(z.int()),
+    horizon_bd: z.int(),
+    items: z.array(zForecastOut),
+    selected_model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ]),
+    ticker: z.string()
+});
+
+/**
  * PricePoint
  */
 export const zPricePoint = z.object({
@@ -323,6 +437,59 @@ export const zProgressCounts = z.object({
     ok: z.int(),
     pending: z.int(),
     total: z.int()
+});
+
+/**
+ * RatioOut
+ */
+export const zRatioOut = z.object({
+    baseline: z.enum(['rv_c2c_20', 'implied']),
+    n_windows: z.int(),
+    ratio: zEstimatedValue
+});
+
+/**
+ * EvaluationRow
+ */
+export const zEvaluationRow = z.object({
+    bias: z.number().nullable(),
+    discarded_incomplete_realized: z.int(),
+    discarded_no_forecast: z.int(),
+    first_origin: z.iso.date().nullable(),
+    kind: z.enum(['model', 'baseline']),
+    last_origin: z.iso.date().nullable(),
+    mae: z.number().nullable(),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch',
+        'rv_c2c_20',
+        'implied'
+    ]),
+    n_windows: z.int(),
+    ratios: z.array(zRatioOut),
+    rmse: zEstimatedValue,
+    status: z.enum(['ok', 'insufficient_data'])
+});
+
+/**
+ * EvaluationResponse
+ */
+export const zEvaluationResponse = z.object({
+    ci_level: z.number(),
+    computed_at: z.iso.datetime({ offset: true }).nullable(),
+    config_version_id: z.int().nullable(),
+    engine_version: z.string().nullable(),
+    evaluated_horizons_bd: z.array(z.int()),
+    horizon_bd: z.int(),
+    min_windows: z.int(),
+    rows: z.array(zEvaluationRow),
+    selected_model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ]),
+    ticker: z.string()
 });
 
 /**
@@ -603,10 +770,59 @@ export const zUpdateEventPath = z.object({
  */
 export const zUpdateEventResponse = zEventOut;
 
+export const zGetForecastsQuery = z.object({
+    horizon_bd: z.int().gte(1).lte(252).nullish(),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch'
+    ]).nullish(),
+    underlying: z.string().min(1).max(12)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetForecastsResponse = zForecastsResponse;
+
 /**
  * Successful Response
  */
 export const zGetHealthResponse = zHealthResponse;
+
+export const zGetModelsEvaluationQuery = z.object({
+    horizon_bd: z.int().gte(1).lte(252).nullish(),
+    underlying: z.string().min(1).max(12)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetModelsEvaluationResponse = zEvaluationResponse;
+
+export const zGetModelsEvaluationPointsQuery = z.object({
+    horizon_bd: z.int().gte(1).lte(252).nullish(),
+    model: z.enum([
+        'ewma',
+        'combination',
+        'garch',
+        'rv_c2c_20',
+        'implied'
+    ]).nullish(),
+    underlying: z.string().min(1).max(12)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetModelsEvaluationPointsResponse = zEvaluationPointsResponse;
+
+export const zPutModelSelectionBody = zModelSelectionIn;
+
+/**
+ * Successful Response
+ */
+export const zPutModelSelectionResponse = zModelSelectionOut;
 
 /**
  * Response List Underlyings

@@ -150,3 +150,36 @@ def load_underlying_trades(session: Session, ticker: str, day: date) -> Underlyi
     p = np.fromiter((r[2] for r in rows), dtype=np.float64, count=len(rows))
     q = np.fromiter((r[3] for r in rows), dtype=np.int64, count=len(rows))
     return t, ids, p, q
+
+
+@dataclass(frozen=True, slots=True)
+class IntradayVariance:
+    """Variância intradiária por pregão alinhada à série diária (NaN = sem pregão completo)."""
+
+    variance: NDArray[np.float64]
+    incomplete: NDArray[np.bool_]
+    first_index: int | None  # primeiro pregão com resumo intradiário (completo ou não)
+
+
+def load_intraday_variance(session: Session, ticker: str, series: DailySeries) -> IntradayVariance:
+    from vollab.db.models import IntradaySession  # import tardio: evita ciclo com os modelos de vol
+
+    n = len(series.days)
+    variance = np.full(n, np.nan)
+    incomplete = np.zeros(n, dtype=bool)
+    first: int | None = None
+    rows = session.execute(
+        select(IntradaySession.trade_date, IntradaySession.intraday_variance, IntradaySession.complete).where(
+            IntradaySession.ticker == ticker
+        )
+    )
+    for day, var, complete in rows:
+        i = series.index(day)
+        if i is None:
+            continue
+        first = i if first is None else min(first, i)
+        if complete:
+            variance[i] = var
+        else:
+            incomplete[i] = True
+    return IntradayVariance(variance, incomplete, first)

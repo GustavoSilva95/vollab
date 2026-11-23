@@ -3,6 +3,7 @@
 Só leitura de agregados calculados no worker (PRD-NF-06): nenhuma rota lê negócios brutos.
 """
 
+import math
 from collections import defaultdict
 from datetime import date
 from typing import Annotated, Any
@@ -52,6 +53,7 @@ from vollab.db.models import (
 )
 from vollab.db.session import get_session
 from vollab.quant.calendar import business_days, count_business_days, previous_business_day
+from vollab.quant.forecast import chi2_vol_interval
 from vollab.quant.vol import Estimator
 from vollab.settings import get_settings
 
@@ -287,6 +289,18 @@ def get_underlying_series(
 # --- RV --------------------------------------------------------------------------------------
 
 
+def _realized_latest(ctx: _Ctx, est: Estimator, window: int, row: RealizedVol) -> EstimatedValue:
+    """Intervalo (QA-07, PRD §5.7): χ² no close-to-close (retornos normais); os demais estimadores
+    não têm distribuição fechada na referência e seguem sem intervalo, com o motivo."""
+    if row.vol is None or row.variance_annual is None:
+        return ctx.estimated(None, row.as_of, reason=REALIZED_REASONS.get(row.reason or ""))
+    if est in (Estimator.CLOSE_TO_CLOSE, Estimator.CLOSE_TO_CLOSE_DEMEANED):
+        dof = window if est is Estimator.CLOSE_TO_CLOSE else window - 1
+        ci = chi2_vol_interval(math.sqrt(row.variance_annual), dof, ctx.params.ci_level)
+        return ctx.estimated(row.vol, row.as_of, ci=(ci.low, ci.high))
+    return ctx.estimated(row.vol, row.as_of, reason="sem intervalo: o estimador não tem distribuição fechada")
+
+
 @router.get(
     "/vol/realized",
     response_model=RealizedVolResponse,
@@ -328,11 +342,7 @@ def get_realized_vol(
                     EstimatorSeries(
                         estimator=est.value,
                         window_bd=window,
-                        latest=ctx.estimated(
-                            latest.vol,
-                            latest.as_of,
-                            reason=REALIZED_REASONS.get(latest.reason or ""),
-                        ),
+                        latest=_realized_latest(ctx, est, window, latest),
                         points=[
                             RealizedPoint(
                                 as_of=r.as_of,

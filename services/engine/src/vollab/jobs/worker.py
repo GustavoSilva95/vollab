@@ -13,6 +13,7 @@ from types import FrameType
 import structlog
 from sqlalchemy.orm import Session, sessionmaker
 
+import vollab.analytics.forecasting  # registra o job de previsão (Etapa 4)
 import vollab.analytics.recompute  # registra o job de recálculo de volatilidade
 import vollab.collection.runner  # noqa: F401  (registra o job de coleta)
 from vollab.db.session import get_sessionmaker
