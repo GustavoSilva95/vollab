@@ -10,9 +10,12 @@ import {
   formatDate,
   formatDateTime,
   formatDuration,
+  formatFraction,
   formatMoney,
   formatNumber,
   formatRate,
+  formatRatio,
+  formatReturn,
   formatShare,
   formatVol,
   formatVolPoints,
@@ -163,5 +166,25 @@ describe('formatShare', () => {
     expect(formatShare(40, 100)).toMatch(/^40\s?%$/);
     expect(formatShare(0, 0)).toBe(EMPTY);
     expect(() => formatShare(5, 4)).toThrow(RangeError);
+  });
+});
+
+describe('formatFraction, formatReturn e formatRatio (Etapa 3)', () => {
+  it('fração e retorno em decimal viram percentual', () => {
+    expect(formatFraction(0.9896)).toBe('99,0%');
+    expect(formatReturn(0.0435)).toBe('4,35%');
+    expect(formatReturn(-0.1364)).toBe('-13,64%');
+    expect(formatRatio(1.0512)).toBe('1,05');
+  });
+
+  it('rejeitam percentual passado por engano', () => {
+    expect(() => formatFraction(98.9)).toThrow(RangeError);
+    expect(() => formatReturn(4.35)).toThrow(RangeError);
+  });
+
+  it('ausente vira EMPTY', () => {
+    expect(formatFraction(null)).toBe(EMPTY);
+    expect(formatReturn(undefined)).toBe(EMPTY);
+    expect(formatRatio(null)).toBe(EMPTY);
   });
 });

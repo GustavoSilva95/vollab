@@ -8,9 +8,11 @@ dependencies = [
     "alembic>=1.20.1",
     "fastapi>=0.165.0",
     "httpx>=0.28",
+    "numpy>=2.5.5",
     "psycopg[binary]>=3.3.9",
     "pydantic>=2.14.4",
     "pydantic-settings>=2.16.3",
+    "scipy>=1.18.1",
     "sqlalchemy>=2.1.9",
     "structlog>=26.1.0",
     "uvicorn>=0.54.0",
@@ -20,9 +22,11 @@ dependencies = [
 dev = [
     "httpx2>=2.16.2",
     "hypothesis>=6.170.17",
+    "mpmath>=1.4.1",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.6",
+    "scipy-stubs>=1.18.1.1",
 ]
 
 [build-system]

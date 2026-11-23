@@ -85,6 +85,7 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Critérios de saída:** T-REF-01 a T-REF-05 passando (T-REF-05 com os 6 estimadores).
 **Revisões:** performance (cálculo de IV vetorizado; barras de 5 min e RV no worker; bundle do Plotly).
+**Gate:** implementada em 2026-11-22 (branch `etapa-3-volatilidade-eventos`); T-REF-01..05 passando; revisão de performance sem bloqueantes (importantes corrigidos). ✅ **Concluída em 2026-11-23** (fechamento e PRD 1.6 aprovados pelo usuário).
 
 ---
 

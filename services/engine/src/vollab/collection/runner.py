@@ -231,6 +231,7 @@ class Collector:
                     f"Coleta interrompida após {consecutive} falhas seguidas da fonte "
                     "(fora do ar ou bloqueio). Os itens restantes continuam pendentes: tente mais tarde."
                 )
+                self._enqueue_recompute(run)
                 self.session.commit()
                 bound.warning("collection.interrupted", consecutive=consecutive)
                 return
@@ -243,8 +244,27 @@ class Collector:
         run.finished_at = func.now()
         # Sem números no texto: a interface formata contagens (PRD-UI-03) a partir do progresso.
         run.message = "Há itens com falha: veja o relatório de lacunas." if failed else None
+        self._enqueue_recompute(run)
         self.session.commit()
         bound.info("collection.finished", status=run.status, failed=failed)
+
+    def _enqueue_recompute(self, run: CollectionRun) -> None:
+        """Recálculos de volatilidade no worker após a coleta (PRD §5.5, PRD-NF-06)."""
+        days = list(
+            self.session.scalars(
+                select(CollectionItem.trade_date)
+                .where(
+                    CollectionItem.run_id == run.id,
+                    CollectionItem.source.in_(("b3_trades", "b3_cotahist_daily")),
+                    CollectionItem.status == "ok",
+                )
+                .distinct()
+            )
+        )
+        # Import tardio: `analytics` depende de `collection` (parâmetros e fases).
+        from vollab.analytics.recompute import enqueue_recompute
+
+        enqueue_recompute(self.session, user_id=run.user_id, days=days, reason=f"coleta {run.id}")
 
     def _heartbeat(self, run: CollectionRun) -> None:
         # Mantém o lock do job recente: uma coleta longa não pode parecer travada (requeue_stale).

@@ -3,6 +3,140 @@
 import * as z from 'zod';
 
 /**
+ * EstimatedValue
+ *
+ * Valor com proveniência (PRD §5.2). `insufficient_data` → a interface nunca mostra número.
+ */
+export const zEstimatedValue = z.object({
+    as_of: z.iso.date(),
+    calibrated: z.boolean().nullish(),
+    ci_high: z.number().nullish(),
+    ci_level: z.number(),
+    ci_low: z.number().nullish(),
+    origin: z.enum([
+        'observed',
+        'estimated',
+        'manual',
+        'approximate'
+    ]),
+    reason: z.string().nullish(),
+    stale: z.boolean(),
+    status: z.enum([
+        'ok',
+        'insufficient_data',
+        'unavailable'
+    ]),
+    value: z.number().nullable()
+});
+
+/**
+ * ConstantMaturityOut
+ */
+export const zConstantMaturityOut = z.object({
+    as_of: z.iso.date(),
+    events_removed: z.array(z.int()),
+    fallback_bd: z.int().nullable(),
+    fallback_expiry: z.iso.date().nullable(),
+    fallback_iv: z.number().nullable(),
+    iv: zEstimatedValue,
+    iv_ex_event: zEstimatedValue,
+    lower_expiry: z.iso.date().nullable(),
+    upper_expiry: z.iso.date().nullable()
+});
+
+/**
+ * ConstantMaturityResponse
+ */
+export const zConstantMaturityResponse = z.object({
+    history: z.array(zConstantMaturityOut),
+    latest: zConstantMaturityOut.nullable(),
+    target_bd: z.int(),
+    ticker: z.string()
+});
+
+/**
+ * EventCreate
+ */
+export const zEventCreate = z.object({
+    amount: z.union([
+        z.number().gt(0),
+        z.string()
+    ]).nullish(),
+    event_date: z.iso.date(),
+    kind: z.enum([
+        'earnings',
+        'ex_dividend',
+        'ex_jcp',
+        'copom',
+        'macro'
+    ]),
+    note: z.string().max(500).nullish(),
+    status: z.enum(['confirmed', 'estimated']),
+    ticker: z.string().regex(/^[A-Z0-9]{4,12}$/).nullish()
+});
+
+/**
+ * EventOut
+ */
+export const zEventOut = z.object({
+    amount: z.string().nullable(),
+    derived: z.boolean(),
+    event_date: z.iso.date(),
+    id: z.int().nullable(),
+    kind: z.enum([
+        'earnings',
+        'ex_dividend',
+        'ex_jcp',
+        'copom',
+        'macro',
+        'expiry'
+    ]),
+    note: z.string().nullable(),
+    status: z.enum(['confirmed', 'estimated']),
+    ticker: z.string().nullable()
+});
+
+/**
+ * EventJumpOut
+ */
+export const zEventJumpOut = z.object({
+    as_of: z.iso.date(),
+    event: zEventOut,
+    expected_move: z.number().nullable(),
+    expiry1: z.iso.date().nullable(),
+    expiry2: z.iso.date().nullable(),
+    historical_ci_high: z.number().nullable(),
+    historical_ci_low: z.number().nullable(),
+    historical_n: z.int(),
+    historical_value: z.number().nullable(),
+    jump: zEstimatedValue,
+    term_structure_reason: z.string().nullable(),
+    term_structure_value: z.number().nullable()
+});
+
+/**
+ * EventJumpsResponse
+ */
+export const zEventJumpsResponse = z.object({
+    as_of: z.iso.date().nullable(),
+    jumps: z.array(zEventJumpOut),
+    ticker: z.string()
+});
+
+/**
+ * EventUpdate
+ */
+export const zEventUpdate = z.object({
+    amount: z.union([
+        z.number().gt(0),
+        z.string()
+    ]).nullish(),
+    event_date: z.iso.date().nullish(),
+    note: z.string().max(500).nullish(),
+    status: z.enum(['confirmed', 'estimated']).nullish()
+});
+
+/**
  * GapOut
  */
 export const zGapOut = z.object({
@@ -81,6 +215,17 @@ export const zHealthResponse = z.object({
 });
 
 /**
+ * IntradayQuality
+ */
+export const zIntradayQuality = z.object({
+    bars_total: z.int(),
+    bars_with_trades: z.int(),
+    complete: z.boolean(),
+    coverage: z.number(),
+    trade_date: z.iso.date()
+});
+
+/**
  * ItemOut
  */
 export const zItemOut = z.object({
@@ -121,6 +266,41 @@ export const zCollectionGapsResponse = z.object({
 });
 
 /**
+ * IvQuality
+ *
+ * Relatório de qualidade da sincronização (RN-VOL-03) no pregão.
+ */
+export const zIvQuality = z.object({
+    sync_window_s: z.number(),
+    trade_date: z.iso.date(),
+    trades_lag_discarded: z.int(),
+    trades_no_solution: z.int(),
+    trades_synced: z.int(),
+    trades_valid: z.int()
+});
+
+/**
+ * PricePoint
+ */
+export const zPricePoint = z.object({
+    close: z.string(),
+    dividend: z.string().nullable(),
+    high: z.string(),
+    low: z.string(),
+    open: z.string(),
+    trade_date: z.iso.date()
+});
+
+/**
+ * PriceHistory
+ */
+export const zPriceHistory = z.object({
+    calendar: z.array(z.iso.date()),
+    points: z.array(zPricePoint),
+    ticker: z.string()
+});
+
+/**
  * ProblemDetails
  *
  * Erro no formato RFC 9457 (PRD §7).
@@ -143,6 +323,46 @@ export const zProgressCounts = z.object({
     ok: z.int(),
     pending: z.int(),
     total: z.int()
+});
+
+/**
+ * RealizedPoint
+ */
+export const zRealizedPoint = z.object({
+    as_of: z.iso.date(),
+    missing_days: z.int(),
+    reason: z.string().nullable(),
+    status: z.enum(['ok', 'insufficient_data']),
+    variance_annual: z.number().nullable(),
+    vol: z.number().nullable()
+});
+
+/**
+ * EstimatorSeries
+ */
+export const zEstimatorSeries = z.object({
+    estimator: z.enum([
+        'close_to_close',
+        'close_to_close_demeaned',
+        'parkinson',
+        'garman_klass',
+        'rogers_satchell',
+        'yang_zhang',
+        'intraday_5m'
+    ]),
+    latest: zEstimatedValue,
+    points: z.array(zRealizedPoint),
+    window_bd: z.int()
+});
+
+/**
+ * RealizedVolResponse
+ */
+export const zRealizedVolResponse = z.object({
+    estimators: z.array(zEstimatorSeries),
+    official_close_to_close: z.enum(['close_to_close', 'close_to_close_demeaned']),
+    ticker: z.string(),
+    windows_bd: z.array(z.int())
 });
 
 /**
@@ -199,6 +419,86 @@ export const zCollectionRunResponse = z.object({
 });
 
 /**
+ * SeriesOut
+ */
+export const zSeriesOut = z.object({
+    code: z.string(),
+    days_to_expiry_bd: z.int(),
+    effective_strike: z.string().nullable(),
+    expiry: z.iso.date(),
+    is_weekly: z.boolean(),
+    iv: zEstimatedValue.nullable(),
+    iv_status: z.enum([
+        'ok',
+        'low_sample',
+        'no_iv'
+    ]).nullable(),
+    liquid: z.boolean(),
+    option_type: z.enum(['call', 'put']),
+    strike: z.string(),
+    style: z.enum(['european', 'american']),
+    trades_count: z.int(),
+    trades_used: z.int().nullable()
+});
+
+/**
+ * SeriesResponse
+ */
+export const zSeriesResponse = z.object({
+    as_of: z.iso.date().nullable(),
+    series: z.array(zSeriesOut),
+    ticker: z.string()
+});
+
+/**
+ * SmilePointOut
+ */
+export const zSmilePointOut = z.object({
+    code: z.string(),
+    effective_strike: z.string(),
+    iv: z.number(),
+    moneyness: z.number(),
+    option_type: z.enum(['call', 'put']),
+    out_of_the_money: z.boolean(),
+    status: z.enum(['ok', 'low_sample']),
+    strike: z.string(),
+    trades_used: z.int()
+});
+
+/**
+ * SmileResponse
+ */
+export const zSmileResponse = z.object({
+    as_of: z.iso.date().nullable(),
+    atm_iv: zEstimatedValue.nullable(),
+    days_to_expiry_bd: z.int().nullable(),
+    expiries: z.array(z.iso.date()),
+    expiry: z.iso.date().nullable(),
+    forward: z.number().nullable(),
+    points: z.array(zSmilePointOut),
+    ticker: z.string()
+});
+
+/**
+ * TermPointOut
+ */
+export const zTermPointOut = z.object({
+    atm_iv: zEstimatedValue,
+    days_to_expiry_bd: z.int(),
+    expiry: z.iso.date(),
+    is_weekly: z.boolean()
+});
+
+/**
+ * TermStructureResponse
+ */
+export const zTermStructureResponse = z.object({
+    as_of: z.iso.date().nullable(),
+    points: z.array(zTermPointOut),
+    ticker: z.string()
+});
+
+/**
  * UnderlyingCreate
  */
 export const zUnderlyingCreate = z.object({
@@ -211,6 +511,20 @@ export const zUnderlyingCreate = z.object({
 export const zUnderlyingOut = z.object({
     active: z.boolean(),
     isin: z.string().nullable(),
+    ticker: z.string()
+});
+
+/**
+ * UnderlyingSummary
+ */
+export const zUnderlyingSummary = z.object({
+    as_of: z.iso.date().nullable(),
+    close: z.string().nullable(),
+    computed_at: z.iso.datetime({ offset: true }).nullable(),
+    expected_as_of: z.iso.date(),
+    intraday: zIntradayQuality.nullable(),
+    isin: z.string().nullable(),
+    iv_quality: zIvQuality.nullable(),
     ticker: z.string()
 });
 
@@ -249,6 +563,46 @@ export const zGetCollectionRunPath = z.object({
  */
 export const zGetCollectionRunResponse = zCollectionRunResponse;
 
+export const zListEventsQuery = z.object({
+    ticker: z.string().regex(/^[A-Z0-9]{4,12}$/).nullish(),
+    start: z.iso.date().nullish(),
+    end: z.iso.date().nullish()
+});
+
+/**
+ * Response List Events
+ *
+ * Successful Response
+ */
+export const zListEventsResponse = z.array(zEventOut);
+
+export const zCreateEventBody = zEventCreate;
+
+/**
+ * Successful Response
+ */
+export const zCreateEventResponse = zEventOut;
+
+export const zDeleteEventPath = z.object({
+    event_id: z.int()
+});
+
+/**
+ * Successful Response
+ */
+export const zDeleteEventResponse = z.void();
+
+export const zUpdateEventBody = zEventUpdate;
+
+export const zUpdateEventPath = z.object({
+    event_id: z.int()
+});
+
+/**
+ * Successful Response
+ */
+export const zUpdateEventResponse = zEventOut;
+
 /**
  * Successful Response
  */
@@ -278,3 +632,101 @@ export const zUpdateUnderlyingPath = z.object({
  * Successful Response
  */
 export const zUpdateUnderlyingResponse = zUnderlyingOut;
+
+export const zGetEventJumpsPath = z.object({
+    ticker: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetEventJumpsResponse = zEventJumpsResponse;
+
+export const zGetPriceHistoryPath = z.object({
+    ticker: z.string()
+});
+
+export const zGetPriceHistoryQuery = z.object({
+    days: z.int().gte(5).lte(1260).optional().default(252)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetPriceHistoryResponse = zPriceHistory;
+
+export const zGetUnderlyingSeriesPath = z.object({
+    ticker: z.string()
+});
+
+export const zGetUnderlyingSeriesQuery = z.object({
+    date: z.iso.date().nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetUnderlyingSeriesResponse = zSeriesResponse;
+
+export const zGetUnderlyingSummaryPath = z.object({
+    ticker: z.string()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetUnderlyingSummaryResponse = zUnderlyingSummary;
+
+export const zGetConstantMaturityPath = z.object({
+    ticker: z.string()
+});
+
+export const zGetConstantMaturityQuery = z.object({
+    days: z.int().gte(5).lte(1260).optional().default(252)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetConstantMaturityResponse = zConstantMaturityResponse;
+
+export const zGetSmilePath = z.object({
+    ticker: z.string()
+});
+
+export const zGetSmileQuery = z.object({
+    expiry: z.iso.date().nullish(),
+    date: z.iso.date().nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetSmileResponse = zSmileResponse;
+
+export const zGetRealizedVolPath = z.object({
+    ticker: z.string()
+});
+
+export const zGetRealizedVolQuery = z.object({
+    window_bd: z.int().gte(2).lte(252).nullish(),
+    days: z.int().gte(5).lte(1260).optional().default(252)
+});
+
+/**
+ * Successful Response
+ */
+export const zGetRealizedVolResponse = zRealizedVolResponse;
+
+export const zGetTermStructurePath = z.object({
+    ticker: z.string()
+});
+
+export const zGetTermStructureQuery = z.object({
+    date: z.iso.date().nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetTermStructureResponse = zTermStructureResponse;

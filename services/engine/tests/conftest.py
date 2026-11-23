@@ -73,7 +73,9 @@ def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
             text(
                 "TRUNCATE jobs, config_versions, collection_items, collection_runs, trades, daily_bars, "
                 "option_daily_stats, series_adjustments, option_series, risk_free_rates, corporate_actions, "
-                "raw_files RESTART IDENTITY CASCADE"
+                "raw_files, intraday_bars, intraday_sessions, realized_vols, implied_vols, "
+                "option_daily_quotes, atm_term_structure, constant_maturity_vols, events "
+                "RESTART IDENTITY CASCADE"
             )
         )
         # Universo inicial semeado pela migration 0003: volta ao estado original.

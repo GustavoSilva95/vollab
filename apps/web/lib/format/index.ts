@@ -187,3 +187,37 @@ export function formatShare(part: Maybe<number>, total: Maybe<number>): string {
   if (part < 0 || part > total) throw new RangeError(`formatShare: ${String(part)} fora de 0..${String(total)}.`);
   return numberFormat({ style: 'percent', maximumFractionDigits: 0 }).format(part / total);
 }
+
+/** Fração decimal (cobertura, participação) → `98,9%`. Escala 0..1; nunca recebe percentual. */
+export function formatFraction(value: Maybe<number>, decimals = 1): string {
+  if (value == null) return EMPTY;
+  assertDecimalScale(value, 1, 'formatFraction');
+  return numberFormat({ style: 'percent', ...fixed(decimals) }).format(value);
+}
+
+/** Retorno ou movimento em decimal, não anualizado (ex.: salto de evento 0.0435) → `4,35%`. */
+export function formatReturn(value: Maybe<number>, decimals = 2): string {
+  if (value == null) return EMPTY;
+  assertDecimalScale(value, 1, 'formatReturn');
+  return numberFormat({ style: 'percent', ...fixed(decimals) }).format(value);
+}
+
+/** Razão adimensional (ex.: moneyness K/F) → `1,05`. */
+export function formatRatio(value: Maybe<number>, decimals = 2): string {
+  if (value == null) return EMPTY;
+  assertFinite(value, 'formatRatio');
+  return numberFormat(fixed(decimals)).format(value);
+}
+
+/**
+ * Formatação dentro dos gráficos (Plotly usa d3-format): separadores do pt-BR e eixos de vol em
+ * decimal exibidos como percentual. Ficam aqui para que nenhum componente formate por conta própria.
+ */
+export const CHART_SEPARATORS = ',.';
+export const CHART_VOL_TICKFORMAT = '.0%';
+/** Eixos de IV, com faixa estreita (smile, prazo constante): uma casa decimal. */
+export const CHART_VOL_TICKFORMAT_FINE = '.1%';
+export const CHART_VOL_HOVERFORMAT = '.2%';
+export const CHART_RATIO_TICKFORMAT = '.2f';
+export const CHART_DATE_TICKFORMAT = '%d/%m';
+export const CHART_DATE_HOVERFORMAT = '%d/%m/%Y';

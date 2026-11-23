@@ -55,16 +55,30 @@ def params_from_config(version: ConfigVersion) -> CollectionParams:
     return CollectionParams.model_validate(raw)
 
 
+def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
+    # Import tardio: o bloco de volatilidade (Etapa 3) vive em `analytics`.
+    from vollab.analytics.params import VolParams
+
+    return {
+        "collection": (
+            CollectionParams().model_dump(mode="json"),
+            "coleta (QA-06: ≥ 20 negócios, K/S 0,9–1,1, 2 mensais)",
+        ),
+        "vol": (
+            VolParams().model_dump(mode="json"),
+            "volatilidade (janelas 20 e 60, cobertura 80%, média zero, sincronização 10 s, prazo 21 du)",
+        ),
+    }
+
+
 def ensure_config_version(session: Session, *, user_id: uuid.UUID) -> ConfigVersion:
-    """Versão vigente; cria a inicial com os padrões se o usuário ainda não tiver nenhuma."""
+    """Versão vigente. Se faltar algum bloco de parâmetros (usuário novo ou bloco de uma etapa
+    nova), cria uma versão com os blocos existentes preservados e os padrões dos que faltam."""
     version = current_config_version(session, user_id=user_id)
-    if version is not None and "collection" in version.params:
+    existing: dict[str, Any] = dict(version.params) if version is not None else {}
+    missing = {k: v for k, v in _default_blocks().items() if k not in existing}
+    if version is not None and not missing:
         return version
-    params: dict[str, Any] = dict(version.params) if version is not None else {}
-    params["collection"] = CollectionParams().model_dump(mode="json")
-    return create_config_version(
-        session,
-        user_id=user_id,
-        params=params,
-        note="Parâmetros padrão da coleta (QA-06: ≥ 20 negócios, K/S 0,9–1,1, 2 mensais).",
-    )
+    params = existing | {k: block for k, (block, _) in missing.items()}
+    note = "Parâmetros padrão: " + "; ".join(label for _, label in missing.values()) + "."
+    return create_config_version(session, user_id=user_id, params=params, note=note)
