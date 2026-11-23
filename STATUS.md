@@ -20,7 +20,7 @@
 | BRD 1.3 / PRD 1.4 / PLANO: estimadores do livro-base (Parkinson, Garman-Klass, Rogers-Satchell, intradiária 5 min + overnight) e GARCH(1,1) explícito | 1.3 / 1.4 | Aprovado (janelas padrão 20 e 60 pregões; cobertura mínima de 80%) | 2026-11-22 |
 | Referência técnica `docs/referencia/volatility-trading.md` (com Errata) / BRD 1.4 / PRD 1.5: close-to-close de média zero, prêmio absoluto, edge relativo e spread normal | 1.4 / 1.5 | Aprovado (decisões do usuário) | 2026-11-22 |
 | PRD 1.6: detalhes físicos e métodos da Etapa 3 (§5.5.1, §6.2, §6.4, §7, §8.1) | 1.6 | Aprovado | 2026-11-23 |
-| Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado (CI no GitHub a conferir no PR) | 2026-11-23 |
+| Fechamento da Etapa 3 (T-REF-01..05, revisão de performance sem bloqueantes) | — | Aprovado; CI verde nos 6 jobs (runs 45107621540 e 45107787201, PR #5) | 2026-11-23 |
 
 ## Feito
 
@@ -131,6 +131,6 @@
 
 1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
-3. Conferir o CI no GitHub do PR da Etapa 3 e mesclar em `main`.
+3. Mesclar o PR #5 (`etapa-3-volatilidade-eventos` → `main`); CI já verde.
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
 5. Quando o usuário pedir, iniciar a Etapa 4 (Previsão de RV e avaliação de modelos).
