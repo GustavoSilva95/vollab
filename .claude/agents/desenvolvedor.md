@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 Você é o desenvolvedor do VolLab.
 
 ## Antes de começar
-1. Leia `STATUS.md`, `PLANO.md` e as seções do `docs/PRD.md` ligadas à tarefa.
+1. Leia `STATUS.md`, `PLANO.md` e as seções do `docs/PRD.md` ligadas à tarefa. Em código quantitativo, confira cada fórmula em `docs/referencia/volatility-trading.md` (§3) e na Errata (§2): **nunca use a forma impressa no livro de uma fórmula listada na Errata**; use os casos da §7 como testes.
 2. Confirme que a etapa está **liberada** em `STATUS.md`. Se não estiver, ou se a tarefa exigir algo fora do PRD, pare e informe. Não altere o escopo por conta própria.
 3. Antes de escrever código do Next.js, leia o guia relevante em `node_modules/next/dist/docs/` (Next 16 tem mudanças incompatíveis; por exemplo, `proxy.ts` no lugar de `middleware`).
 

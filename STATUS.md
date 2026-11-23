@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-22
-**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada; **não iniciar até o usuário pedir**)
+**Etapa atual:** Etapa 3 — Volatilidade e eventos (liberada, com BRD 1.4 / PRD 1.5; **não iniciar até o usuário pedir**)
 **Próxima etapa:** Etapa 4 — Previsão de RV e avaliação de modelos (bloqueada até o fechamento da Etapa 3)
 
 ## Aprovações
@@ -18,6 +18,7 @@
 | PRD | 1.3 | Aprovado (Yahoo por httpx, nomes físicos, stack do E2E, PRD-QA-02) | 2026-11-22 |
 | Fechamento da Etapa 2 (Dados): CI verde (run 45062752607), revisões de segurança e performance com bloqueantes corrigidos | — | Aprovado | 2026-11-22 |
 | BRD 1.3 / PRD 1.4 / PLANO: estimadores do livro-base (Parkinson, Garman-Klass, Rogers-Satchell, intradiária 5 min + overnight) e GARCH(1,1) explícito | 1.3 / 1.4 | Aprovado (janelas padrão 20 e 60 pregões; cobertura mínima de 80%) | 2026-11-22 |
+| Referência técnica `docs/referencia/volatility-trading.md` (com Errata) / BRD 1.4 / PRD 1.5: close-to-close de média zero, prêmio absoluto, edge relativo e spread normal | 1.4 / 1.5 | Aprovado (decisões do usuário) | 2026-11-22 |
 
 ## Feito
 
@@ -90,6 +91,9 @@
 | 2026-11-22 | E2E numa stack separada (`vollab-e2e`, fonte simulada, hoje = 20/11/2026); o fluxo de coleta se pula contra fonte real | PRD 1.3 §10.3 |
 | 2026-11-22 | `GET /underlyings/{t}/series` fica para a Etapa 3, com a tela do ativo | PLANO |
 | 2026-11-22 | Adicionar os estimadores do livro-base: barras de **5 min** e **overnight somado** à RV intradiária (decisão do usuário; proposta em BRD 1.3 / PRD 1.4) | BRD RF-VOL-01, RN-VOL-08 |
+| 2026-11-22 | **Referência técnica de fórmulas adotada:** `docs/referencia/volatility-trading.md` (Sinclair, 2ª ed., fórmulas corrigidas). Nunca usar a forma impressa de fórmula listada na Errata (§2). PRD §5.5 conferido: Garman-Klass com ln(C/O), Rogers-Satchell com O = abertura, Yang-Zhang com ln(O/C₋₁) e ln(C/O), 1º retorno intradiário a partir da abertura, todos na forma corrigida | AGENTS.md |
+| 2026-11-22 | **Close-to-close padrão: média zero, divisor *n*** (eq. 2.1b); forma com média subtraída e *n* − 1 como opção configurável (`close_to_close_mode`), as duas gravadas para comparação. Viés da vol corrigido por `bias_b_zero_mean` (b₀(*n*)); `bias_b` nunca no estimador de média zero; *n*/(*n* − 1) não se aplica à média zero. Fatores conferidos por simulação (N = 20: 0,98741 simulado × 0,98758 teórico) | PRD 1.5 §5.5 |
+| 2026-11-22 | **Edge:** RN-EDG-01 = prêmio absoluto em pontos (semáforo e P&L esperado ≈ vega × pontos); **novo RN-EDG-02 = edge relativo** (IV − previsão)/previsão, métrica principal do ranking e dos alertas; ambos descontam o **spread normal** do produto (RN-EDG-07, regra S1 da referência). Spread normal definido uma vez, em termos relativos (*s*), de modo que prêmio = IV − σ̂(1 + *s*) e edge relativo = prêmio ÷ σ̂. Regras do semáforo renumeradas RN-EDG-02..05 → 03..06 (nenhum código dependia delas). Método e valor padrão do spread normal: **QA-14, aberta**, para a Etapa 5 | BRD 1.4 §7.4, PRD 1.5 §5.6 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -111,4 +115,4 @@
 
 1. Mesclar o PR #2 (`etapa-2-dados` → `main`).
 2. Primeira carga real (~5 h, em várias sessões): `npm run engine:up` e **Coletar agora** no painel; acompanhar bloqueios do Cloudflare no relatório de lacunas.
-3. Quando o usuário pedir, iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO e o BRD 1.3 / PRD 1.4: incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
+3. Quando o usuário pedir, iniciar a Etapa 3 (Volatilidade e eventos) conforme o PLANO e o BRD 1.4 / PRD 1.5 (fórmulas pela referência técnica, nunca na forma impressa da Errata): incluir `GET /underlyings/{t}/series` e gravar agregados no worker após a coleta (não agregar negócios brutos na requisição).
