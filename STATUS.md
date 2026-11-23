@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 5 — Custos, edge e ranking: **implementada (2026-11-23)** na branch `etapa-5-custos-edge` (BRD 1.5 / PRD 1.8.1); aguardando commit, CI e aprovação do fechamento
+**Etapa atual:** Etapa 5 — Custos, edge e ranking: **concluída (2026-11-23)**: CI verde, revisão de performance sem bloqueantes, fechamento aprovado pelo usuário; mesclada na `main`
 **Etapa anterior:** Etapa 4 concluída e aprovada (2026-11-23), mesclada direto na `main`
 
 ## Aprovações
@@ -24,6 +24,7 @@
 | PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário; CI verde nos 6 jobs (run 45271823943) | 2026-11-23 |
 | BRD 1.5 (semáforo nas duas direções, QA-14, QA-11 parcial) / PRD 1.8 (§5.6.1 métodos da Etapa 5, `option_spread_estimates`, `/ranking`, `/config`, telas e testes) | 1.5 / 1.8 | Aprovado | 2026-11-23 |
+| Fechamento da Etapa 5 (testes do semáforo nos três estados e nos limites, rótulos "não calibrado", revisão de performance sem bloqueantes, PRD 1.8.1) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45290076552 e 45291444806) | 2026-11-23 |
 
 ## Feito
 
@@ -175,5 +176,5 @@
 3. Mesclar o PR #5 (`etapa-3-volatilidade-eventos` → `main`); CI já verde.
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
 5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
-6. **Etapa 5:** commit e push da branch `etapa-5-custos-edge`, CI no GitHub, aprovação do fechamento. Medição de performance feita (ranking ~15 ms, spread ~2 ms por pregão); revisão formal pelos revisores só se o usuário pedir.
+6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.
