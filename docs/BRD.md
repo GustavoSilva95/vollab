@@ -2,11 +2,11 @@
 
 **Projeto:** VolLab — cockpit de decisão para traders de volatilidade em opções
 **Base conceitual:** *Volatility Trading*, 2ª edição, Euan Sinclair
-**Versão:** 1.5 — Fase 1
+**Versão:** 1.6 — Fase 1 (proposta)
 **Data:** 2026-11-23
-**Status:** Aprovado (1.5, 2026-11-23)
+**Status:** Em revisão (1.6, proposta da Etapa 6); 1.5 aprovado em 2026-11-23
 
-> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário. 1.4 (2026-11-22, decisão do usuário): referência técnica de fórmulas adotada (`docs/referencia/volatility-trading.md`, com Errata); prêmio de vol absoluto em pontos (RN-EDG-01) e **edge relativo** como métrica principal de ranking e alertas (novo RN-EDG-02), ambos descontando o **spread normal** do produto (RN-EDG-07, QA-14); regras seguintes do semáforo renumeradas (RN-EDG-02..05 → RN-EDG-03..06). 1.5 (2026-11-23, Etapa 5, decisões do usuário): semáforo nas **duas direções** (venda e compra de vol, RN-EDG-03) e ranking pelo edge relativo líquido na direção do sinal (RF-RNK-01); **QA-14 resolvida** (spread normal pela mediana de (IV − RV realizada)/RV realizada em janelas não sobrepostas, padrão não calibrado de **15%**); QA-11 parcial: limiar de edge padrão de **1 ponto de vol**, corretagem padrão de **R$ 0 por ordem** e hedge diário como premissa do custo de hedge.
+> **Histórico:** 1.0 (2026-11-21) aprovado. 1.1 (2026-11-22) incorpora os resultados da Etapa 0 ([relatório](./pesquisa/etapa-0.md), alterações A-01..A-10): COTAHIST como segunda fonte oficial da B3, regra de construção do OHLC, cadastro de séries pelo ISIN, feriados, proventos e questões QA-01, QA-02, QA-04, QA-05, QA-06 e QA-13 resolvidas. 1.2 (2026-11-22): mínimo de liquidez padrão elevado de 10 para **20 negócios no dia** (QA-06), por decisão do usuário. 1.3 (2026-11-22, aprovado): estimadores de RV do livro-base (Parkinson, Garman-Klass, Rogers-Satchell e variância realizada intradiária de 5 min com o overnight somado) e GARCH(1,1) explícito entre os modelos de previsão, por decisão do usuário. 1.4 (2026-11-22, decisão do usuário): referência técnica de fórmulas adotada (`docs/referencia/volatility-trading.md`, com Errata); prêmio de vol absoluto em pontos (RN-EDG-01) e **edge relativo** como métrica principal de ranking e alertas (novo RN-EDG-02), ambos descontando o **spread normal** do produto (RN-EDG-07, QA-14); regras seguintes do semáforo renumeradas (RN-EDG-02..05 → RN-EDG-03..06). 1.5 (2026-11-23, Etapa 5, decisões do usuário): semáforo nas **duas direções** (venda e compra de vol, RN-EDG-03) e ranking pelo edge relativo líquido na direção do sinal (RF-RNK-01); **QA-14 resolvida** (spread normal pela mediana de (IV − RV realizada)/RV realizada em janelas não sobrepostas, padrão não calibrado de **15%**); QA-11 parcial: limiar de edge padrão de **1 ponto de vol**, corretagem padrão de **R$ 0 por ordem** e hedge diário como premissa do custo de hedge. 1.6 (2026-11-23, Etapa 6, decisões do usuário, **proposta**): **straddle e strangle comprados** entram no simulador (RF-SIM-01), para que o sinal de compra de vol (RN-EDG-03) tenha estrutura; o Kelly só é positivo quando a direção da estrutura coincide com a do semáforo (RN-SIZ-05); **QA-09 resolvida** (perda máxima = a maior entre o *expected shortfall* de 99% da distribuição simulada e a pior perda nos stresses simples de RF-RSK-03); **QA-10 resolvida** (bootstrap de retornos diários reais, com média zero e reescalados para a RV prevista); QA-11 parcial: **banda de delta** como regra de hedge padrão da simulação.
 
 ---
 
@@ -57,7 +57,7 @@ Hoje essas decisões são tomadas sem medição sistemática. O VolLab será um 
 
 - Mercado: **Brasil (B3)**.
 - Universo: **ativos-objeto escolhidos pelo usuário**, no máximo de 5 a 10.
-- Estruturas: **straddle vendido, strangle vendido e venda coberta**.
+- Estruturas: **straddle vendido, strangle vendido e venda coberta**; *(1.6)* **straddle e strangle comprados**, para o sinal de compra de vol.
 - Delta-hedge: **com o próprio ativo-objeto**.
 - Dados: **fechamento do dia anterior (D-1)**, com **entrada manual** de preços do momento (ativo-objeto e opção) para análise intradiária.
 - Módulos:
@@ -216,7 +216,7 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 
 | ID | Requisito |
 |----|-----------|
-| RF-SIM-01 | Simular straddle vendido, strangle vendido e venda coberta, com séries reais da cadeia. |
+| RF-SIM-01 | Simular straddle vendido, strangle vendido e venda coberta, com séries reais da cadeia. *(1.6)* Também **straddle comprado** e **strangle comprado**, com séries reais. |
 | RF-SIM-02 | Exibir **payoff** no vencimento e em datas intermediárias, **Greeks** (delta, gamma, theta, vega) e **custos estimados**. |
 | RF-SIM-03 | Aceitar **preços manuais** do ativo-objeto e da opção para análise com valores do momento, recalculando IV, Greeks e edge. Valores manuais são identificados como tais. |
 | RF-SIM-04 | Gerar a **distribuição simulada de P&L** da estrutura, que alimenta o dimensionamento (RN-SIZ-02). |
@@ -230,7 +230,7 @@ Convenção: **RN** = regra de negócio; **RF** = requisito funcional de negóci
 | RN-SIZ-02 | **Kelly fracionado** com fração inicial de **1/4** (configurável), usando o **limite inferior do intervalo de edge** e a **variância da distribuição simulada de P&L** da estrutura, sem aproximação normal. |
 | RN-SIZ-03 | **Teto de perda máxima por trade: 7% do capital** alocado (configurável). |
 | RN-SIZ-04 | Tamanho final = **o menor** entre o Kelly fracionado e o teto. A tela mostra qual dos dois prevaleceu. |
-| RN-SIZ-05 | Se o semáforo não estiver em "edge líquido", o Kelly resulta em zero; a plataforma não sugere tamanho positivo. |
+| RN-SIZ-05 | Se o semáforo não estiver em "edge líquido", o Kelly resulta em zero; a plataforma não sugere tamanho positivo. *(1.6)* O mesmo vale quando a direção da estrutura (venda ou compra de vol) é **oposta** à do semáforo: o Kelly é zero e a tela explica o motivo. |
 | RN-SIZ-06 | **Margem** informada **manualmente** pelo usuário. Qualquer estimativa feita pela plataforma é rotulada como **aproximada**. |
 
 ### 7.8 Carteira e risco
@@ -371,9 +371,9 @@ Os critérios medem **processo, não lucro**.
 | QA-06 | Quais são os **filtros mínimos de liquidez** (nº de negócios, quantidade, volume financeiro) por série? | **Resolvida (2026-11-22):** padrão **≥ 20 negócios no dia** (elevado de 10 na versão 1.2), K/S entre 0,9 e 1,1, 2 próximos vencimentos mensais, semanais desligadas; tudo configurável. |
 | QA-07 | Qual **nível de confiança** e qual método para os intervalos? | 90%, configurável; método a definir. |
 | QA-08 | Quais as **amostras mínimas** para sair de "dados insuficientes" em cada métrica? | Definir por métrica. |
-| QA-09 | Como definir a **"perda máxima por trade"** em estruturas de perda ilimitada (straddle/strangle vendido) para aplicar o teto de 7%? | Usar a pior perda entre os cenários de stress configurados ou um percentil extremo (ex.: 99%) da distribuição simulada. |
-| QA-10 | Qual método gera a **distribuição simulada de P&L** (bootstrap de retornos históricos, simulação paramétrica etc.)? | Bootstrap de retornos históricos, considerando a regra de hedge. |
-| QA-11 | Quais **valores padrão** para banda de delta, intervalo de hedge, meta de lucro, stop e dias até o vencimento? | Definir com o usuário antes do uso. **Parcial (Etapa 5, 2026-11-23):** limiar de edge 1 ponto de vol; corretagem R$ 0 por ordem; hedge diário (1 du) como premissa do custo de hedge no edge. O resto nas Etapas 6 e 8. |
+| QA-09 | Como definir a **"perda máxima por trade"** em estruturas de perda ilimitada (straddle/strangle vendido) para aplicar o teto de 7%? | **Resolvida (Etapa 6, 2026-11-23):** a **maior** entre o *expected shortfall* de 99% da distribuição simulada (média das perdas no pior 1% dos caminhos) e a pior perda nos stresses simples de RF-RSK-03 (gap ±10%, +10 pontos de vol, queda com alta de vol), para todas as estruturas. O cenário de crise histórica (QA-12) entra na Etapa 7. |
+| QA-10 | Qual método gera a **distribuição simulada de P&L** (bootstrap de retornos históricos, simulação paramétrica etc.)? | **Resolvida (Etapa 6, 2026-11-23):** bootstrap dos retornos diários reais do último ano (com os gaps), com média zero e reescalados para a RV prevista do modelo escolhido, considerando a regra de hedge. |
+| QA-11 | Quais **valores padrão** para banda de delta, intervalo de hedge, meta de lucro, stop e dias até o vencimento? | Definir com o usuário antes do uso. **Parcial (Etapa 5, 2026-11-23):** limiar de edge 1 ponto de vol; corretagem R$ 0 por ordem; hedge diário (1 du) como premissa do custo de hedge no edge. O resto nas Etapas 6 e 8. **Parcial (Etapa 6, 2026-11-23):** a simulação usa **banda de delta** como regra padrão (largura no PRD 1.9 §5.8, configurável). Meta de lucro, stop e dias até o vencimento na Etapa 8. |
 | QA-12 | Quais **choques exatos** do cenário de crise histórica (episódios e magnitudes)? | Medir nos episódios de mai/2017 e mar/2020 para cada ativo. |
 | QA-13 | Como tratar os **cancelamentos** (`AcaoAtualizacao`) e os **tipos de sessão** (`TipoSessaoPregao`, ex.: leilão, after-market) na construção do OHLC e da IV? | **Resolvida (2026-11-22):** regra R4 (RN-DAD-01). |
 | QA-14 | Como medir o **spread normal** do produto (RN-EDG-07) e qual o valor padrão enquanto não houver histórico? | **Resolvida (Etapa 5, 2026-11-23):** mediana, no último ano, de (IV de prazo constante − RV realizada depois, no mesmo prazo) / RV realizada, por ativo, nas janelas não sobrepostas da avaliação; abaixo de 8 janelas (QA-08), **15%** configurado, rotulado "não calibrado" (PRD 1.8 §5.6.1). |
@@ -405,5 +405,6 @@ Os critérios medem **processo, não lucro**.
 | **Semáforo de edge** | Classificação em *sem edge*, *inconclusivo* ou *edge líquido*. |
 | **Skew / smile** | Variação da IV entre strikes de um mesmo vencimento. |
 | **Straddle / strangle vendido** | Venda de call e put no mesmo strike / em strikes diferentes. |
+| **Straddle / strangle comprado** | Compra de call e put no mesmo strike / em strikes diferentes (*1.6*). |
 | **Venda coberta** | Venda de call com posse do ativo-objeto. |
 | **Yang-Zhang** | Estimador de volatilidade que usa abertura, máxima, mínima e fechamento. |
