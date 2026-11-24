@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**; CI verde no GitHub nos 6 jobs (run 45309490121, PR #7); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos); testes locais: engine 297, web 95, Playwright 8; aguarda aprovação do fechamento
+**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**; CI verde no GitHub nos 6 jobs (runs 45309490121 e, com as correções, 45311502461; PR #7); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos); testes locais: engine 297, web 95, Playwright 8; aguarda aprovação do fechamento
 **Etapa anterior:** Etapa 5 concluída e aprovada (2026-11-23), mesclada na `main`
 
 ## Aprovações
