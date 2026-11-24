@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-24
-**Etapa atual:** Etapa 7 — Diário, carteira e risco: **implementada (2026-11-24)**; BRD 1.7 / PRD 1.10 aprovados; revisões feitas (bloqueante de segurança corrigido); engine 332 testes, web 110, Playwright 9 verdes localmente. **Aguardando**: commit/PR, CI no GitHub e aprovação do fechamento (branch `etapa-7-diario-carteira-risco`)
+**Etapa atual:** Etapa 7 — Diário, carteira e risco: **implementada (2026-11-24)**; BRD 1.7 / PRD 1.10 aprovados; revisões feitas (bloqueante de segurança corrigido); engine 332 testes, web 110, Playwright 9 verdes localmente. CI verde nos 6 jobs (runs 45511462669 e 45511483977, PR #8). **Aguardando** a aprovação do fechamento (branch `etapa-7-diario-carteira-risco`)
 **Etapa anterior:** Etapa 6 concluída e aprovada (2026-11-23), mesclada na `main` (PR #7)
 
 ## Aprovações
@@ -215,5 +215,5 @@
 5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
 8. **Etapa 6:** concluída e mesclada na `main` (PR #7). Próxima: Etapa 7 (diário, carteira e risco; QA-12 e o cenário de crise no teto), quando o usuário pedir.
-9. **Etapa 7:** implementada; falta commit, PR, CI verde no GitHub e aprovação do fechamento pelo usuário. Backlog não bloqueante das revisões: performance M-2 (`LATERAL … LIMIT 1` na última marcação), M-3 (stress e Greeks vetorizados por ativo; `crisis_values` lido duas vezes no `/sizing`), M-4 (`count_business_days` com índice acumulado), M-5 (INSERT em lote das marcações), M-6 (pedido amplo na fila não absorve os específicos), M-7 (pernas só da última marcação no detalhe); crise: guardar o parsing por ano. Os proventos históricos do Yahoo vêm ajustados por desdobramentos posteriores (BBAS3 2017 com metade do valor): seguem "estimados"; o efeito numa janela de 5 pregões é pequeno.
+9. **Etapa 7:** implementada; PR #8 com CI verde nos 6 jobs; falta a aprovação do fechamento pelo usuário e o merge. Backlog não bloqueante das revisões: performance M-2 (`LATERAL … LIMIT 1` na última marcação), M-3 (stress e Greeks vetorizados por ativo; `crisis_values` lido duas vezes no `/sizing`), M-4 (`count_business_days` com índice acumulado), M-5 (INSERT em lote das marcações), M-6 (pedido amplo na fila não absorve os específicos), M-7 (pernas só da última marcação no detalhe); crise: guardar o parsing por ano. Os proventos históricos do Yahoo vêm ajustados por desdobramentos posteriores (BBAS3 2017 com metade do valor): seguem "estimados"; o efeito numa janela de 5 pregões é pequeno.
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.
