@@ -24,7 +24,7 @@ from vollab.settings import get_settings
 
 # Versão do CONTRATO (OpenAPI). Não é o git sha: este valor entra no arquivo gerado e
 # versionado, e mudar a cada commit faria o contract-drift falhar sem motivo.
-API_VERSION = "0.5.0"
+API_VERSION = "0.6.0"
 
 
 def _operation_id(route: APIRoute) -> str:

@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getEventJumps, getForecasts, getHealth, getModelsEvaluation, getModelsEvaluationPoints, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listUnderlyings, type Options, postConfig, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
-import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
+import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getChain, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getEventJumps, getForecasts, getHealth, getModelsEvaluation, getModelsEvaluationPoints, getPosition, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listPositions, listUnderlyings, type Options, postConfig, postPosition, postSimulation, postSizing, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
+import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetChainData, GetChainError, GetChainResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPositionData, GetPositionError, GetPositionResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListPositionsData, ListPositionsError, ListPositionsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PostPositionData, PostPositionError, PostPositionResponse, PostSimulationData, PostSimulationError, PostSimulationResponse, PostSizingData, PostSizingError, PostSizingResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -398,6 +398,59 @@ export const putModelSelectionMutation = (options?: Partial<Options<PutModelSele
     return mutationOptions;
 };
 
+export const listPositionsQueryKey = (options?: Options<ListPositionsData>) => createQueryKey('listPositions', options);
+
+/**
+ * Operações registradas
+ */
+export const listPositionsOptions = (options?: Options<ListPositionsData>) => queryOptions<ListPositionsResponse, ListPositionsError, ListPositionsResponse, ReturnType<typeof listPositionsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await listPositions({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: listPositionsQueryKey(options)
+});
+
+/**
+ * Registrar a entrada com o retrato da decisão
+ */
+export const postPositionMutation = (options?: Partial<Options<PostPositionData>>): UseMutationOptions<PostPositionResponse, PostPositionError, Options<PostPositionData>> => {
+    const mutationOptions: UseMutationOptions<PostPositionResponse, PostPositionError, Options<PostPositionData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postPosition({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getPositionQueryKey = (options: Options<GetPositionData>) => createQueryKey('getPosition', options);
+
+/**
+ * Uma operação, com o retrato da decisão
+ */
+export const getPositionOptions = (options: Options<GetPositionData>) => queryOptions<GetPositionResponse, GetPositionError, GetPositionResponse, ReturnType<typeof getPositionQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPosition({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPositionQueryKey(options)
+});
+
 export const getRankingQueryKey = (options?: Options<GetRankingData>) => createQueryKey('getRanking', options);
 
 /**
@@ -415,6 +468,40 @@ export const getRankingOptions = (options?: Options<GetRankingData>) => queryOpt
     },
     queryKey: getRankingQueryKey(options)
 });
+
+/**
+ * Simular uma estrutura (não grava nada)
+ */
+export const postSimulationMutation = (options?: Partial<Options<PostSimulationData>>): UseMutationOptions<PostSimulationResponse, PostSimulationError, Options<PostSimulationData>> => {
+    const mutationOptions: UseMutationOptions<PostSimulationResponse, PostSimulationError, Options<PostSimulationData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postSimulation({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+/**
+ * Simular e dimensionar: Kelly fracionado e teto (não grava nada)
+ */
+export const postSizingMutation = (options?: Partial<Options<PostSizingData>>): UseMutationOptions<PostSizingResponse, PostSizingError, Options<PostSizingData>> => {
+    const mutationOptions: UseMutationOptions<PostSizingResponse, PostSizingError, Options<PostSizingData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postSizing({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const listUnderlyingsQueryKey = (options?: Options<ListUnderlyingsData>) => createQueryKey('listUnderlyings', options);
 
@@ -467,6 +554,24 @@ export const updateUnderlyingMutation = (options?: Partial<Options<UpdateUnderly
     };
     return mutationOptions;
 };
+
+export const getChainQueryKey = (options: Options<GetChainData>) => createQueryKey('getChain', options);
+
+/**
+ * Séries de um vencimento para montar a estrutura
+ */
+export const getChainOptions = (options: Options<GetChainData>) => queryOptions<GetChainResponse, GetChainError, GetChainResponse, ReturnType<typeof getChainQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getChain({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getChainQueryKey(options)
+});
 
 export const getEventJumpsQueryKey = (options: Options<GetEventJumpsData>) => createQueryKey('getEventJumps', options);
 

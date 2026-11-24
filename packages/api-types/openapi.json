@@ -1,6 +1,211 @@
 {
   "components": {
     "schemas": {
+      "ChainResponse": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "days_to_expiry_bd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days To Expiry Bd"
+          },
+          "expiries": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Expiries",
+            "type": "array"
+          },
+          "expiries_with_iv": {
+            "description": "Vencimentos com IV de referência no pregão.",
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Expiries With Iv",
+            "type": "array"
+          },
+          "expiry": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry"
+          },
+          "forward": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forward"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/ChainSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "spot_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spot Brl"
+          },
+          "suggestions": {
+            "additionalProperties": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "description": "Séries sugeridas por estrutura (editáveis).",
+            "title": "Suggestions",
+            "type": "object"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "as_of",
+          "spot_brl",
+          "expiries",
+          "expiries_with_iv",
+          "expiry",
+          "days_to_expiry_bd",
+          "forward",
+          "series",
+          "suggestions"
+        ],
+        "title": "ChainResponse",
+        "type": "object"
+      },
+      "ChainSeries": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "effective_strike": {
+            "title": "Effective Strike",
+            "type": "number"
+          },
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "iv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "IV de referência do pregão (RN-VOL-06); nula sem IV.",
+            "title": "Iv"
+          },
+          "k_over_f": {
+            "title": "K Over F",
+            "type": "number"
+          },
+          "liquid": {
+            "title": "Liquid",
+            "type": "boolean"
+          },
+          "option_type": {
+            "enum": [
+              "call",
+              "put"
+            ],
+            "title": "Option Type",
+            "type": "string"
+          },
+          "price_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço BS com a IV de referência e o fechamento.",
+            "title": "Price Brl"
+          },
+          "series_id": {
+            "title": "Series Id",
+            "type": "integer"
+          },
+          "strike": {
+            "title": "Strike",
+            "type": "number"
+          },
+          "trades_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trades Count"
+          }
+        },
+        "required": [
+          "series_id",
+          "code",
+          "option_type",
+          "expiry",
+          "strike",
+          "effective_strike",
+          "k_over_f",
+          "iv",
+          "price_brl",
+          "liquid",
+          "trades_count"
+        ],
+        "title": "ChainSeries",
+        "type": "object"
+      },
       "CollectionGapsResponse": {
         "properties": {
           "bars_start": {
@@ -332,6 +537,12 @@
           "forecast": {
             "$ref": "#/components/schemas/ForecastParams"
           },
+          "simulation": {
+            "$ref": "#/components/schemas/SimulationParams"
+          },
+          "sizing": {
+            "$ref": "#/components/schemas/SizingParams"
+          },
           "vol": {
             "$ref": "#/components/schemas/VolParams"
           }
@@ -354,6 +565,12 @@
           },
           "forecast": {
             "$ref": "#/components/schemas/ForecastParams"
+          },
+          "simulation": {
+            "$ref": "#/components/schemas/SimulationParams"
+          },
+          "sizing": {
+            "$ref": "#/components/schemas/SizingParams"
           },
           "vol": {
             "$ref": "#/components/schemas/VolParams"
@@ -821,6 +1038,329 @@
         "title": "CostParams",
         "type": "object"
       },
+      "CostsOut": {
+        "description": "Custos por lote em BRL e em pontos de vol (decimal). Sempre estimativa.",
+        "properties": {
+          "band_hedge_cost_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custo médio do hedge pela regra de banda (simulação).",
+            "title": "Band Hedge Cost Brl"
+          },
+          "hedge_buy_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hedge Buy Vol Pts"
+          },
+          "hedge_half_spread": {
+            "title": "Hedge Half Spread",
+            "type": "number"
+          },
+          "hedge_interval_bd": {
+            "title": "Hedge Interval Bd",
+            "type": "integer"
+          },
+          "hedge_sell_vol_pts": {
+            "title": "Hedge Sell Vol Pts",
+            "type": "number"
+          },
+          "options_brokerage_brl": {
+            "title": "Options Brokerage Brl",
+            "type": "string"
+          },
+          "options_fees_brl": {
+            "title": "Options Fees Brl",
+            "type": "string"
+          },
+          "options_spread_brl": {
+            "title": "Options Spread Brl",
+            "type": "string"
+          },
+          "options_vol_pts": {
+            "title": "Options Vol Pts",
+            "type": "number"
+          },
+          "stock_brl": {
+            "title": "Stock Brl",
+            "type": "string"
+          },
+          "total_buy_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Buy Vol Pts"
+          },
+          "total_sell_vol_pts": {
+            "title": "Total Sell Vol Pts",
+            "type": "number"
+          },
+          "underlying_spread": {
+            "title": "Underlying Spread",
+            "type": "number"
+          },
+          "underlying_spread_estimated": {
+            "title": "Underlying Spread Estimated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "options_spread_brl",
+          "options_fees_brl",
+          "options_brokerage_brl",
+          "stock_brl",
+          "underlying_spread",
+          "underlying_spread_estimated",
+          "options_vol_pts",
+          "hedge_sell_vol_pts",
+          "hedge_buy_vol_pts",
+          "hedge_half_spread",
+          "hedge_interval_bd",
+          "total_sell_vol_pts",
+          "total_buy_vol_pts",
+          "band_hedge_cost_brl"
+        ],
+        "title": "CostsOut",
+        "type": "object"
+      },
+      "DistributionOut": {
+        "properties": {
+          "delta_band": {
+            "title": "Delta Band",
+            "type": "number"
+          },
+          "delta_band_calibrated": {
+            "title": "Delta Band Calibrated",
+            "type": "boolean"
+          },
+          "es_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Es Brl"
+          },
+          "es_level": {
+            "title": "Es Level",
+            "type": "number"
+          },
+          "hist_counts": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Hist Counts",
+            "type": "array"
+          },
+          "hist_edges_brl": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Hist Edges Brl",
+            "type": "array"
+          },
+          "iv_constant": {
+            "description": "IV de cada perna constante na simulação.",
+            "title": "Iv Constant",
+            "type": "boolean"
+          },
+          "kamal_derman_std_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Eq. 7.7 com hedge diário (aproximado).",
+            "title": "Kamal Derman Std Brl"
+          },
+          "mean_band_hedge_cost_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Band Hedge Cost Brl"
+          },
+          "mean_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Brl"
+          },
+          "mean_rehedges": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Rehedges"
+          },
+          "origin": {
+            "enum": [
+              "estimated",
+              "approximate"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "paths": {
+            "title": "Paths",
+            "type": "integer"
+          },
+          "percentiles": {
+            "items": {
+              "$ref": "#/components/schemas/PercentileOut"
+            },
+            "title": "Percentiles",
+            "type": "array"
+          },
+          "prob_loss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prob Loss"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sample_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample End"
+          },
+          "sample_size": {
+            "title": "Sample Size",
+            "type": "integer"
+          },
+          "sample_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Start"
+          },
+          "seed": {
+            "title": "Seed",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "insufficient_data",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "std_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Std Brl"
+          },
+          "variance_brl2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance Brl2"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "origin",
+          "paths",
+          "seed",
+          "sample_size",
+          "sample_start",
+          "sample_end",
+          "delta_band",
+          "delta_band_calibrated",
+          "iv_constant",
+          "mean_brl",
+          "std_brl",
+          "variance_brl2",
+          "percentiles",
+          "es_level",
+          "es_brl",
+          "prob_loss",
+          "mean_rehedges",
+          "mean_band_hedge_cost_brl",
+          "kamal_derman_std_brl",
+          "hist_edges_brl",
+          "hist_counts"
+        ],
+        "title": "DistributionOut",
+        "type": "object"
+      },
       "EdgeParams": {
         "additionalProperties": false,
         "description": "Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.",
@@ -878,6 +1418,67 @@
           }
         },
         "title": "EdgeParams",
+        "type": "object"
+      },
+      "EntryOut": {
+        "properties": {
+          "brokerage_brl": {
+            "title": "Brokerage Brl",
+            "type": "string"
+          },
+          "executed_at": {
+            "format": "date-time",
+            "title": "Executed At",
+            "type": "string"
+          },
+          "fees_brl": {
+            "title": "Fees Brl",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "instrument": {
+            "title": "Instrument",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "price_brl": {
+            "title": "Price Brl",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "series_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series Id"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "instrument",
+          "series_id",
+          "quantity",
+          "price_brl",
+          "fees_brl",
+          "brokerage_brl",
+          "executed_at"
+        ],
+        "title": "EntryOut",
         "type": "object"
       },
       "EstimatedValue": {
@@ -1775,6 +2376,122 @@
         "title": "EventUpdate",
         "type": "object"
       },
+      "ExecutedLeg": {
+        "additionalProperties": false,
+        "properties": {
+          "brokerage_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Brokerage Brl"
+          },
+          "fees_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Fees Brl"
+          },
+          "price_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price Brl"
+          },
+          "series_id": {
+            "minimum": 1.0,
+            "title": "Series Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "series_id",
+          "price_brl"
+        ],
+        "title": "ExecutedLeg",
+        "type": "object"
+      },
+      "ExecutedStock": {
+        "additionalProperties": false,
+        "description": "Ação executada na entrada: a da venda coberta ou o hedge inicial (com sinal).",
+        "properties": {
+          "brokerage_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Brokerage Brl"
+          },
+          "fees_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Fees Brl"
+          },
+          "price_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price Brl"
+          },
+          "quantity": {
+            "maximum": 10000000.0,
+            "minimum": -10000000.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity",
+          "price_brl"
+        ],
+        "title": "ExecutedStock",
+        "type": "object"
+      },
       "ForecastOut": {
         "properties": {
           "eligibility_reason": {
@@ -2064,6 +2781,34 @@
           "count"
         ],
         "title": "GapSummary",
+        "type": "object"
+      },
+      "GreeksOut": {
+        "properties": {
+          "delta_shares": {
+            "title": "Delta Shares",
+            "type": "number"
+          },
+          "gamma": {
+            "title": "Gamma",
+            "type": "number"
+          },
+          "theta_per_bd_brl": {
+            "title": "Theta Per Bd Brl",
+            "type": "number"
+          },
+          "vega_per_point_brl": {
+            "title": "Vega Per Point Brl",
+            "type": "number"
+          }
+        },
+        "required": [
+          "delta_shares",
+          "gamma",
+          "vega_per_point_brl",
+          "theta_per_bd_brl"
+        ],
+        "title": "GreeksOut",
         "type": "object"
       },
       "GroupCount": {
@@ -2418,6 +3163,174 @@
         "title": "IvQuality",
         "type": "object"
       },
+      "LegInput": {
+        "additionalProperties": false,
+        "properties": {
+          "manual_price_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Data e hora do preço manual.",
+            "title": "Manual Price At"
+          },
+          "manual_price_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço do momento (RF-SIM-03).",
+            "title": "Manual Price Brl"
+          },
+          "series_id": {
+            "minimum": 1.0,
+            "title": "Series Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "series_id"
+        ],
+        "title": "LegInput",
+        "type": "object"
+      },
+      "LegOut": {
+        "properties": {
+          "band": {
+            "enum": [
+              "low",
+              "atm",
+              "high"
+            ],
+            "title": "Band",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "delta": {
+            "title": "Delta",
+            "type": "number"
+          },
+          "effective_strike": {
+            "title": "Effective Strike",
+            "type": "number"
+          },
+          "gamma": {
+            "title": "Gamma",
+            "type": "number"
+          },
+          "iv": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "k_over_f": {
+            "title": "K Over F",
+            "type": "number"
+          },
+          "option_type": {
+            "enum": [
+              "call",
+              "put"
+            ],
+            "title": "Option Type",
+            "type": "string"
+          },
+          "price_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price At"
+          },
+          "price_brl": {
+            "title": "Price Brl",
+            "type": "string"
+          },
+          "price_origin": {
+            "enum": [
+              "observed",
+              "estimated",
+              "manual"
+            ],
+            "title": "Price Origin",
+            "type": "string"
+          },
+          "quantity_per_lot": {
+            "description": "Opções por lote, com sinal (− vendida).",
+            "title": "Quantity Per Lot",
+            "type": "integer"
+          },
+          "series_id": {
+            "title": "Series Id",
+            "type": "integer"
+          },
+          "spread_conservative": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Spread relativo da faixa (estimativa).",
+            "title": "Spread Conservative"
+          },
+          "strike": {
+            "title": "Strike",
+            "type": "number"
+          },
+          "theta_per_bd": {
+            "title": "Theta Per Bd",
+            "type": "number"
+          },
+          "vega_per_point": {
+            "title": "Vega Per Point",
+            "type": "number"
+          }
+        },
+        "required": [
+          "series_id",
+          "code",
+          "option_type",
+          "quantity_per_lot",
+          "strike",
+          "effective_strike",
+          "k_over_f",
+          "band",
+          "price_brl",
+          "price_origin",
+          "price_at",
+          "iv",
+          "delta",
+          "gamma",
+          "vega_per_point",
+          "theta_per_bd",
+          "spread_conservative"
+        ],
+        "title": "LegOut",
+        "type": "object"
+      },
       "LiquidityFilter-Input": {
         "additionalProperties": false,
         "description": "Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).",
@@ -2538,6 +3451,40 @@
           "option_volume_brl"
         ],
         "title": "LiquidityOut",
+        "type": "object"
+      },
+      "ManualInputOut": {
+        "properties": {
+          "instrument": {
+            "title": "Instrument",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "spot",
+              "option_price",
+              "margin"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "value_brl": {
+            "title": "Value Brl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "instrument",
+          "value_brl",
+          "observed_at"
+        ],
+        "title": "ManualInputOut",
         "type": "object"
       },
       "ModelSelectionIn": {
@@ -2702,6 +3649,494 @@
           }
         },
         "title": "ModelState",
+        "type": "object"
+      },
+      "PayoffCurve": {
+        "properties": {
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pnl_brl": {
+            "description": "P&L por lote, sem hedge nem custos.",
+            "items": {
+              "type": "number"
+            },
+            "title": "Pnl Brl",
+            "type": "array"
+          },
+          "step_bd": {
+            "title": "Step Bd",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "label",
+          "step_bd",
+          "day",
+          "pnl_brl"
+        ],
+        "title": "PayoffCurve",
+        "type": "object"
+      },
+      "PayoffOut": {
+        "properties": {
+          "curves": {
+            "items": {
+              "$ref": "#/components/schemas/PayoffCurve"
+            },
+            "title": "Curves",
+            "type": "array"
+          },
+          "spots": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Spots",
+            "type": "array"
+          }
+        },
+        "required": [
+          "spots",
+          "curves"
+        ],
+        "title": "PayoffOut",
+        "type": "object"
+      },
+      "PercentileOut": {
+        "properties": {
+          "percentile": {
+            "title": "Percentile",
+            "type": "integer"
+          },
+          "pnl_brl": {
+            "title": "Pnl Brl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "percentile",
+          "pnl_brl"
+        ],
+        "title": "PercentileOut",
+        "type": "object"
+      },
+      "PositionCreate": {
+        "additionalProperties": false,
+        "description": "Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,\nsimulação e dimensionamento; o cliente não impõe números calculados (PRD §7).",
+        "properties": {
+          "base_config_version_id": {
+            "description": "409 se não for mais a vigente.",
+            "minimum": 1.0,
+            "title": "Base Config Version Id",
+            "type": "integer"
+          },
+          "capital_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Capital alocado para opções (RN-SIZ-01); sem ele vale o da configuração.",
+            "title": "Capital Brl"
+          },
+          "executed_at": {
+            "format": "date-time",
+            "title": "Executed At",
+            "type": "string"
+          },
+          "executed_legs": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutedLeg"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Executed Legs",
+            "type": "array"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/LegInput"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Legs",
+            "type": "array"
+          },
+          "lots": {
+            "default": 1,
+            "description": "Lotes para os Greeks da posição.",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Lots",
+            "type": "integer"
+          },
+          "manual_spot_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Spot At"
+          },
+          "manual_spot_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço manual do ativo-objeto.",
+            "title": "Manual Spot Brl"
+          },
+          "margin_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin At"
+          },
+          "margin_per_lot_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Margem manual (RN-SIZ-06).",
+            "title": "Margin Per Lot Brl"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "override_reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Obrigatório fora de \"edge líquido\" na direção da estrutura ou acima do tamanho sugerido.",
+            "title": "Override Reason"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExecutedStock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "pattern": "^[A-Za-z0-9]{4,12}$",
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "structure",
+          "legs",
+          "base_config_version_id",
+          "executed_legs",
+          "executed_at"
+        ],
+        "title": "PositionCreate",
+        "type": "object"
+      },
+      "PositionOut": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision_snapshot": {
+            "additionalProperties": true,
+            "title": "Decision Snapshot",
+            "type": "object"
+          },
+          "direction": {
+            "enum": [
+              "sell",
+              "buy"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "edge_state": {
+            "enum": [
+              "edge",
+              "inconclusive",
+              "no_edge"
+            ],
+            "title": "Edge State",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/EntryOut"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lots": {
+            "title": "Lots",
+            "type": "integer"
+          },
+          "manual_inputs": {
+            "items": {
+              "$ref": "#/components/schemas/ManualInputOut"
+            },
+            "title": "Manual Inputs",
+            "type": "array"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "overridden": {
+            "title": "Overridden",
+            "type": "boolean"
+          },
+          "override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Reason"
+          },
+          "status": {
+            "const": "open",
+            "default": "open",
+            "description": "Lançamentos de saída na Etapa 7.",
+            "title": "Status",
+            "type": "string"
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "ticker",
+          "structure",
+          "direction",
+          "expiry",
+          "lots",
+          "edge_state",
+          "model",
+          "config_version_id",
+          "overridden",
+          "as_of",
+          "engine_version",
+          "override_reason",
+          "note",
+          "entries",
+          "manual_inputs",
+          "decision_snapshot"
+        ],
+        "title": "PositionOut",
+        "type": "object"
+      },
+      "PositionSummary": {
+        "properties": {
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "sell",
+              "buy"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "edge_state": {
+            "enum": [
+              "edge",
+              "inconclusive",
+              "no_edge"
+            ],
+            "title": "Edge State",
+            "type": "string"
+          },
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lots": {
+            "title": "Lots",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "overridden": {
+            "title": "Overridden",
+            "type": "boolean"
+          },
+          "status": {
+            "const": "open",
+            "default": "open",
+            "description": "Lançamentos de saída na Etapa 7.",
+            "title": "Status",
+            "type": "string"
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "ticker",
+          "structure",
+          "direction",
+          "expiry",
+          "lots",
+          "edge_state",
+          "model",
+          "config_version_id",
+          "overridden"
+        ],
+        "title": "PositionSummary",
         "type": "object"
       },
       "PriceHistory": {
@@ -3629,6 +5064,877 @@
         "title": "SeriesResponse",
         "type": "object"
       },
+      "SimulationParams": {
+        "additionalProperties": false,
+        "description": "Bloco `simulation` (PRD 1.9 §5.8; QA-10, QA-11 parcial). Banda de delta \"não calibrada\".",
+        "properties": {
+          "delta_band": {
+            "default": 0.1,
+            "description": "Meia-largura da banda de delta, em ações por opção (QA-11).",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Delta Band",
+            "type": "number"
+          },
+          "histogram_bins": {
+            "default": 50,
+            "maximum": 200.0,
+            "minimum": 10.0,
+            "title": "Histogram Bins",
+            "type": "integer"
+          },
+          "min_returns": {
+            "default": 120,
+            "description": "Retornos mínimos da amostra.",
+            "maximum": 1260.0,
+            "minimum": 30.0,
+            "title": "Min Returns",
+            "type": "integer"
+          },
+          "paths": {
+            "default": 10000,
+            "description": "Caminhos do bootstrap.",
+            "maximum": 50000.0,
+            "minimum": 1000.0,
+            "title": "Paths",
+            "type": "integer"
+          },
+          "payoff_points": {
+            "default": 61,
+            "maximum": 401.0,
+            "minimum": 11.0,
+            "title": "Payoff Points",
+            "type": "integer"
+          },
+          "payoff_range": {
+            "default": 0.3,
+            "description": "Grade do payoff: ±fração de S.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Payoff Range",
+            "type": "number"
+          },
+          "sample_bd": {
+            "default": 252,
+            "description": "Pregões da amostra de retornos.",
+            "maximum": 1260.0,
+            "minimum": 60.0,
+            "title": "Sample Bd",
+            "type": "integer"
+          },
+          "seed": {
+            "default": 20261123,
+            "description": "Semente (resultado determinístico).",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          }
+        },
+        "title": "SimulationParams",
+        "type": "object"
+      },
+      "SimulationRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/LegInput"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Legs",
+            "type": "array"
+          },
+          "lots": {
+            "default": 1,
+            "description": "Lotes para os Greeks da posição.",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Lots",
+            "type": "integer"
+          },
+          "manual_spot_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Spot At"
+          },
+          "manual_spot_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço manual do ativo-objeto.",
+            "title": "Manual Spot Brl"
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "pattern": "^[A-Za-z0-9]{4,12}$",
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "structure",
+          "legs"
+        ],
+        "title": "SimulationRequest",
+        "type": "object"
+      },
+      "SimulationResponse": {
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "ci_level": {
+            "title": "Ci Level",
+            "type": "number"
+          },
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "costs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CostsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "direction": {
+            "enum": [
+              "sell",
+              "buy"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "direction_match": {
+            "title": "Direction Match",
+            "type": "boolean"
+          },
+          "distribution": {
+            "$ref": "#/components/schemas/DistributionOut"
+          },
+          "dynamic_hedge": {
+            "title": "Dynamic Hedge",
+            "type": "boolean"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "events_removed": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Events Removed",
+            "type": "array"
+          },
+          "expected_as_of": {
+            "format": "date",
+            "title": "Expected As Of",
+            "type": "string"
+          },
+          "expected_pnl_approx_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Vega × (|p| − c) por lote (aproximado).",
+            "title": "Expected Pnl Approx Brl"
+          },
+          "expected_pnl_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Média da distribuição por lote (RF-SIM-05).",
+            "title": "Expected Pnl Brl"
+          },
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "forecast": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "greeks_lot": {
+            "$ref": "#/components/schemas/GreeksOut"
+          },
+          "greeks_position": {
+            "$ref": "#/components/schemas/GreeksOut"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "iv": {
+            "$ref": "#/components/schemas/EstimatedValue",
+            "description": "IV da estrutura (ponderada pela vega), ex-evento."
+          },
+          "iv_with_events": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/LegOut"
+            },
+            "title": "Legs",
+            "type": "array"
+          },
+          "lot_size": {
+            "title": "Lot Size",
+            "type": "integer"
+          },
+          "lots": {
+            "title": "Lots",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "net_premium": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Premium"
+          },
+          "net_relative_edge": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Relative Edge"
+          },
+          "normal_spread": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "payoff": {
+            "$ref": "#/components/schemas/PayoffOut"
+          },
+          "premium": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "rate": {
+            "description": "Selic do pregão (decimal anual exponencial).",
+            "title": "Rate",
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "relative_edge": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "required_buy": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Buy"
+          },
+          "required_sell": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Sell"
+          },
+          "signal_direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sell",
+                  "buy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Direction"
+          },
+          "spot_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spot At"
+          },
+          "spot_brl": {
+            "title": "Spot Brl",
+            "type": "string"
+          },
+          "spot_origin": {
+            "enum": [
+              "observed",
+              "manual"
+            ],
+            "title": "Spot Origin",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "edge",
+              "inconclusive",
+              "no_edge",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "stock": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StockOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "threshold": {
+            "$ref": "#/components/schemas/EstimatedValue"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "structure",
+          "direction",
+          "dynamic_hedge",
+          "as_of",
+          "expected_as_of",
+          "expiry",
+          "horizon_bd",
+          "lots",
+          "lot_size",
+          "spot_brl",
+          "spot_origin",
+          "spot_at",
+          "rate",
+          "legs",
+          "stock",
+          "iv",
+          "iv_with_events",
+          "events_removed",
+          "forecast",
+          "normal_spread",
+          "premium",
+          "relative_edge",
+          "threshold",
+          "state",
+          "signal_direction",
+          "direction_match",
+          "reason",
+          "required_sell",
+          "required_buy",
+          "net_premium",
+          "net_relative_edge",
+          "expected_pnl_approx_brl",
+          "costs",
+          "greeks_lot",
+          "greeks_position",
+          "payoff",
+          "distribution",
+          "expected_pnl_brl",
+          "model",
+          "ci_level",
+          "config_version_id",
+          "engine_version"
+        ],
+        "title": "SimulationResponse",
+        "type": "object"
+      },
+      "SizingOut": {
+        "properties": {
+          "capital_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capital Brl"
+          },
+          "es_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Es Brl"
+          },
+          "kelly_fraction": {
+            "title": "Kelly Fraction",
+            "type": "number"
+          },
+          "kelly_full_lots": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kelly Full Lots"
+          },
+          "margin_origin": {
+            "const": "manual",
+            "default": "manual",
+            "title": "Margin Origin",
+            "type": "string"
+          },
+          "margin_per_lot_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Per Lot Brl"
+          },
+          "margin_share_of_capital": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Share Of Capital"
+          },
+          "margin_total_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Total Brl"
+          },
+          "max_loss_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Loss Brl"
+          },
+          "max_loss_fraction": {
+            "title": "Max Loss Fraction",
+            "type": "number"
+          },
+          "mu_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "P&L esperado por lote no limite inferior do edge.",
+            "title": "Mu Brl"
+          },
+          "n_cap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Cap"
+          },
+          "n_final": {
+            "title": "N Final",
+            "type": "integer"
+          },
+          "n_kelly": {
+            "title": "N Kelly",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rule": {
+            "enum": [
+              "kelly",
+              "cap",
+              "tie",
+              "zero"
+            ],
+            "title": "Rule",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "stress": {
+            "items": {
+              "$ref": "#/components/schemas/StressOut"
+            },
+            "title": "Stress",
+            "type": "array"
+          },
+          "variance_brl2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance Brl2"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "capital_brl",
+          "kelly_fraction",
+          "max_loss_fraction",
+          "mu_brl",
+          "variance_brl2",
+          "es_brl",
+          "stress",
+          "max_loss_brl",
+          "kelly_full_lots",
+          "n_kelly",
+          "n_cap",
+          "n_final",
+          "rule",
+          "margin_per_lot_brl",
+          "margin_total_brl",
+          "margin_share_of_capital"
+        ],
+        "title": "SizingOut",
+        "type": "object"
+      },
+      "SizingParams": {
+        "additionalProperties": false,
+        "description": "Bloco `sizing` (PRD 1.9 §5.8; RN-SIZ-01..06, QA-09).",
+        "properties": {
+          "capital_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Capital alocado para opções (RN-SIZ-01); sem padrão.",
+            "title": "Capital Brl"
+          },
+          "es_level": {
+            "default": 0.99,
+            "description": "Nível do expected shortfall (QA-09).",
+            "maximum": 0.999,
+            "minimum": 0.9,
+            "title": "Es Level",
+            "type": "number"
+          },
+          "kelly_fraction": {
+            "default": 0.25,
+            "description": "Fração de Kelly (RN-SIZ-02).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Kelly Fraction",
+            "type": "number"
+          },
+          "lot_size": {
+            "default": 100,
+            "description": "Opções por lote.",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Lot Size",
+            "type": "integer"
+          },
+          "max_loss_fraction": {
+            "default": 0.07,
+            "description": "Teto de perda por trade sobre o capital (RN-SIZ-03).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Loss Fraction",
+            "type": "number"
+          },
+          "stress_gap": {
+            "default": 0.1,
+            "description": "Gap do ativo no stress (±).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 0.5,
+            "title": "Stress Gap",
+            "type": "number"
+          },
+          "stress_vol_pts": {
+            "default": 0.1,
+            "description": "Choque de vol no stress (decimal).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Stress Vol Pts",
+            "type": "number"
+          }
+        },
+        "title": "SizingParams",
+        "type": "object"
+      },
+      "SizingRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "capital_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Capital alocado para opções (RN-SIZ-01); sem ele vale o da configuração.",
+            "title": "Capital Brl"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/LegInput"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Legs",
+            "type": "array"
+          },
+          "lots": {
+            "default": 1,
+            "description": "Lotes para os Greeks da posição.",
+            "maximum": 100000.0,
+            "minimum": 1.0,
+            "title": "Lots",
+            "type": "integer"
+          },
+          "manual_spot_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Spot At"
+          },
+          "manual_spot_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço manual do ativo-objeto.",
+            "title": "Manual Spot Brl"
+          },
+          "margin_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin At"
+          },
+          "margin_per_lot_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Margem manual (RN-SIZ-06).",
+            "title": "Margin Per Lot Brl"
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "pattern": "^[A-Za-z0-9]{4,12}$",
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "structure",
+          "legs"
+        ],
+        "title": "SizingRequest",
+        "type": "object"
+      },
+      "SizingResponse": {
+        "properties": {
+          "simulation": {
+            "$ref": "#/components/schemas/SimulationResponse"
+          },
+          "sizing": {
+            "$ref": "#/components/schemas/SizingOut"
+          }
+        },
+        "required": [
+          "simulation",
+          "sizing"
+        ],
+        "title": "SizingResponse",
+        "type": "object"
+      },
       "SmilePointOut": {
         "properties": {
           "code": {
@@ -3894,6 +6200,52 @@
           "days"
         ],
         "title": "SpreadsResponse",
+        "type": "object"
+      },
+      "StockOut": {
+        "properties": {
+          "price_brl": {
+            "title": "Price Brl",
+            "type": "string"
+          },
+          "quantity_per_lot": {
+            "title": "Quantity Per Lot",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity_per_lot",
+          "price_brl"
+        ],
+        "title": "StockOut",
+        "type": "object"
+      },
+      "StressOut": {
+        "properties": {
+          "loss_brl": {
+            "title": "Loss Brl",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "spot_shock": {
+            "title": "Spot Shock",
+            "type": "number"
+          },
+          "vol_shock": {
+            "title": "Vol Shock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "spot_shock",
+          "vol_shock",
+          "loss_brl"
+        ],
+        "title": "StressOut",
         "type": "object"
       },
       "TermPointOut": {
@@ -4227,7 +6579,7 @@
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -5182,6 +7534,163 @@
         ]
       }
     },
+    "/positions": {
+      "get": {
+        "operationId": "list_positions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PositionSummary"
+                  },
+                  "title": "Response List Positions",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Operações registradas",
+        "tags": [
+          "simulação"
+        ]
+      },
+      "post": {
+        "operationId": "post_position",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PositionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "A configuração mudou."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Insumo inválido ou ausente (com o motivo)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Registrar a entrada com o retrato da decisão",
+        "tags": [
+          "simulação"
+        ]
+      }
+    },
+    "/positions/{position_id}": {
+      "get": {
+        "operationId": "get_position",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "position_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Position Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Operação inexistente."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Uma operação, com o retrato da decisão",
+        "tags": [
+          "simulação"
+        ]
+      }
+    },
     "/ranking": {
       "get": {
         "operationId": "get_ranking",
@@ -5232,6 +7741,128 @@
         "summary": "Ranking dos ativos com semáforo de edge",
         "tags": [
           "ranking"
+        ]
+      }
+    },
+    "/simulations": {
+      "post": {
+        "operationId": "post_simulation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Insumo inválido ou ausente (com o motivo)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Simular uma estrutura (não grava nada)",
+        "tags": [
+          "simulação"
+        ]
+      }
+    },
+    "/sizing": {
+      "post": {
+        "operationId": "post_sizing",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SizingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SizingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Insumo inválido ou ausente (com o motivo)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Simular e dimensionar: Kelly fracionado e teto (não grava nada)",
+        "tags": [
+          "simulação"
         ]
       }
     },
@@ -5388,6 +8019,88 @@
         "summary": "Ativa ou desativa um ativo",
         "tags": [
           "ativos"
+        ]
+      }
+    },
+    "/underlyings/{ticker}/chain": {
+      "get": {
+        "operationId": "get_chain",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9]{4,12}$",
+              "title": "Ticker",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Vencimento; sem ele, o mais próximo.",
+            "in": "query",
+            "name": "expiry",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vencimento; sem ele, o mais próximo.",
+              "title": "Expiry"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Ativo não cadastrado."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Insumo inválido ou ausente (com o motivo)."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Séries de um vencimento para montar a estrutura",
+        "tags": [
+          "simulação"
         ]
       }
     },
