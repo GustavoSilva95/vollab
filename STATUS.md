@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) **aprovados**; implementação em andamento
+**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**, testes locais verdes (engine 295, web 95, Playwright 8); aguarda CI no GitHub e aprovação do fechamento
 **Etapa anterior:** Etapa 5 concluída e aprovada (2026-11-23), mesclada na `main`
 
 ## Aprovações
@@ -24,8 +24,8 @@
 | PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário; CI verde nos 6 jobs (run 45271823943) | 2026-11-23 |
 | BRD 1.5 (semáforo nas duas direções, QA-14, QA-11 parcial) / PRD 1.8 (§5.6.1 métodos da Etapa 5, `option_spread_estimates`, `/ranking`, `/config`, telas e testes) | 1.5 / 1.8 | Aprovado | 2026-11-23 |
-| BRD 1.6 / PRD 1.9 (§5.8: simulador e dimensionamento; QA-09, QA-10, QA-11 parcial; estruturas compradas) | 1.6 / 1.9 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 5 (testes do semáforo nos três estados e nos limites, rótulos "não calibrado", revisão de performance sem bloqueantes, PRD 1.8.1) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45290076552 e 45291444806) | 2026-11-23 |
+| BRD 1.6 / PRD 1.9 (§5.8: simulador e dimensionamento; QA-09, QA-10, QA-11 parcial; estruturas compradas) | 1.6 / 1.9 | Aprovado | 2026-11-23 |
 
 ## Feito
 
@@ -96,6 +96,16 @@
   - **Revisão de performance (2026-11-23): sem bloqueantes, dentro das metas.** Ranking de 10 ativos com 1 ano em 126 ms (143 ms por HTTP; projeção de ~0,4 s com 5 anos; meta 2 s); `/spreads` 11 ms; `spread_day` ~2 ms por pregão; JS das rotas novas +14–15 KiB gzip, só nelas; landing e `/app` sem mudança. Corrigidos: **I-1** (a troca do modelo não invalidava o cache da configuração e um salvamento logo depois podia voltar ao modelo antigo em silêncio: o ModelsView agora invalida `getConfig`/`listConfigVersions` e o `POST /config` exige `base_version_id`, com 409 se não for a vigente), M-1 (liquidez só com séries não vencidas), M-4 (só invalida quando cria versão), M-5 (lista de versões sem ler o JSONB), M-6 (`useMemo` inútil removido).
   - Com as fixtures (PETR4, 19/11/2026, modelo combinação): IV 32,6% (ATM de 18/12, 20 du, aproximado) × σ̂ 48,4% [35,5–66,8] → prêmio −23,0 pts [−44,2; −8,2] com *s* = 15% → **edge líquido de compra de vol**, edge relativo líquido 45,5%; custos 0,43 pts nas opções (spread ATM 1,04% conservador) + 0,52 pts de hedge. A previsão está inflada pelos gaps de 26/10 das fixtures (ver riscos): não é sinal real. BBAS3 e BOVA11 sem IV nas fixtures (indisponível).
 
+- **Etapa 6 implementada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento` (BRD 1.6, PRD 1.9 §5.8):
+  - `quant/simulation` (puro): 5 estruturas (straddle e strangle vendidos e comprados, venda coberta), bootstrap i.i.d. dos retornos diários reais reescalados para σ̂ com média zero e desvio exato (QA-10), hedge por banda de delta à IV de entrada com ajuste até a borda (`rehedge` da referência; venda coberta sem ajustes), caixa à Selic e proventos, exercício no vencimento, payoff, Greeks, IV da estrutura ponderada pela vega, ES e stress na entrada (QA-09). `quant/sizing`: n = ⌊f·W·μ/σ²⌋ (eq. 8.14) × teto ⌊c·W/L⌋, regra `kelly`/`cap`/`tie`/`zero`, pisos em aritmética racional sobre o decimal digitado.
+  - Migration `0007`: `positions`, `position_entries` (tipo `entry`) e `manual_inputs` imutáveis (UPDATE/DELETE/TRUNCATE barrados por trigger). **Backlog M-2 (b) resolvido:** papel `vollab_app` (API e worker fazem `SET ROLE`) sem DDL, sem TRUNCATE e sem UPDATE/DELETE nas tabelas imutáveis nem em `alembic_version`; partições de `trades` por `create_trades_partition` (`SECURITY DEFINER`). Os testes rodam como `vollab_app`.
+  - Blocos `simulation` (10.000 caminhos, semente fixa, 252 pregões, mínimo de 120 retornos, banda 0,10 não calibrada) e `sizing` (capital sem padrão, Kelly 1/4, teto 7%, ES 99%, stress ±10% e +10 pontos, lote 100). Versão nova criada automaticamente com os padrões.
+  - API (contrato 0.6.0): `GET /underlyings/{t}/chain` (padrão: 1º vencimento com IV de referência; sugestões por estrutura), `POST /simulations`, `POST /sizing`, `POST /positions` (409 com configuração velha; 422 sem semáforo; `override_reason` obrigatório fora de "edge líquido" na direção, com direção oposta ou acima do sugerido), `GET /positions`, `GET /positions/{id}`. Métodos do ranking reaproveitados (previsão, spread normal, spreads por faixa, limiar).
+  - Tela `/app/simulador` (navegação habilitada; links no ranking e no ativo): semáforo e edge da estrutura no topo, pernas, Greeks, custos (Leland do semáforo × custo da banda simulado), payoff, histograma com ES e percentis, dimensionamento com a regra que prevaleceu e zero explicado, registro da entrada com o retrato.
+  - Testes: **T-REF-07 passando** (27 de referência: Kelly, teto, empate, zero por semáforo, direção e μ ≤ 0, piso exato; reescala; determinismo; banda × referência; P&L médio do straddle hedgeado × ΔBS; dispersão × banda e eq. 7.7; payoff; proventos; stress e ES à mão); engine 295 (8 de integração com fixtures reais e 9 de privilégios do papel); web 95; Playwright 8 (novo: **fluxo 2**). Ruff, mypy estrito, ESLint, tsc, `next build` e contrato determinístico ok.
+  - **Desempenho (meta PRD-NF-06: 10.000 caminhos < 3 s):** ~0,04–0,12 s no motor (21–63 du); `/sizing` ~50 ms e `/chain` ~8 ms por HTTP com as fixtures. JS da rota `/app/simulador` ~108 KiB gzip (Plotly à parte, sob demanda); landing ~15 KiB.
+  - Com as fixtures (PETR4, 19/11/2026, combinação): straddle comprado ATM 18/12 → edge líquido de compra, P&L médio R$ 143/lote, ES 99% R$ 105, Kelly 102 × teto 66 lotes com R$ 100 mil → **teto prevalece (66)**. Estruturas vendidas: zero, "direção oposta ao sinal". Mesma ressalva da Etapa 5: σ̂ inflado pelos gaps de 26/10 das fixtures.
+
 ## Decisões registradas
 
 | Data | Decisão | Onde |
@@ -144,13 +154,14 @@
 | 2026-11-23 | TanStack Table adotado no ranking (`@tanstack/react-table` 8.21); componente fora do React Compiler (`'use no memo'`) por incompatibilidade conhecida | PRD §3.1 |
 | 2026-11-23 | Taxas da B3 padrão (0,134% opções, 0,03% ações) **mantidas por enquanto** (decisão do usuário), rotuladas "a conferir" | PRD 1.8.1 §5.6.1 |
 | 2026-11-23 | **Etapa 6 — decisões do usuário (BRD 1.6 / PRD 1.9, aprovados):** QA-10 = bootstrap dos retornos diários reais do último ano, com média zero e reescalados para σ̂; QA-09 = perda máxima pela maior entre ES 99% da simulação e a pior perda nos stresses simples (gap ±10%, +10 pts, queda + alta de vol); straddle e strangle **comprados** entram no simulador; QA-11 parcial: **banda de delta** (0,10 por opção, não calibrada) como regra de hedge da simulação, com ajuste até a borda | BRD 1.6, PRD 1.9 §5.8 |
+| 2026-11-23 | Etapa 6 — decisões de implementação: venda coberta sem hedge dinâmico; IV constante na simulação; Kelly n = ⌊f·W·μ/σ²⌋ com μ no limite inferior do edge; stress instantâneo na entrada com custos de entrada e saída; margem só manual; a cadeia abre no 1º vencimento com IV de referência; o semáforo da estrutura mantém Leland diário (conservador) e a simulação mostra o custo da banda ao lado | PRD 1.9 §5.8 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
 
 - Calendário 2027 provisório até a B3 publicar.
 - Backlog de segurança (revisão da Etapa 1, não bloqueante):
-  - M-2 (b): separar papéis do Postgres (dono das migrations × aplicação sem DDL/UPDATE/DELETE nas tabelas imutáveis) — junto com as decisões gravadas, Etapa 6.
+  - ~~M-2 (b)~~: resolvido na Etapa 6 (migration 0007, papel `vollab_app`). Limite: o usuário da conexão continua sendo o dono (o `SET ROLE` protege contra erro do app, não contra credencial vazada); ao hospedar, usar um login próprio para o papel.
   - B-2: fixar ações do CI por SHA (com Dependabot) e imagens por digest/versão completa (`uv:0.13.9`).
   - ~~B-5~~: resolvido na Etapa 2 (DSN com `SecretStr`; `last_error`, erros de item e logs só com o tipo do erro).
   - B-6: `ENGINE_URL` do rewrite é fixado no `next build` (documentar ou mover para `proxy.ts`).
@@ -161,6 +172,8 @@
 - Backlog da revisão de performance da Etapa 2 (não bloqueante): `executemany` nos upserts do COTAHIST (compilação do SQLAlchemy domina ~0,6 s por pregão); `r4_mask` calculado duas vezes por arquivo do ativo; evitar a cópia `bytes(body)` no download. Para a Etapa 3: não agregar negócios brutos na requisição (PETR4 em 63 pregões = 4,4 milhões de linhas, ~1,2 s); gravar agregados no worker após a coleta.
 - Etapa 5: o sinal das fixtures (edge de compra em PETR4) vem de σ̂ inflado pelos gaps de 26/10; conferir o ranking depois da carga real. O spread normal fica "não calibrado" até ~8 meses de IV de prazo constante (mesma limitação do baseline `implied`).
 - Backlog da revisão de performance da Etapa 5 (não bloqueante): I-2 (o recálculo inicial depois da 0006 refaz a IV de todo o histórico uma vez: ~1 min com 3 ativos, ~3 min com 10; processar do mais recente para o mais antigo ou criar um caminho só de spread); M-2 (`EventContext` no ranking carrega a estrutura a termo inteira e relê feriados e proventos: construtor pontual por `as_of`); M-3 (~20 consultas por PK por ativo; agrupar só se o universo passar de 10); M-4b (telas de vol não são invalidadas ao mudar parâmetros de `vol`; ficam velhas por até 10 s); M-6b (`staleTime` de 60 s no ranking).
+- Etapa 6: a simulação mantém a IV constante (risco de vega só no stress) e sorteia retornos i.i.d. (sem agrupamento de vol); com a amostra de 1 ano, um único gap grande pesa no ES. O cenário de crise histórica (QA-12) entra no teto na Etapa 7. A banda de delta (0,10) e o teto seguem "não calibrados".
+- Migration 0007 e bancos existentes: o papel `vollab_app` é do cluster; o dono das migrations precisa poder criar papéis (superusuário no compose e no CI).
 - Rodar o E2E exige parar o Postgres de dev (as duas stacks usam 127.0.0.1:5432).
 - Retenção de `trades` não definida (~8 GB/ano com 3 ativos).
 - Backlog da revisão de performance da Etapa 3 (não bloqueante): "data mais recente" por seq scan em `/series` e no smile (usar a PK de `atm_term_structure`); laços O(séries × negócios) e `count_business_days` dia a dia em `implied_day`; inserts de `realized_vols`/`intraday_bars` por executemany (COPY se crescer); GZip no FastAPI; `staleTime` maior nas consultas de vol; `useMemo` na estrutura a termo; pregão com `IntradayError` volta ao escopo a cada job (raro).
@@ -179,5 +192,5 @@
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
 5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
-8. **Etapa 6:** BRD 1.6 e PRD 1.9 aprovados (2026-11-23); implementação na branch `etapa-6-simulador-dimensionamento`.
+8. **Etapa 6:** implementada na branch `etapa-6-simulador-dimensionamento`. Falta: push e CI no GitHub, revisão de performance (meta cumprida nas medições locais), aprovação do fechamento pelo usuário e o merge. Depois: Etapa 7 (diário, carteira e risco; QA-12).
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.
