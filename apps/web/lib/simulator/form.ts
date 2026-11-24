@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { PositionCreate, SimulationResponse, SizingOut, SizingRequest } from '@vollab/api-types';
+import type { LimitsResponse, PositionCreate, SimulationResponse, SizingOut, SizingRequest } from '@vollab/api-types';
 import { marketInputToIso, parseMoneyInput } from '@/lib/format';
 import { STRUCTURES, type StructureName } from './labels';
 
@@ -68,13 +68,20 @@ export function toSizingRequest(ticker: string, v: SimulatorValues): SizingReque
 
 /**
  * Motivos que exigem justificativa no registro (mesma regra do engine): fora de "edge líquido" na
- * direção da estrutura, ou lotes acima do sugerido.
+ * direção da estrutura, lotes acima do sugerido ou limite da carteira ultrapassado com a nova posição
+ * (PR-04; o pró-forma da tela usa os lotes simulados, e o engine refaz com os executados).
  */
-export function overrideReasons(sim: SimulationResponse, sizing: SizingOut, lots: number): string[] {
+export function overrideReasons(
+  sim: SimulationResponse,
+  sizing: SizingOut,
+  lots: number,
+  limits: LimitsResponse | null | undefined = null,
+): string[] {
   const out: string[] = [];
   if (sim.state !== 'edge') out.push(`semáforo em ${sim.state}`);
   else if (!sim.direction_match) out.push('direção da estrutura oposta à do sinal');
   if (lots > sizing.n_final) out.push(`${lots} lote(s) acima do sugerido (${sizing.n_final})`);
+  if (limits?.breached) out.push('limite da carteira ultrapassado com a nova posição');
   return out;
 }
 

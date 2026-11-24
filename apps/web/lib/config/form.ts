@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ConfigParamsInput, ConfigParamsOutput } from '@vollab/api-types';
 import {
+  parseMoneyInput,
   parsePercentInput,
   parsePlainInput,
   parseVolPointsInput,
@@ -19,8 +20,11 @@ import {
 type Unit = 'percent' | 'points' | 'plain' | 'int';
 
 interface FieldSpec {
-  block: 'costs' | 'edge' | 'vol' | 'forecast';
+  block: 'costs' | 'edge' | 'vol' | 'forecast' | 'risk' | 'journal';
+  /** Caminho dentro do bloco; `limits.x` para campos aninhados. */
   key: string;
+  /** Valor padrão sem calibração por dados (rótulo "não calibrado"). */
+  uncalibrated?: boolean;
   label: string;
   unit: Unit;
   min: number;
@@ -143,11 +147,91 @@ export const FIELDS = {
     max: 0.99,
     nextRecompute: true,
   },
+  stress_gap: {
+    block: 'risk',
+    key: 'stress_gap',
+    label: 'Gap do ativo nos stresses (±%)',
+    unit: 'percent',
+    min: 0.01,
+    max: 0.5,
+    help: 'Stresses simples da carteira e do teto do dimensionamento (RF-RSK-03).',
+  },
+  stress_vol_pts: { block: 'risk', key: 'stress_vol_pts', label: 'Choque de vol nos stresses (pontos)', unit: 'points', min: 0.01, max: 1 },
+  crisis_horizon_bd: {
+    block: 'risk',
+    key: 'crisis_horizon_bd',
+    label: 'Pregões da pior janela da crise',
+    unit: 'int',
+    min: 1,
+    max: 20,
+    help: 'QA-12: pior retorno acumulado nesse número de pregões dentro do episódio. Vale na próxima medição.',
+  },
+  max_stress_loss_fraction: {
+    block: 'risk',
+    key: 'limits.max_stress_loss_fraction',
+    label: 'Limite: pior perda em stress (% do capital)',
+    unit: 'percent',
+    min: 0.01,
+    max: 1,
+    uncalibrated: true,
+  },
+  max_abs_vega_fraction: {
+    block: 'risk',
+    key: 'limits.max_abs_vega_fraction',
+    label: 'Limite: |vega| por ponto (% do capital)',
+    unit: 'percent',
+    min: 0.0001,
+    max: 1,
+    uncalibrated: true,
+  },
+  max_underlying_share: {
+    block: 'risk',
+    key: 'limits.max_underlying_share',
+    label: 'Limite: perda de um ativo (% do orçamento de perda)',
+    unit: 'percent',
+    min: 0.01,
+    max: 1,
+    uncalibrated: true,
+  },
+  max_expiry_share: {
+    block: 'risk',
+    key: 'limits.max_expiry_share',
+    label: 'Limite: perda de um vencimento (% do orçamento de perda)',
+    unit: 'percent',
+    min: 0.01,
+    max: 1,
+    uncalibrated: true,
+  },
+  residual_max_ratio: {
+    block: 'journal',
+    key: 'residual_max_ratio',
+    label: 'Meta do resíduo da atribuição, CS-04 (%)',
+    unit: 'percent',
+    min: 0.01,
+    max: 1,
+  },
+  residual_min_brl: {
+    block: 'journal',
+    key: 'residual_min_brl',
+    label: 'Resíduo mínimo para o sinal de erro (R$)',
+    unit: 'plain',
+    min: 0,
+    max: 1_000_000_000,
+    uncalibrated: true,
+    help: 'Evita acusar erro de lançamento em dias parados (RS-06).',
+  },
 } as const satisfies Record<string, FieldSpec>;
 
 export type FieldName = keyof typeof FIELDS;
 export const FIELD_NAMES = Object.keys(FIELDS) as FieldName[];
-export const BLOCK_LABEL = { costs: 'Custos', edge: 'Edge', vol: 'Volatilidade', forecast: 'Previsão' } as const;
+export const BLOCK_LABEL = {
+  costs: 'Custos',
+  edge: 'Edge',
+  vol: 'Volatilidade',
+  forecast: 'Previsão',
+  risk: 'Risco e limites',
+  journal: 'Diário',
+} as const;
 
 function parse(unit: Unit, raw: string): number | null {
   if (unit === 'percent') return parsePercentInput(raw);
@@ -172,6 +256,7 @@ export const configFormSchema = z
     ...(Object.fromEntries(FIELD_NAMES.map((n) => [n, z.string()])) as Record<FieldName, z.ZodString>),
     band_low: z.string(),
     band_high: z.string(),
+    capital: z.string(),
     note: z.string().trim().min(1, 'Diga o que mudou e por quê.').max(500),
   })
   .superRefine((v, ctx) => {
@@ -187,6 +272,9 @@ export const configFormSchema = z
     if (lo == null || hi == null || !(lo >= 0.5 && lo < 1 && hi > 1 && hi <= 1.5)) {
       ctx.addIssue({ code: 'custom', path: ['band_high'], message: '0,5 ≤ inferior < 1 < superior ≤ 1,5.' });
     }
+    if (v.capital.trim() !== '' && parseMoneyInput(v.capital) == null) {
+      ctx.addIssue({ code: 'custom', path: ['capital'], message: 'Capital em R$ (ou vazio para não informar).' });
+    }
   });
 
 export type ConfigFormValues = z.input<typeof configFormSchema>;
@@ -197,15 +285,27 @@ function block(params: ConfigParamsOutput, name: FieldSpec['block']): Block {
   return (params[name] ?? {}) as Block;
 }
 
+function getPath(obj: Block, path: string): unknown {
+  return path.split('.').reduce<unknown>((acc, k) => (acc as Block | undefined)?.[k], obj);
+}
+
+function setPath(obj: Block, path: string, value: unknown): Block {
+  const [head, ...rest] = path.split('.') as [string, ...string[]];
+  if (rest.length === 0) return { ...obj, [head]: value };
+  return { ...obj, [head]: setPath((obj[head] ?? {}) as Block, rest.join('.'), value) };
+}
+
 export function toFormValues(params: ConfigParamsOutput): ConfigFormValues {
   const out: Record<string, string> = { note: '' };
   for (const name of FIELD_NAMES) {
     const spec: FieldSpec = FIELDS[name];
-    out[name] = toInput(spec.unit, Number(block(params, spec.block)[spec.key]));
+    out[name] = toInput(spec.unit, Number(getPath(block(params, spec.block), spec.key)));
   }
   const bands = (params.costs?.moneyness_bands ?? [0.95, 1.05]) as [number, number];
   out.band_low = toPlainInput(bands[0]);
   out.band_high = toPlainInput(bands[1]);
+  const capital = params.sizing?.capital_brl;
+  out.capital = capital == null ? '' : toPlainInput(capital);
   return out as ConfigFormValues;
 }
 
@@ -216,12 +316,14 @@ export function toConfigParams(values: ConfigFormValues, current: ConfigParamsOu
     const spec: FieldSpec = FIELDS[name];
     const value = parse(spec.unit, values[name]);
     if (value == null) throw new RangeError(`Campo inválido: ${name}.`);
-    next[spec.block] = { ...(next[spec.block] ?? {}), [spec.key]: value };
+    next[spec.block] = setPath(next[spec.block] ?? {}, spec.key, value);
   }
   next.costs = {
     ...next.costs,
     moneyness_bands: [parsePlainInput(values.band_low), parsePlainInput(values.band_high)],
   };
+  const capital = values.capital.trim() === '' ? null : Number(parseMoneyInput(values.capital));
+  next.sizing = { ...next.sizing, capital_brl: capital };
   return next as ConfigParamsInput;
 }
 

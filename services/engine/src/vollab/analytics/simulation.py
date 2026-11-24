@@ -16,14 +16,18 @@ import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from vollab.analytics.crisis import crisis_values
 from vollab.analytics.events import EventContext
 from vollab.analytics.market import DividendInfo, load_daily_series, load_dividends, underlying_isin
 from vollab.analytics.params import (
+    RiskParams,
     SimulationParams,
     SizingParams,
+    risk_params_from_config,
     simulation_params_from_config,
     sizing_params_from_config,
 )
+from vollab.analytics.portfolio import PortfolioComputer
 from vollab.analytics.ranking import RankingComputer
 from vollab.api.schemas.simulation import (
     ChainResponse,
@@ -62,6 +66,7 @@ from vollab.quant.pricing import (
     continuous_rate,
     implied_vol,
 )
+from vollab.quant.risk import Book, RiskLeg, RiskStock
 from vollab.quant.simulation import (
     DYNAMIC_HEDGE,
     STRUCTURE_DIRECTION,
@@ -71,6 +76,7 @@ from vollab.quant.simulation import (
     Market,
     StressScenario,
     Structure,
+    initial_hedge,
     kamal_derman_std,
     payoff_curve,
     rescale_returns,
@@ -127,6 +133,10 @@ class Computed:
     distribution: Distribution | None
     stress: list[StressOut]
     stress_max_unit: float | None
+    stress_notes: list[str]
+    market: Market
+    stock_qty: int
+    dynamic: bool
     p_low: float | None
     p_high: float | None
     cost_sell: float | None
@@ -143,6 +153,7 @@ class SimulationComputer:
             raise RuntimeError("configuração vigente não encontrada")
         self.sim: SimulationParams = simulation_params_from_config(version)
         self.size: SizingParams = sizing_params_from_config(version)
+        self.risk: RiskParams = risk_params_from_config(version)
         self.holidays = self.rk.holidays
         self.v = self.rk.v
 
@@ -554,14 +565,21 @@ class SimulationComputer:
         if costs_out is not None and dist is not None:
             costs_out.band_hedge_cost_brl = money(dist.mean_hedge_cost)
 
-        # Stress (QA-09).
-        gap, vol = self.size.stress_gap, self.size.stress_vol_pts
+        # Stress (QA-09): os choques do bloco `risk` (os mesmos da carteira) e, desde a Etapa 7, os
+        # cenários de crise medidos do ativo (QA-12).
+        gap, vol = self.risk.stress_gap, self.risk.stress_vol_pts
         scenarios = [
             StressScenario("gap_down", -gap, 0.0),
             StressScenario("gap_up", gap, 0.0),
             StressScenario("vol_up", 0.0, vol),
             StressScenario("down_vol_up", -gap, vol),
         ]
+        stress_notes: list[str] = []
+        for cv in crisis_values(self.session, self.risk, [ticker], user_id=self.user_id):
+            if cv.status == "ok" and cv.price_shock is not None and cv.vol_shock is not None:
+                scenarios.append(StressScenario(f"crisis_{cv.episode}", cv.price_shock, cv.vol_shock))
+            else:
+                stress_notes.append(f"crise {cv.label} indisponível: {cv.reason or 'sem medição'}")
         exit_rates = [leg.entry_cost_rate for leg in legs]
         losses = stress_losses(legs, stock_qty, market, rule, scenarios, exit_cost_rates=exit_rates)
         stress = [
@@ -672,6 +690,10 @@ class SimulationComputer:
             distribution=dist,
             stress=stress,
             stress_max_unit=stress_max,
+            stress_notes=stress_notes,
+            market=market,
+            stock_qty=stock_qty,
+            dynamic=rule.dynamic,
             p_low=p_lo,
             p_high=p_hi,
             cost_sell=cost_sell,
@@ -825,6 +847,7 @@ class SimulationComputer:
             "variance_brl2": d.variance if d is not None else None,
             "es_brl": money(es) if es is not None else None,
             "stress": comp.stress,
+            "stress_notes": comp.stress_notes,
             "max_loss_brl": money(max_loss_lot) if max_loss_lot is not None else None,
             "margin_per_lot_brl": money(margin) if margin is not None else None,
         }
@@ -871,4 +894,36 @@ class SimulationComputer:
 
     def sizing_response(self, req: SizingRequest) -> SizingResponse:
         comp, out = self.sizing(req)
-        return SizingResponse(simulation=comp.response, sizing=out)
+        # Limites com o capital da configuração (PRD 1.10 §5.9), nunca o do pedido: um capital digitado
+        # maior não pode dispensar a justificativa (revisão de segurança da Etapa 7, M-1).
+        limits = PortfolioComputer(self.session, user_id=self.user_id).limits(
+            self.proforma(comp, req.lots, None)
+        )
+        return SizingResponse(simulation=comp.response, sizing=out, limits=limits)
+
+    def proforma(self, comp: Computed, lots: int, stock_total: int | None) -> Book:
+        """A posição nova como livro de risco (PR-04): pernas × lote × lotes e a ação executada (ou o
+        hedge inicial até delta zero, ou a ação da venda coberta)."""
+        r = comp.response
+        units = self.size.lot_size * lots
+        m = comp.market
+        legs = [
+            RiskLeg(
+                position_id=0,
+                ticker=r.ticker,
+                expiry=r.expiry,
+                code=lo.code,
+                quantity=leg.quantity * units,
+                is_call=leg.is_call,
+                strike_eff=leg.strike,
+                days_to_expiry_bd=m.days_bd,
+                iv=leg.iv,
+                rate_c=m.rate_c,
+                pv_div=m.pv_dividends(0),
+            )
+            for leg, lo in zip(comp.legs, r.legs, strict=True)
+        ]
+        if stock_total is None:
+            stock_total = round(initial_hedge(comp.legs, comp.stock_qty, m, comp.dynamic) * units)
+        stocks = [RiskStock(0, r.ticker, r.expiry, stock_total)] if stock_total else []
+        return Book(legs, stocks, {r.ticker: m.spot})

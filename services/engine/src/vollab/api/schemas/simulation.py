@@ -13,6 +13,17 @@ from typing import Annotated, Any, Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 from vollab.api.schemas.common import EstimatedValue
+from vollab.api.schemas.journal import (
+    AttributionOut,
+    CleanText,
+    Cs04Out,
+    DeltaBandOut,
+    EntryOut,
+    HoldingOut,
+    MarkOut,
+    TotalsOut,
+)
+from vollab.api.schemas.portfolio import LimitsResponse
 
 StructureName = Literal["short_straddle", "short_strangle", "covered_call", "long_straddle", "long_strangle"]
 PriceBRL = Annotated[Decimal, Field(gt=0, le=Decimal("1000000"), max_digits=18, decimal_places=6)]
@@ -95,6 +106,25 @@ class ExecutedStock(BaseModel):
     brokerage_brl: CostBRL = Decimal(0)
 
 
+class RollLeg(BaseModel):
+    """Fechamento de uma perna da posição de origem na rolagem (RN-GES-04)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    instrument: str = Field(pattern=r"^[A-Z0-9]{4,12}$")
+    quantity: int = Field(ge=-10_000_000, le=10_000_000, description="Com sinal: reduz a perna até zero.")
+    price_brl: Annotated[Decimal, Field(ge=0, le=Decimal("1000000"), max_digits=18, decimal_places=6)]
+    fees_brl: CostBRL = Decimal(0)
+    brokerage_brl: CostBRL = Decimal(0)
+
+
+class RollFrom(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    position_id: int = Field(ge=1)
+    legs: list[RollLeg] = Field(min_length=1, max_length=4)
+
+
 class PositionCreate(SizingRequest):
     """Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,
     simulação e dimensionamento; o cliente não impõe números calculados (PRD §7)."""
@@ -103,13 +133,16 @@ class PositionCreate(SizingRequest):
     executed_legs: list[ExecutedLeg] = Field(min_length=1, max_length=2)
     stock: ExecutedStock | None = None
     executed_at: AwareDatetime
-    note: str | None = Field(default=None, max_length=2000)
-    override_reason: str | None = Field(
+    note: CleanText | None = Field(default=None, max_length=2000)
+    override_reason: CleanText | None = Field(
         default=None,
         min_length=10,
         max_length=2000,
-        description='Obrigatório fora de "edge líquido" na direção da estrutura ou acima do tamanho '
-        "sugerido.",
+        description='Obrigatório fora de "edge líquido" na direção da estrutura, acima do tamanho '
+        "sugerido ou com limite da carteira ultrapassado (pró-forma).",
+    )
+    roll_from: RollFrom | None = Field(
+        default=None, description="Rolagem: fecha as pernas da posição de origem na mesma transação."
     )
 
 
@@ -318,11 +351,13 @@ class SizingOut(BaseModel):
     margin_total_brl: str | None
     margin_share_of_capital: float | None
     margin_origin: Literal["manual"] = "manual"
+    stress_notes: list[str] = Field(description="Cenários de crise indisponíveis (o teto fica sem eles).")
 
 
 class SizingResponse(BaseModel):
     simulation: SimulationResponse
     sizing: SizingOut
+    limits: LimitsResponse = Field(description="Limites da carteira com a nova posição (pró-forma, PR-04).")
 
 
 # --- Operações -------------------------------------------------------------------------------
@@ -340,19 +375,14 @@ class PositionSummary(BaseModel):
     model: str
     config_version_id: int
     overridden: bool
-    status: Literal["open"] = Field(default="open", description="Lançamentos de saída na Etapa 7.")
-
-
-class EntryOut(BaseModel):
-    id: int
-    kind: str
-    instrument: str
-    series_id: int | None
-    quantity: int
-    price_brl: str
-    fees_brl: str
-    brokerage_brl: str
-    executed_at: datetime
+    status: Literal["open", "closed"] = Field(description="Derivado dos lançamentos (PRD 1.10 §5.9).")
+    rolled_from_position_id: int | None
+    pnl_total_brl: str | None = Field(description="Mercado + execução e custos, até a última marcação.")
+    last_mark_date: date | None
+    cs04_ratio: float | None
+    error_days: int
+    pending_expiry: list[str] = Field(description="Pernas vencidas ainda em aberto (LC-08).")
+    ledger_error: str | None = Field(description="Livro de lançamentos inconsistente (RS-06), com o motivo.")
 
 
 class ManualInputOut(BaseModel):
@@ -370,3 +400,9 @@ class PositionOut(PositionSummary):
     entries: list[EntryOut]
     manual_inputs: list[ManualInputOut]
     decision_snapshot: dict[str, Any]
+    holdings: list[HoldingOut]
+    marks: list[MarkOut]
+    attribution: list[AttributionOut]
+    totals: TotalsOut | None
+    cs04: Cs04Out
+    delta_band: DeltaBandOut

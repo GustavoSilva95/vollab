@@ -74,6 +74,16 @@ export function formatVolPoints(premium: Maybe<number>, decimals = 1): string {
   return `${numberFormat(fixed(decimals)).format(premium * 100)} pts`;
 }
 
+/** Teto de sanidade para choque de vol de crise em decimal: 2 = 200 pontos (QA-12). */
+export const MAX_DECIMAL_VOL_SHOCK = 2;
+
+/** Choque de vol em decimal, com sinal → `+15,9 pts` (cenários de stress e de crise, QA-12). */
+export function formatVolShock(shock: Maybe<number>, decimals = 1): string {
+  if (shock == null) return EMPTY;
+  assertDecimalScale(shock, MAX_DECIMAL_VOL_SHOCK, 'formatVolShock');
+  return `${numberFormat({ ...fixed(decimals), signDisplay: 'exceptZero' }).format(shock * 100)} pts`;
+}
+
 /** Taxa decimal anual, capitalização exponencial, base 252 → `13,65% a.a.`. */
 export function formatRate(rate: Maybe<number>, decimals = 2): string {
   if (rate == null) return EMPTY;
@@ -293,6 +303,14 @@ export function parseMoneyInput(raw: string): string | null {
   if (!MONEY_INPUT.test(text)) return null;
   const normalized = text.replace(',', '.');
   return /^0+(\.0+)?$/.test(normalized) ? null : normalized;
+}
+
+/** Como `parseMoneyInput`, mas aceita zero ("0" → "0"): saída de opção que venceu sem valor. */
+export function parseMoneyOrZeroInput(raw: string): string | null {
+  const text = raw.replace(/^\s*R\$\s*/, '').trim();
+  if (!MONEY_INPUT.test(text)) return null;
+  const normalized = text.replace(',', '.');
+  return /^0+(\.0+)?$/.test(normalized) ? '0' : normalized;
 }
 
 /** Decimal da API ("1.80") → texto de formulário ("1,80"). */

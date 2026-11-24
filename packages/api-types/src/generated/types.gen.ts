@@ -5,6 +5,62 @@ export type ClientOptions = {
 };
 
 /**
+ * AttributionOut
+ */
+export type AttributionOut = {
+    /**
+     * Delta Brl
+     */
+    delta_brl: string;
+    /**
+     * Error Flag
+     *
+     * Possível erro de lançamento (RS-06).
+     */
+    error_flag: boolean;
+    /**
+     * Execution Brl
+     *
+     * Execução e custos, fora do resíduo.
+     */
+    execution_brl: string;
+    /**
+     * Gamma Brl
+     */
+    gamma_brl: string;
+    /**
+     * Market Brl
+     */
+    market_brl: string;
+    /**
+     * Residual Brl
+     *
+     * Sempre exibido (RF-DIA-04).
+     */
+    residual_brl: string;
+    /**
+     * Stale
+     */
+    stale: boolean;
+    /**
+     * Theta Brl
+     */
+    theta_brl: string;
+    /**
+     * Total Brl
+     */
+    total_brl: string;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+    /**
+     * Vega Brl
+     */
+    vega_brl: string;
+};
+
+/**
  * ChainResponse
  */
 export type ChainResponse = {
@@ -325,6 +381,8 @@ export type ConfigParamsInput = {
     costs?: CostParams;
     edge?: EdgeParams;
     forecast?: ForecastParams;
+    journal?: JournalParams;
+    risk?: RiskParams;
     simulation?: SimulationParams;
     sizing?: SizingParams;
     vol?: VolParams;
@@ -340,6 +398,8 @@ export type ConfigParamsOutput = {
     costs?: CostParams;
     edge?: EdgeParams;
     forecast?: ForecastParams;
+    journal?: JournalParams;
+    risk?: RiskParams;
     simulation?: SimulationParams;
     sizing?: SizingParams;
     vol?: VolParams;
@@ -719,6 +779,234 @@ export type CostsOut = {
 };
 
 /**
+ * CrisisEpisode
+ */
+export type CrisisEpisode = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Start
+     */
+    start: string;
+};
+
+/**
+ * CrisisEpisodeOut
+ */
+export type CrisisEpisodeOut = {
+    /**
+     * End
+     */
+    end: string;
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Start
+     */
+    start: string;
+};
+
+/**
+ * CrisisMeasureOut
+ */
+export type CrisisMeasureOut = {
+    /**
+     * Job Id
+     */
+    job_id: number | null;
+    /**
+     * Queued
+     *
+     * False: já havia uma medição igual ou mais ampla na fila.
+     */
+    queued: boolean;
+};
+
+/**
+ * CrisisOut
+ */
+export type CrisisOut = {
+    /**
+     * Dividends Checked
+     */
+    dividends_checked?: boolean | null;
+    /**
+     * Episode
+     */
+    episode: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Measured At
+     */
+    measured_at?: string | null;
+    /**
+     * Origin
+     */
+    origin: 'approximate' | 'manual';
+    /**
+     * Price Shock
+     */
+    price_shock: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'unavailable';
+    /**
+     * Ticker
+     */
+    ticker: string;
+    /**
+     * Vol After
+     */
+    vol_after?: number | null;
+    /**
+     * Vol Before
+     */
+    vol_before?: number | null;
+    /**
+     * Vol Method
+     */
+    vol_method?: 'atm_iv' | 'rv20' | null;
+    /**
+     * Vol Shock
+     */
+    vol_shock: number | null;
+    /**
+     * Window End
+     */
+    window_end?: string | null;
+    /**
+     * Window Start
+     */
+    window_start?: string | null;
+    /**
+     * Worst Day
+     */
+    worst_day?: string | null;
+    /**
+     * Worst Day Return
+     */
+    worst_day_return?: number | null;
+};
+
+/**
+ * CrisisOverride
+ *
+ * Choque manual de um ativo num episódio (substitui o medido; origem `manual`).
+ */
+export type CrisisOverride = {
+    /**
+     * Price Shock
+     *
+     * Retorno simples (−0,25 = queda de 25%).
+     */
+    price_shock: number;
+    /**
+     * Vol Shock
+     *
+     * Pontos de vol em decimal (0,15 = +15 pontos).
+     */
+    vol_shock: number;
+};
+
+/**
+ * CrisisResponse
+ */
+export type CrisisResponse = {
+    /**
+     * Episodes
+     */
+    episodes: Array<CrisisEpisodeOut>;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Job
+     *
+     * Medição em andamento, se houver.
+     */
+    job: 'queued' | 'running' | null;
+    /**
+     * Values
+     */
+    values: Array<CrisisOut>;
+};
+
+/**
+ * Cs04Out
+ */
+export type Cs04Out = {
+    /**
+     * Error Days
+     */
+    error_days: number;
+    /**
+     * Ok
+     */
+    ok: boolean | null;
+    /**
+     * Ratio
+     *
+     * Σ|resíduo| ÷ Σ(|delta|+|gamma|+|theta|+|vega|) na vida.
+     */
+    ratio: number | null;
+    /**
+     * Target
+     */
+    target: number;
+};
+
+/**
+ * DeltaBandOut
+ */
+export type DeltaBandOut = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    /**
+     * Calibrated
+     */
+    calibrated: boolean;
+    /**
+     * Delta Shares
+     */
+    delta_shares: number | null;
+    /**
+     * Half Width Shares
+     */
+    half_width_shares: number;
+    /**
+     * State
+     */
+    state: 'inside' | 'outside' | 'unavailable';
+};
+
+/**
  * DistributionOut
  */
 export type DistributionOut = {
@@ -862,6 +1150,64 @@ export type EdgeParams = {
 };
 
 /**
+ * EntryCreate
+ *
+ * Lançamento (RF-DIA-02/03). Estorno (`void`): só `linked_entry_id`, `void_reason` e a data.
+ */
+export type EntryCreate = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl?: number | string;
+    /**
+     * Executed At
+     */
+    executed_at: string;
+    /**
+     * Fees Brl
+     */
+    fees_brl?: number | string;
+    /**
+     * Instrument
+     */
+    instrument?: string | null;
+    /**
+     * Kind
+     */
+    kind: 'hedge' | 'strike_adjustment' | 'exercise' | 'assignment' | 'exit' | 'void';
+    /**
+     * Linked Entry Id
+     *
+     * Lançamento estornado (`void`).
+     */
+    linked_entry_id?: number | null;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Price Brl
+     *
+     * Preço executado; no exercício e na designação, o strike efetivo.
+     */
+    price_brl?: number | string | null;
+    /**
+     * Quantity
+     *
+     * Com sinal (+ compra, − venda). Exercício/designação: variação da perna de opção. Ajuste de strike: quantidade da perna depois do ajuste.
+     */
+    quantity?: number | null;
+    /**
+     * Strike After Brl
+     */
+    strike_after_brl?: number | string | null;
+    /**
+     * Void Reason
+     */
+    void_reason?: string | null;
+};
+
+/**
  * EntryOut
  */
 export type EntryOut = {
@@ -888,7 +1234,15 @@ export type EntryOut = {
     /**
      * Kind
      */
-    kind: string;
+    kind: 'entry' | 'hedge' | 'strike_adjustment' | 'exercise' | 'assignment' | 'exit' | 'roll' | 'void';
+    /**
+     * Linked Entry Id
+     */
+    linked_entry_id: number | null;
+    /**
+     * Note
+     */
+    note: string | null;
     /**
      * Price Brl
      */
@@ -901,6 +1255,20 @@ export type EntryOut = {
      * Series Id
      */
     series_id: number | null;
+    /**
+     * Strike After Brl
+     */
+    strike_after_brl: string | null;
+    /**
+     * Void Reason
+     */
+    void_reason: string | null;
+    /**
+     * Voided By
+     *
+     * Estorno que anulou este lançamento.
+     */
+    voided_by: number | null;
 };
 
 /**
@@ -1379,6 +1747,52 @@ export type ExecutedStock = {
 };
 
 /**
+ * ExposureOut
+ */
+export type ExposureOut = {
+    /**
+     * Delta Brl
+     */
+    delta_brl: number;
+    /**
+     * Delta Shares
+     */
+    delta_shares: number;
+    /**
+     * Expiry
+     */
+    expiry?: string | null;
+    /**
+     * Gamma
+     *
+     * Variação do delta (ações) por R$ 1 no ativo.
+     */
+    gamma: number;
+    /**
+     * Gamma 1Pct Brl
+     *
+     * P&L de um movimento de 1% no ativo: ½·Γ·(0,01·S)².
+     */
+    gamma_1pct_brl: number;
+    /**
+     * Market Value Brl
+     */
+    market_value_brl: number;
+    /**
+     * Theta Per Bd Brl
+     */
+    theta_per_bd_brl: number;
+    /**
+     * Ticker
+     */
+    ticker?: string | null;
+    /**
+     * Vega Per Point Brl
+     */
+    vega_per_point_brl: number;
+};
+
+/**
  * ForecastOut
  */
 export type ForecastOut = {
@@ -1648,6 +2062,24 @@ export type HealthResponse = {
 };
 
 /**
+ * HoldingOut
+ */
+export type HoldingOut = {
+    /**
+     * Instrument
+     */
+    instrument: string;
+    /**
+     * Quantity
+     */
+    quantity: number;
+    /**
+     * Series Id
+     */
+    series_id: number | null;
+};
+
+/**
  * ImpliedParams
  */
 export type ImpliedParams = {
@@ -1810,6 +2242,26 @@ export type IvQuality = {
 };
 
 /**
+ * JournalParams
+ *
+ * Bloco `journal` (PRD 1.10 §5.9; CS-04, RS-06).
+ */
+export type JournalParams = {
+    /**
+     * Residual Max Ratio
+     *
+     * Meta do CS-04: Σ|resíduo| ÷ Σ|Greeks| por operação.
+     */
+    residual_max_ratio?: number;
+    /**
+     * Residual Min Brl
+     *
+     * Resíduo mínimo em R$ para o sinal de erro (não calibrado).
+     */
+    residual_min_brl?: number;
+};
+
+/**
  * LegInput
  */
 export type LegInput = {
@@ -1904,6 +2356,102 @@ export type LegOut = {
      * Vega Per Point
      */
     vega_per_point: number;
+};
+
+/**
+ * LimitOut
+ */
+export type LimitOut = {
+    /**
+     * Calibrated
+     */
+    calibrated?: boolean;
+    /**
+     * Limit
+     */
+    limit: number;
+    /**
+     * Name
+     */
+    name: 'stress_loss' | 'vega_total' | 'underlying_concentration' | 'expiry_concentration';
+    /**
+     * Reason
+     */
+    reason?: string | null;
+    /**
+     * Scope
+     */
+    scope: string | null;
+    /**
+     * State
+     */
+    state: 'ok' | 'breached' | 'unavailable';
+    /**
+     * Usage
+     *
+     * value ÷ limite (1,0 = no limite).
+     */
+    usage: number | null;
+    /**
+     * Value
+     */
+    value: number | null;
+};
+
+/**
+ * LimitsParams
+ */
+export type LimitsParams = {
+    /**
+     * Max Abs Vega Fraction
+     *
+     * |vega por ponto| da carteira ÷ capital.
+     */
+    max_abs_vega_fraction?: number;
+    /**
+     * Max Expiry Share
+     *
+     * Perda em stress de um vencimento ÷ orçamento de perda.
+     */
+    max_expiry_share?: number;
+    /**
+     * Max Stress Loss Fraction
+     *
+     * Pior perda ÷ capital.
+     */
+    max_stress_loss_fraction?: number;
+    /**
+     * Max Underlying Share
+     *
+     * Perda em stress de um ativo ÷ orçamento de perda.
+     */
+    max_underlying_share?: number;
+};
+
+/**
+ * LimitsResponse
+ */
+export type LimitsResponse = {
+    /**
+     * Breached
+     */
+    breached: boolean;
+    /**
+     * Capital Brl
+     */
+    capital_brl: string | null;
+    /**
+     * Limits
+     */
+    limits: Array<LimitOut>;
+    /**
+     * Scenarios
+     */
+    scenarios: Array<ScenarioOut>;
+    /**
+     * Warnings
+     */
+    warnings: Array<string>;
 };
 
 /**
@@ -2022,6 +2570,98 @@ export type ManualInputOut = {
      * Value Brl
      */
     value_brl: string;
+};
+
+/**
+ * MarkLegOut
+ */
+export type MarkLegOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Delta
+     */
+    delta: number;
+    /**
+     * Gamma
+     */
+    gamma: number;
+    /**
+     * Iv
+     */
+    iv: number | null;
+    /**
+     * Origin
+     */
+    origin: 'observed' | 'approximate' | 'stale' | 'expired';
+    /**
+     * Price Brl
+     */
+    price_brl: string;
+    /**
+     * Quantity
+     */
+    quantity: number;
+    /**
+     * Theta Per Bd
+     */
+    theta_per_bd: number;
+    /**
+     * Vega Per Point
+     */
+    vega_per_point: number;
+};
+
+/**
+ * MarkOut
+ */
+export type MarkOut = {
+    /**
+     * Delta Shares
+     */
+    delta_shares: number;
+    /**
+     * Gamma
+     */
+    gamma: number;
+    /**
+     * Legs
+     */
+    legs: Array<MarkLegOut>;
+    /**
+     * Options Value Brl
+     */
+    options_value_brl: string;
+    /**
+     * Spot Brl
+     */
+    spot_brl: string;
+    /**
+     * Stale
+     */
+    stale: boolean;
+    /**
+     * Stock Qty
+     */
+    stock_qty: number;
+    /**
+     * Stock Value Brl
+     */
+    stock_value_brl: string;
+    /**
+     * Theta Per Bd Brl
+     */
+    theta_per_bd_brl: number;
+    /**
+     * Trade Date
+     */
+    trade_date: string;
+    /**
+     * Vega Per Point Brl
+     */
+    vega_per_point_brl: number;
 };
 
 /**
@@ -2165,6 +2805,69 @@ export type PercentileOut = {
 };
 
 /**
+ * PnlByExpiry
+ */
+export type PnlByExpiry = {
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Pnl Brl
+     */
+    pnl_brl: string;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * PnlByTicker
+ */
+export type PnlByTicker = {
+    /**
+     * Pnl Brl
+     */
+    pnl_brl: string;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * PortfolioResponse
+ */
+export type PortfolioResponse = {
+    /**
+     * By Expiry
+     */
+    by_expiry: Array<ExposureOut>;
+    /**
+     * By Ticker
+     */
+    by_ticker: Array<ExposureOut>;
+    /**
+     * Mark Dates
+     *
+     * Última marcação usada por ativo.
+     */
+    mark_dates: {
+        [key: string]: string;
+    };
+    /**
+     * Positions Open
+     */
+    positions_open: number;
+    total: ExposureOut | null;
+    /**
+     * Warnings
+     */
+    warnings: Array<string>;
+};
+
+/**
  * PositionCreate
  *
  * Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,
@@ -2228,9 +2931,13 @@ export type PositionCreate = {
     /**
      * Override Reason
      *
-     * Obrigatório fora de "edge líquido" na direção da estrutura ou acima do tamanho sugerido.
+     * Obrigatório fora de "edge líquido" na direção da estrutura, acima do tamanho sugerido ou com limite da carteira ultrapassado (pró-forma).
      */
     override_reason?: string | null;
+    /**
+     * Rolagem: fecha as pernas da posição de origem na mesma transação.
+     */
+    roll_from?: RollFrom | null;
     stock?: ExecutedStock | null;
     /**
      * Structure
@@ -2251,6 +2958,10 @@ export type PositionOut = {
      */
     as_of: string;
     /**
+     * Attribution
+     */
+    attribution: Array<AttributionOut>;
+    /**
      * Config Version Id
      */
     config_version_id: number;
@@ -2258,12 +2969,18 @@ export type PositionOut = {
      * Created At
      */
     created_at: string;
+    cs04: Cs04Out;
+    /**
+     * Cs04 Ratio
+     */
+    cs04_ratio: number | null;
     /**
      * Decision Snapshot
      */
     decision_snapshot: {
         [key: string]: unknown;
     };
+    delta_band: DeltaBandOut;
     /**
      * Direction
      */
@@ -2281,13 +2998,31 @@ export type PositionOut = {
      */
     entries: Array<EntryOut>;
     /**
+     * Error Days
+     */
+    error_days: number;
+    /**
      * Expiry
      */
     expiry: string;
     /**
+     * Holdings
+     */
+    holdings: Array<HoldingOut>;
+    /**
      * Id
      */
     id: number;
+    /**
+     * Last Mark Date
+     */
+    last_mark_date: string | null;
+    /**
+     * Ledger Error
+     *
+     * Livro de lançamentos inconsistente (RS-06), com o motivo.
+     */
+    ledger_error: string | null;
     /**
      * Lots
      */
@@ -2296,6 +3031,10 @@ export type PositionOut = {
      * Manual Inputs
      */
     manual_inputs: Array<ManualInputOut>;
+    /**
+     * Marks
+     */
+    marks: Array<MarkOut>;
     /**
      * Model
      */
@@ -2313,11 +3052,27 @@ export type PositionOut = {
      */
     override_reason: string | null;
     /**
+     * Pending Expiry
+     *
+     * Pernas vencidas ainda em aberto (LC-08).
+     */
+    pending_expiry: Array<string>;
+    /**
+     * Pnl Total Brl
+     *
+     * Mercado + execução e custos, até a última marcação.
+     */
+    pnl_total_brl: string | null;
+    /**
+     * Rolled From Position Id
+     */
+    rolled_from_position_id: number | null;
+    /**
      * Status
      *
-     * Lançamentos de saída na Etapa 7.
+     * Derivado dos lançamentos (PRD 1.10 §5.9).
      */
-    status?: 'open';
+    status: 'open' | 'closed';
     /**
      * Structure
      */
@@ -2326,6 +3081,7 @@ export type PositionOut = {
      * Ticker
      */
     ticker: string;
+    totals: TotalsOut | null;
 };
 
 /**
@@ -2341,6 +3097,10 @@ export type PositionSummary = {
      */
     created_at: string;
     /**
+     * Cs04 Ratio
+     */
+    cs04_ratio: number | null;
+    /**
      * Direction
      */
     direction: 'sell' | 'buy';
@@ -2349,6 +3109,10 @@ export type PositionSummary = {
      */
     edge_state: 'edge' | 'inconclusive' | 'no_edge';
     /**
+     * Error Days
+     */
+    error_days: number;
+    /**
      * Expiry
      */
     expiry: string;
@@ -2356,6 +3120,16 @@ export type PositionSummary = {
      * Id
      */
     id: number;
+    /**
+     * Last Mark Date
+     */
+    last_mark_date: string | null;
+    /**
+     * Ledger Error
+     *
+     * Livro de lançamentos inconsistente (RS-06), com o motivo.
+     */
+    ledger_error: string | null;
     /**
      * Lots
      */
@@ -2369,11 +3143,27 @@ export type PositionSummary = {
      */
     overridden: boolean;
     /**
+     * Pending Expiry
+     *
+     * Pernas vencidas ainda em aberto (LC-08).
+     */
+    pending_expiry: Array<string>;
+    /**
+     * Pnl Total Brl
+     *
+     * Mercado + execução e custos, até a última marcação.
+     */
+    pnl_total_brl: string | null;
+    /**
+     * Rolled From Position Id
+     */
+    rolled_from_position_id: number | null;
+    /**
      * Status
      *
-     * Lançamentos de saída na Etapa 7.
+     * Derivado dos lançamentos (PRD 1.10 §5.9).
      */
-    status?: 'open';
+    status: 'open' | 'closed';
     /**
      * Structure
      */
@@ -2792,6 +3582,91 @@ export type RealizedVolResponse = {
 };
 
 /**
+ * RiskParams
+ *
+ * Bloco `risk` (PRD 1.10 §5.9; RF-RSK-03/04, QA-12). Limites "não calibrados".
+ */
+export type RiskParams = {
+    /**
+     * Crisis Episodes
+     */
+    crisis_episodes?: Array<CrisisEpisode>;
+    /**
+     * Crisis Horizon Bd
+     *
+     * Pregões da pior janela do episódio.
+     */
+    crisis_horizon_bd?: number;
+    /**
+     * Crisis Overrides
+     *
+     * Por ativo e episódio: {'PETR4': {'mar2020': {...}}}.
+     */
+    crisis_overrides?: {
+        [key: string]: {
+            [key: string]: CrisisOverride;
+        };
+    };
+    limits?: LimitsParams;
+    /**
+     * Stress Gap
+     *
+     * Gap do ativo nos stresses simples (±).
+     */
+    stress_gap?: number;
+    /**
+     * Stress Vol Pts
+     *
+     * Choque de vol (decimal).
+     */
+    stress_vol_pts?: number;
+};
+
+/**
+ * RollFrom
+ */
+export type RollFrom = {
+    /**
+     * Legs
+     */
+    legs: Array<RollLeg>;
+    /**
+     * Position Id
+     */
+    position_id: number;
+};
+
+/**
+ * RollLeg
+ *
+ * Fechamento de uma perna da posição de origem na rolagem (RN-GES-04).
+ */
+export type RollLeg = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl?: number | string;
+    /**
+     * Fees Brl
+     */
+    fees_brl?: number | string;
+    /**
+     * Instrument
+     */
+    instrument: string;
+    /**
+     * Price Brl
+     */
+    price_brl: number | string;
+    /**
+     * Quantity
+     *
+     * Com sinal: reduz a perna até zero.
+     */
+    quantity: number;
+};
+
+/**
  * RunSummary
  */
 export type RunSummary = {
@@ -2835,6 +3710,56 @@ export type RunSummary = {
      * Status
      */
     status: 'queued' | 'running' | 'succeeded' | 'partial' | 'interrupted' | 'failed';
+};
+
+/**
+ * ScenarioOut
+ */
+export type ScenarioOut = {
+    /**
+     * By Expiry
+     */
+    by_expiry: Array<PnlByExpiry>;
+    /**
+     * By Ticker
+     */
+    by_ticker: Array<PnlByTicker>;
+    /**
+     * Kind
+     */
+    kind: 'standard' | 'crisis' | 'custom';
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Loss Brl
+     */
+    loss_brl: string;
+    /**
+     * Missing Tickers
+     *
+     * Ativos sem choque neste cenário (crise indisponível).
+     */
+    missing_tickers: Array<string>;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Origin
+     */
+    origin: 'estimated' | 'approximate' | 'manual';
+    /**
+     * Pnl Brl
+     */
+    pnl_brl: string;
+    /**
+     * Shocks
+     *
+     * Choque aplicado a cada ativo.
+     */
+    shocks: Array<ShockOut>;
 };
 
 /**
@@ -2919,6 +3844,28 @@ export type SeriesResponse = {
      * Ticker
      */
     ticker: string;
+};
+
+/**
+ * ShockOut
+ */
+export type ShockOut = {
+    /**
+     * Spot Shock
+     *
+     * Relativo (−0,10 = queda de 10%).
+     */
+    spot_shock: number;
+    /**
+     * Ticker
+     */
+    ticker: string;
+    /**
+     * Vol Shock
+     *
+     * Pontos de vol em decimal.
+     */
+    vol_shock: number;
 };
 
 /**
@@ -3234,6 +4181,12 @@ export type SizingOut = {
      */
     stress: Array<StressOut>;
     /**
+     * Stress Notes
+     *
+     * Cenários de crise indisponíveis (o teto fica sem eles).
+     */
+    stress_notes: Array<string>;
+    /**
      * Variance Brl2
      */
     variance_brl2: number | null;
@@ -3278,13 +4231,13 @@ export type SizingParams = {
     /**
      * Stress Gap
      *
-     * Gap do ativo no stress (±).
+     * Obsoleto desde a Etapa 7: o teto usa `risk.stress_gap`.
      */
     stress_gap?: number;
     /**
      * Stress Vol Pts
      *
-     * Choque de vol no stress (decimal).
+     * Obsoleto desde a Etapa 7: o teto usa `risk.stress_vol_pts`.
      */
     stress_vol_pts?: number;
 };
@@ -3343,6 +4296,10 @@ export type SizingRequest = {
  * SizingResponse
  */
 export type SizingResponse = {
+    /**
+     * Limites da carteira com a nova posição (pró-forma, PR-04).
+     */
+    limits: LimitsResponse;
     simulation: SimulationResponse;
     sizing: SizingOut;
 };
@@ -3526,6 +4483,24 @@ export type StressOut = {
 };
 
 /**
+ * StressRequest
+ */
+export type StressRequest = {
+    /**
+     * Spot Shock
+     *
+     * Relativo (−0,10 = queda de 10%).
+     */
+    spot_shock: number;
+    /**
+     * Vol Shock
+     *
+     * Pontos de vol em decimal (0,10 = +10 pontos).
+     */
+    vol_shock: number;
+};
+
+/**
  * TermPointOut
  */
 export type TermPointOut = {
@@ -3586,6 +4561,44 @@ export type TermStructureResponse = {
      * Ticker
      */
     ticker: string;
+};
+
+/**
+ * TotalsOut
+ */
+export type TotalsOut = {
+    /**
+     * Delta Brl
+     */
+    delta_brl: string;
+    /**
+     * Execution Brl
+     */
+    execution_brl: string;
+    /**
+     * Gamma Brl
+     */
+    gamma_brl: string;
+    /**
+     * Market Brl
+     */
+    market_brl: string;
+    /**
+     * Residual Brl
+     */
+    residual_brl: string;
+    /**
+     * Theta Brl
+     */
+    theta_brl: string;
+    /**
+     * Total Brl
+     */
+    total_brl: string;
+    /**
+     * Vega Brl
+     */
+    vega_brl: string;
 };
 
 /**
@@ -4268,10 +5281,92 @@ export type PutModelSelectionResponses = {
 
 export type PutModelSelectionResponse = PutModelSelectionResponses[keyof PutModelSelectionResponses];
 
-export type ListPositionsData = {
+export type GetPortfolioData = {
     body?: never;
     path?: never;
     query?: never;
+    url: '/portfolio';
+};
+
+export type GetPortfolioErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetPortfolioError = GetPortfolioErrors[keyof GetPortfolioErrors];
+
+export type GetPortfolioResponses = {
+    /**
+     * Successful Response
+     */
+    200: PortfolioResponse;
+};
+
+export type GetPortfolioResponse = GetPortfolioResponses[keyof GetPortfolioResponses];
+
+export type GetLimitsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/portfolio/limits';
+};
+
+export type GetLimitsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetLimitsError = GetLimitsErrors[keyof GetLimitsErrors];
+
+export type GetLimitsResponses = {
+    /**
+     * Successful Response
+     */
+    200: LimitsResponse;
+};
+
+export type GetLimitsResponse = GetLimitsResponses[keyof GetLimitsResponses];
+
+export type PostStressData = {
+    body: StressRequest;
+    path?: never;
+    query?: never;
+    url: '/portfolio/stress';
+};
+
+export type PostStressErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostStressError = PostStressErrors[keyof PostStressErrors];
+
+export type PostStressResponses = {
+    /**
+     * Successful Response
+     */
+    200: ScenarioOut;
+};
+
+export type PostStressResponse = PostStressResponses[keyof PostStressResponses];
+
+export type ListPositionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         *
+         * Filtra pelo status derivado.
+         */
+        status?: 'open' | 'closed' | null;
+    };
     url: '/positions';
 };
 
@@ -4366,6 +5461,44 @@ export type GetPositionResponses = {
 
 export type GetPositionResponse = GetPositionResponses[keyof GetPositionResponses];
 
+export type PostEntryData = {
+    body: EntryCreate;
+    path: {
+        /**
+         * Position Id
+         */
+        position_id: number;
+    };
+    query?: never;
+    url: '/positions/{position_id}/entries';
+};
+
+export type PostEntryErrors = {
+    /**
+     * Operação inexistente.
+     */
+    404: ProblemDetails;
+    /**
+     * Lançamento inconsistente (RS-06), com o motivo.
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostEntryError = PostEntryErrors[keyof PostEntryErrors];
+
+export type PostEntryResponses = {
+    /**
+     * Successful Response
+     */
+    201: PositionOut;
+};
+
+export type PostEntryResponse = PostEntryResponses[keyof PostEntryResponses];
+
 export type GetRankingData = {
     body?: never;
     path?: never;
@@ -4397,6 +5530,56 @@ export type GetRankingResponses = {
 };
 
 export type GetRankingResponse = GetRankingResponses[keyof GetRankingResponses];
+
+export type GetCrisisData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/risk/crisis';
+};
+
+export type GetCrisisErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetCrisisError = GetCrisisErrors[keyof GetCrisisErrors];
+
+export type GetCrisisResponses = {
+    /**
+     * Successful Response
+     */
+    200: CrisisResponse;
+};
+
+export type GetCrisisResponse = GetCrisisResponses[keyof GetCrisisResponses];
+
+export type PostCrisisMeasureData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/risk/crisis/measure';
+};
+
+export type PostCrisisMeasureErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostCrisisMeasureError = PostCrisisMeasureErrors[keyof PostCrisisMeasureErrors];
+
+export type PostCrisisMeasureResponses = {
+    /**
+     * Successful Response
+     */
+    202: CrisisMeasureOut;
+};
+
+export type PostCrisisMeasureResponse = PostCrisisMeasureResponses[keyof PostCrisisMeasureResponses];
 
 export type PostSimulationData = {
     body: SimulationRequest;

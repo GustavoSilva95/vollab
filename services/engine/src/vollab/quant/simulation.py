@@ -134,6 +134,8 @@ class HedgeRule:
     cost_rate: float  # λ do ativo-objeto: meio spread + taxa (decimal)
 
 
+# Piso da IV nos choques (um choque de crise negativo não leva a IV a zero; PRD 1.10 §5.9).
+STRESS_IV_FLOOR = 0.01
 PATH_BLOCK = 5_000  # caminhos por bloco: pico de memória ~10 MB por 100 pregões
 
 
@@ -411,7 +413,7 @@ def stress_losses(
                     leg.strike,
                     t,
                     market.rate_c,
-                    leg.iv + sc.vol_shock,
+                    max(leg.iv + sc.vol_shock, STRESS_IV_FLOOR),
                     leg.is_call,
                     market.pv_dividends(0),
                 )

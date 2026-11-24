@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +12,7 @@ import { MODEL_LABEL } from '@/lib/forecast/labels';
 import { entrySchema, overrideReasons, toPositionCreate, type EntryValues } from '@/lib/simulator/form';
 import { RULE_LABEL, STRUCTURE_LABEL } from '@/lib/simulator/labels';
 import styles from '../vol/vol.module.css';
-import { problemMessage } from './SimulatorView';
+import { problemMessage } from '@/lib/api/problem';
 
 /**
  * Registro da entrada (RF-DIA-01, RN-EDG-06, CS-01): envia só os insumos e o executado; o engine
@@ -34,7 +35,7 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
     },
   });
   const lots = Number(useWatch({ control: form.control, name: 'lots' })) || 0;
-  const reasons = overrideReasons(sim, sizing, lots);
+  const reasons = overrideReasons(sim, sizing, lots, result.limits);
   const save = useMutation({
     ...postPositionMutation(),
     onSuccess: () =>
@@ -177,7 +178,11 @@ function Registered({ position }: { position: PositionOut }) {
         </dd>
       </dl>
       <p className={`${styles.muted} ${styles.small}`}>
-        O retrato é imutável. Lançamentos de hedge, marcação e atribuição chegam na Etapa 7 (Diário).
+        O retrato é imutável.{' '}
+        <Link className={styles.link} href={`/app/operacoes/${position.id}`} data-testid="sim-open-position">
+          Abrir a operação no diário
+        </Link>{' '}
+        para lançar hedge, ajustes e saídas e acompanhar a marcação D-1 e a atribuição.
       </p>
     </section>
   );

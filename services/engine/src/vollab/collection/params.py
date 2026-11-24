@@ -61,6 +61,8 @@ def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
         CostParams,
         EdgeParams,
         ForecastParams,
+        JournalParams,
+        RiskParams,
         SimulationParams,
         SizingParams,
         VolParams,
@@ -94,6 +96,15 @@ def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
         "sizing": (
             SizingParams().model_dump(mode="json"),
             "dimensionamento (Kelly 1/4, teto 7%, ES 99%, stress ±10% e +10 pontos, lote de 100)",
+        ),
+        "journal": (
+            JournalParams().model_dump(mode="json"),
+            "diário (CS-04: resíduo < 15%; sinal de erro acima de R$ 50, não calibrado)",
+        ),
+        "risk": (
+            RiskParams().model_dump(mode="json"),
+            "risco (stress ±10% e +10 pontos; crise mai/2017 e mar/2020 em 5 pregões; limites não "
+            "calibrados: stress 20%, vega 1% por ponto, ativo 50% e vencimento 60% do orçamento)",
         ),
     }
 

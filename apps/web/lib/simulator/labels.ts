@@ -32,6 +32,14 @@ export const STRESS_LABEL: Record<string, string> = {
   down_vol_up: 'Queda com alta de vol',
 };
 
+/** Rótulo do cenário de stress; os de crise vêm como `crisis_<episódio>` (QA-12). */
+export function stressLabel(name: string): string {
+  const known = STRESS_LABEL[name];
+  if (known) return known;
+  const m = /^crisis_([a-z]+)(\d{4})$/.exec(name);
+  return m ? `Crise ${m[1]}/${m[2]}` : name;
+}
+
 export const DELTA_BAND_HELP =
   'Hedge por banda de delta (QA-11): fora da banda, ajusta só até a borda, à IV de entrada. Largura configurada, ainda sem calibração por dados.';
 

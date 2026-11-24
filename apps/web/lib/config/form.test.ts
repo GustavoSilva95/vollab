@@ -26,9 +26,41 @@ const params: ConfigParamsOutput = {
     iv_rank_min_days: 60,
     skew_moneyness: [0.95, 1.05],
   },
+  sizing: { capital_brl: null, kelly_fraction: 0.25 } as ConfigParamsOutput['sizing'],
+  risk: {
+    stress_gap: 0.1,
+    stress_vol_pts: 0.1,
+    crisis_horizon_bd: 5,
+    crisis_episodes: [],
+    crisis_overrides: { PETR4: { mar2020: { price_shock: -0.3, vol_shock: 0.5 } } },
+    limits: {
+      max_stress_loss_fraction: 0.2,
+      max_abs_vega_fraction: 0.01,
+      max_underlying_share: 0.5,
+      max_expiry_share: 0.6,
+    },
+  } as ConfigParamsOutput['risk'],
+  journal: { residual_max_ratio: 0.15, residual_min_brl: 50 },
 };
 
 describe('formulário da configuração (PRD 1.8 §8.1)', () => {
+  it('Etapa 7: limites aninhados, stress, diário e capital (vazio = não informado)', () => {
+    const v = toFormValues(params);
+    expect(v.max_stress_loss_fraction).toBe('20');
+    expect(v.max_abs_vega_fraction).toBe('1');
+    expect(v.stress_vol_pts).toBe('10');
+    expect(v.residual_min_brl).toBe('50');
+    expect(v.capital).toBe('');
+    const out = toConfigParams({ ...v, max_expiry_share: '70', capital: '150000,50', note: 'x' }, params);
+    expect(out.risk?.limits?.max_expiry_share).toBe(0.7);
+    expect(out.risk?.limits?.max_stress_loss_fraction).toBe(0.2);
+    expect(out.risk?.crisis_overrides).toEqual(params.risk?.crisis_overrides); // fora do formulário, intacto
+    expect(out.sizing?.capital_brl).toBe(150000.5);
+    expect(toConfigParams({ ...v, capital: '', note: 'x' }, params).sizing?.capital_brl).toBeNull();
+    const bad = configFormSchema.safeParse({ ...v, capital: 'abc', max_underlying_share: '0', note: 'x' });
+    expect(bad.success).toBe(false);
+  });
+
   it('mostra % e pontos de vol na unidade da tela, a partir dos decimais da API', () => {
     const v = toFormValues(params);
     expect(v.option_fee_rate).toBe('0,134');

@@ -10,16 +10,11 @@ import { getChainOptions, listUnderlyingsOptions, postSizingMutation } from '@vo
 import { formatBusinessDays, formatDate, formatMoney, formatNumber, formatVol, nowMarketInput } from '@/lib/format';
 import { needsPut, simulatorSchema, toSizingRequest, type SimulatorValues } from '@/lib/simulator/form';
 import { STRUCTURES, type StructureName } from '@/lib/simulator/labels';
+import { problemMessage } from '@/lib/api/problem';
 import styles from '../vol/vol.module.css';
 import EntryForm from './EntryForm';
 import SimulationResult from './SimulationResult';
 
-export function problemMessage(error: unknown, fallback: string): string {
-  if (error && typeof error === 'object' && 'detail' in error && typeof error.detail === 'string') {
-    return error.detail;
-  }
-  return fallback;
-}
 
 /**
  * Simulador (PRD 1.9 §8.1; RF-SIM-01..05, RN-SIZ-01..06): monta a estrutura com séries reais,
@@ -248,7 +243,7 @@ function SimulatorForm({ ticker, chain }: { ticker: string; chain: ChainResponse
       {run.isError && <p className={styles.error}>{problemMessage(run.error, 'Não foi possível simular.')}</p>}
       {result && request && (
         <div className={styles.grid} style={{ marginTop: 16 }}>
-          <SimulationResult sim={result.simulation} sizing={result.sizing} />
+          <SimulationResult sim={result.simulation} sizing={result.sizing} limits={result.limits} />
           <EntryForm key={JSON.stringify(request)} request={request} result={result} />
         </div>
       )}

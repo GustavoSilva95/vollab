@@ -120,6 +120,10 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Entregáveis:** lançamentos tipados (hedge, ajuste, exercício, designação, saída, rolagem); validações de consistência (RS-06); marcação D-1; atribuição por Greek com resíduo; Greeks agregados; exposição por vencimento; stress (QA-12) e limites.
 **Critérios de saída:** T-REF-08; Playwright, fluxo 3; CS-04 medido.
+*(BRD 1.7 / PRD 1.10, aprovados em 2026-11-24)* Lançamentos com estorno e rolagem ligada a nova entrada com semáforo; marcação D-1 pela IV de referência com fallback rotulado; atribuição com execução e custos à parte; carteira, stress com cenários de crise medidos nos COTAHIST de 2017 e 2020 (QA-12) e no teto do dimensionamento; limites com padrões não calibrados e pró-forma na entrada; telas `/app/diario`, `/app/operacoes/[id]` e `/app/carteira`. O passo "alerta de banda de delta" do fluxo 3 é um indicador nesta etapa (alerta persistente na Etapa 8).
+**Gate de início:** ✅ BRD 1.7 e PRD 1.10 aprovados pelo usuário (2026-11-24).
+**Revisões:** segurança (download e parsing dos COTAHIST anuais de 2017 e 2020, lançamentos manuais como entrada do usuário) e performance (`marks_recompute`, leitura da carteira e do stress).
+**Gate:** implementada em 2026-11-24 (branch `etapa-7-diario-carteira-risco`); T-REF-08 passando; Playwright fluxo 3 passando; CS-04 medido por operação (tela e API); revisão de segurança com o bloqueante B-1 corrigido; revisão de performance sem bloqueantes (I-1..I-3 corrigidos). Falta CI no GitHub e a aprovação do fechamento.
 
 ---
 

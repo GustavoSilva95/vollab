@@ -1,6 +1,73 @@
 {
   "components": {
     "schemas": {
+      "AttributionOut": {
+        "properties": {
+          "delta_brl": {
+            "title": "Delta Brl",
+            "type": "string"
+          },
+          "error_flag": {
+            "description": "Possível erro de lançamento (RS-06).",
+            "title": "Error Flag",
+            "type": "boolean"
+          },
+          "execution_brl": {
+            "description": "Execução e custos, fora do resíduo.",
+            "title": "Execution Brl",
+            "type": "string"
+          },
+          "gamma_brl": {
+            "title": "Gamma Brl",
+            "type": "string"
+          },
+          "market_brl": {
+            "title": "Market Brl",
+            "type": "string"
+          },
+          "residual_brl": {
+            "description": "Sempre exibido (RF-DIA-04).",
+            "title": "Residual Brl",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "theta_brl": {
+            "title": "Theta Brl",
+            "type": "string"
+          },
+          "total_brl": {
+            "title": "Total Brl",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "vega_brl": {
+            "title": "Vega Brl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "delta_brl",
+          "gamma_brl",
+          "theta_brl",
+          "vega_brl",
+          "residual_brl",
+          "market_brl",
+          "execution_brl",
+          "total_brl",
+          "stale",
+          "error_flag"
+        ],
+        "title": "AttributionOut",
+        "type": "object"
+      },
       "ChainResponse": {
         "properties": {
           "as_of": {
@@ -537,6 +604,12 @@
           "forecast": {
             "$ref": "#/components/schemas/ForecastParams"
           },
+          "journal": {
+            "$ref": "#/components/schemas/JournalParams"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskParams"
+          },
           "simulation": {
             "$ref": "#/components/schemas/SimulationParams"
           },
@@ -565,6 +638,12 @@
           },
           "forecast": {
             "$ref": "#/components/schemas/ForecastParams"
+          },
+          "journal": {
+            "$ref": "#/components/schemas/JournalParams"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskParams"
           },
           "simulation": {
             "$ref": "#/components/schemas/SimulationParams"
@@ -1139,6 +1218,448 @@
         "title": "CostsOut",
         "type": "object"
       },
+      "CrisisEpisode": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "key": {
+            "pattern": "^[a-z0-9_]{3,20}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 40,
+            "minLength": 3,
+            "title": "Label",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "start",
+          "end"
+        ],
+        "title": "CrisisEpisode",
+        "type": "object"
+      },
+      "CrisisEpisodeOut": {
+        "properties": {
+          "end": {
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "start",
+          "end"
+        ],
+        "title": "CrisisEpisodeOut",
+        "type": "object"
+      },
+      "CrisisMeasureOut": {
+        "properties": {
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "queued": {
+            "description": "False: já havia uma medição igual ou mais ampla na fila.",
+            "title": "Queued",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "queued",
+          "job_id"
+        ],
+        "title": "CrisisMeasureOut",
+        "type": "object"
+      },
+      "CrisisOut": {
+        "properties": {
+          "dividends_checked": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dividends Checked"
+          },
+          "episode": {
+            "title": "Episode",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "measured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Measured At"
+          },
+          "origin": {
+            "enum": [
+              "approximate",
+              "manual"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "price_shock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Shock"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "vol_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol After"
+          },
+          "vol_before": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Before"
+          },
+          "vol_method": {
+            "anyOf": [
+              {
+                "enum": [
+                  "atm_iv",
+                  "rv20"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Method"
+          },
+          "vol_shock": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vol Shock"
+          },
+          "window_end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window End"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          },
+          "worst_day": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worst Day"
+          },
+          "worst_day_return": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worst Day Return"
+          }
+        },
+        "required": [
+          "ticker",
+          "episode",
+          "label",
+          "status",
+          "origin",
+          "price_shock",
+          "vol_shock",
+          "reason"
+        ],
+        "title": "CrisisOut",
+        "type": "object"
+      },
+      "CrisisOverride": {
+        "additionalProperties": false,
+        "description": "Choque manual de um ativo num episódio (substitui o medido; origem `manual`).",
+        "properties": {
+          "price_shock": {
+            "description": "Retorno simples (−0,25 = queda de 25%).",
+            "maximum": 0.9,
+            "minimum": -0.9,
+            "title": "Price Shock",
+            "type": "number"
+          },
+          "vol_shock": {
+            "description": "Pontos de vol em decimal (0,15 = +15 pontos).",
+            "maximum": 2.0,
+            "minimum": -0.5,
+            "title": "Vol Shock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "price_shock",
+          "vol_shock"
+        ],
+        "title": "CrisisOverride",
+        "type": "object"
+      },
+      "CrisisResponse": {
+        "properties": {
+          "episodes": {
+            "items": {
+              "$ref": "#/components/schemas/CrisisEpisodeOut"
+            },
+            "title": "Episodes",
+            "type": "array"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "job": {
+            "anyOf": [
+              {
+                "enum": [
+                  "queued",
+                  "running"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Medição em andamento, se houver.",
+            "title": "Job"
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/CrisisOut"
+            },
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "episodes",
+          "horizon_bd",
+          "values",
+          "job"
+        ],
+        "title": "CrisisResponse",
+        "type": "object"
+      },
+      "Cs04Out": {
+        "properties": {
+          "error_days": {
+            "title": "Error Days",
+            "type": "integer"
+          },
+          "ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ok"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Σ|resíduo| ÷ Σ(|delta|+|gamma|+|theta|+|vega|) na vida.",
+            "title": "Ratio"
+          },
+          "target": {
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "ratio",
+          "target",
+          "ok",
+          "error_days"
+        ],
+        "title": "Cs04Out",
+        "type": "object"
+      },
+      "DeltaBandOut": {
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "calibrated": {
+            "title": "Calibrated",
+            "type": "boolean"
+          },
+          "delta_shares": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Shares"
+          },
+          "half_width_shares": {
+            "title": "Half Width Shares",
+            "type": "number"
+          },
+          "state": {
+            "enum": [
+              "inside",
+              "outside",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "as_of",
+          "delta_shares",
+          "half_width_shares",
+          "calibrated",
+          "state"
+        ],
+        "title": "DeltaBandOut",
+        "type": "object"
+      },
       "DistributionOut": {
         "properties": {
           "delta_band": {
@@ -1420,6 +1941,160 @@
         "title": "EdgeParams",
         "type": "object"
       },
+      "EntryCreate": {
+        "additionalProperties": false,
+        "description": "Lançamento (RF-DIA-02/03). Estorno (`void`): só `linked_entry_id`, `void_reason` e a data.",
+        "properties": {
+          "brokerage_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Brokerage Brl"
+          },
+          "executed_at": {
+            "format": "date-time",
+            "title": "Executed At",
+            "type": "string"
+          },
+          "fees_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Fees Brl"
+          },
+          "instrument": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9]{4,12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrument"
+          },
+          "kind": {
+            "enum": [
+              "hedge",
+              "strike_adjustment",
+              "exercise",
+              "assignment",
+              "exit",
+              "void"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "linked_entry_id": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lançamento estornado (`void`).",
+            "title": "Linked Entry Id"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "price_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preço executado; no exercício e na designação, o strike efetivo.",
+            "title": "Price Brl"
+          },
+          "quantity": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": -10000000.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Com sinal (+ compra, − venda). Exercício/designação: variação da perna de opção. Ajuste de strike: quantidade da perna depois do ajuste.",
+            "title": "Quantity"
+          },
+          "strike_after_brl": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strike After Brl"
+          },
+          "void_reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 10,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Void Reason"
+          }
+        },
+        "required": [
+          "kind",
+          "executed_at"
+        ],
+        "title": "EntryCreate",
+        "type": "object"
+      },
       "EntryOut": {
         "properties": {
           "brokerage_brl": {
@@ -1444,8 +2119,40 @@
             "type": "string"
           },
           "kind": {
+            "enum": [
+              "entry",
+              "hedge",
+              "strike_adjustment",
+              "exercise",
+              "assignment",
+              "exit",
+              "roll",
+              "void"
+            ],
             "title": "Kind",
             "type": "string"
+          },
+          "linked_entry_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linked Entry Id"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           },
           "price_brl": {
             "title": "Price Brl",
@@ -1465,6 +2172,40 @@
               }
             ],
             "title": "Series Id"
+          },
+          "strike_after_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strike After Brl"
+          },
+          "void_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Void Reason"
+          },
+          "voided_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Estorno que anulou este lançamento.",
+            "title": "Voided By"
           }
         },
         "required": [
@@ -1476,7 +2217,12 @@
           "price_brl",
           "fees_brl",
           "brokerage_brl",
-          "executed_at"
+          "executed_at",
+          "linked_entry_id",
+          "strike_after_brl",
+          "void_reason",
+          "note",
+          "voided_by"
         ],
         "title": "EntryOut",
         "type": "object"
@@ -2492,6 +3238,74 @@
         "title": "ExecutedStock",
         "type": "object"
       },
+      "ExposureOut": {
+        "properties": {
+          "delta_brl": {
+            "title": "Delta Brl",
+            "type": "number"
+          },
+          "delta_shares": {
+            "title": "Delta Shares",
+            "type": "number"
+          },
+          "expiry": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry"
+          },
+          "gamma": {
+            "description": "Variação do delta (ações) por R$ 1 no ativo.",
+            "title": "Gamma",
+            "type": "number"
+          },
+          "gamma_1pct_brl": {
+            "description": "P&L de um movimento de 1% no ativo: ½·Γ·(0,01·S)².",
+            "title": "Gamma 1Pct Brl",
+            "type": "number"
+          },
+          "market_value_brl": {
+            "title": "Market Value Brl",
+            "type": "number"
+          },
+          "theta_per_bd_brl": {
+            "title": "Theta Per Bd Brl",
+            "type": "number"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticker"
+          },
+          "vega_per_point_brl": {
+            "title": "Vega Per Point Brl",
+            "type": "number"
+          }
+        },
+        "required": [
+          "delta_shares",
+          "delta_brl",
+          "gamma",
+          "gamma_1pct_brl",
+          "vega_per_point_brl",
+          "theta_per_bd_brl",
+          "market_value_brl"
+        ],
+        "title": "ExposureOut",
+        "type": "object"
+      },
       "ForecastOut": {
         "properties": {
           "eligibility_reason": {
@@ -2939,6 +3753,36 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "HoldingOut": {
+        "properties": {
+          "instrument": {
+            "title": "Instrument",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "series_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series Id"
+          }
+        },
+        "required": [
+          "instrument",
+          "series_id",
+          "quantity"
+        ],
+        "title": "HoldingOut",
+        "type": "object"
+      },
       "ImpliedParams": {
         "additionalProperties": false,
         "properties": {
@@ -3163,6 +4007,30 @@
         "title": "IvQuality",
         "type": "object"
       },
+      "JournalParams": {
+        "additionalProperties": false,
+        "description": "Bloco `journal` (PRD 1.10 §5.9; CS-04, RS-06).",
+        "properties": {
+          "residual_max_ratio": {
+            "default": 0.15,
+            "description": "Meta do CS-04: Σ|resíduo| ÷ Σ|Greeks| por operação.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Residual Max Ratio",
+            "type": "number"
+          },
+          "residual_min_brl": {
+            "default": 50.0,
+            "description": "Resíduo mínimo em R$ para o sinal de erro (não calibrado).",
+            "maximum": 1000000000.0,
+            "minimum": 0.0,
+            "title": "Residual Min Brl",
+            "type": "number"
+          }
+        },
+        "title": "JournalParams",
+        "type": "object"
+      },
       "LegInput": {
         "additionalProperties": false,
         "properties": {
@@ -3331,6 +4199,181 @@
         "title": "LegOut",
         "type": "object"
       },
+      "LimitOut": {
+        "properties": {
+          "calibrated": {
+            "default": false,
+            "title": "Calibrated",
+            "type": "boolean"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "number"
+          },
+          "name": {
+            "enum": [
+              "stress_loss",
+              "vega_total",
+              "underlying_concentration",
+              "expiry_concentration"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "state": {
+            "enum": [
+              "ok",
+              "breached",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "value ÷ limite (1,0 = no limite).",
+            "title": "Usage"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "name",
+          "scope",
+          "value",
+          "limit",
+          "usage",
+          "state"
+        ],
+        "title": "LimitOut",
+        "type": "object"
+      },
+      "LimitsParams": {
+        "additionalProperties": false,
+        "properties": {
+          "max_abs_vega_fraction": {
+            "default": 0.01,
+            "description": "|vega por ponto| da carteira ÷ capital.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Abs Vega Fraction",
+            "type": "number"
+          },
+          "max_expiry_share": {
+            "default": 0.6,
+            "description": "Perda em stress de um vencimento ÷ orçamento de perda.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Expiry Share",
+            "type": "number"
+          },
+          "max_stress_loss_fraction": {
+            "default": 0.2,
+            "description": "Pior perda ÷ capital.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Stress Loss Fraction",
+            "type": "number"
+          },
+          "max_underlying_share": {
+            "default": 0.5,
+            "description": "Perda em stress de um ativo ÷ orçamento de perda.",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Max Underlying Share",
+            "type": "number"
+          }
+        },
+        "title": "LimitsParams",
+        "type": "object"
+      },
+      "LimitsResponse": {
+        "properties": {
+          "breached": {
+            "title": "Breached",
+            "type": "boolean"
+          },
+          "capital_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capital Brl"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/LimitOut"
+            },
+            "title": "Limits",
+            "type": "array"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioOut"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "capital_brl",
+          "scenarios",
+          "limits",
+          "breached",
+          "warnings"
+        ],
+        "title": "LimitsResponse",
+        "type": "object"
+      },
       "LiquidityFilter-Input": {
         "additionalProperties": false,
         "description": "Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).",
@@ -3485,6 +4528,139 @@
           "observed_at"
         ],
         "title": "ManualInputOut",
+        "type": "object"
+      },
+      "MarkLegOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "delta": {
+            "title": "Delta",
+            "type": "number"
+          },
+          "gamma": {
+            "title": "Gamma",
+            "type": "number"
+          },
+          "iv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iv"
+          },
+          "origin": {
+            "enum": [
+              "observed",
+              "approximate",
+              "stale",
+              "expired"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "price_brl": {
+            "title": "Price Brl",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "integer"
+          },
+          "theta_per_bd": {
+            "title": "Theta Per Bd",
+            "type": "number"
+          },
+          "vega_per_point": {
+            "title": "Vega Per Point",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "quantity",
+          "price_brl",
+          "iv",
+          "origin",
+          "delta",
+          "gamma",
+          "vega_per_point",
+          "theta_per_bd"
+        ],
+        "title": "MarkLegOut",
+        "type": "object"
+      },
+      "MarkOut": {
+        "properties": {
+          "delta_shares": {
+            "title": "Delta Shares",
+            "type": "number"
+          },
+          "gamma": {
+            "title": "Gamma",
+            "type": "number"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/MarkLegOut"
+            },
+            "title": "Legs",
+            "type": "array"
+          },
+          "options_value_brl": {
+            "title": "Options Value Brl",
+            "type": "string"
+          },
+          "spot_brl": {
+            "title": "Spot Brl",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "stock_qty": {
+            "title": "Stock Qty",
+            "type": "integer"
+          },
+          "stock_value_brl": {
+            "title": "Stock Value Brl",
+            "type": "string"
+          },
+          "theta_per_bd_brl": {
+            "title": "Theta Per Bd Brl",
+            "type": "number"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "vega_per_point_brl": {
+            "title": "Vega Per Point Brl",
+            "type": "number"
+          }
+        },
+        "required": [
+          "trade_date",
+          "spot_brl",
+          "stock_qty",
+          "options_value_brl",
+          "stock_value_brl",
+          "delta_shares",
+          "gamma",
+          "vega_per_point_brl",
+          "theta_per_bd_brl",
+          "stale",
+          "legs"
+        ],
+        "title": "MarkOut",
         "type": "object"
       },
       "ModelSelectionIn": {
@@ -3726,6 +4902,106 @@
         "title": "PercentileOut",
         "type": "object"
       },
+      "PnlByExpiry": {
+        "properties": {
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "pnl_brl": {
+            "title": "Pnl Brl",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "expiry",
+          "pnl_brl"
+        ],
+        "title": "PnlByExpiry",
+        "type": "object"
+      },
+      "PnlByTicker": {
+        "properties": {
+          "pnl_brl": {
+            "title": "Pnl Brl",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "pnl_brl"
+        ],
+        "title": "PnlByTicker",
+        "type": "object"
+      },
+      "PortfolioResponse": {
+        "properties": {
+          "by_expiry": {
+            "items": {
+              "$ref": "#/components/schemas/ExposureOut"
+            },
+            "title": "By Expiry",
+            "type": "array"
+          },
+          "by_ticker": {
+            "items": {
+              "$ref": "#/components/schemas/ExposureOut"
+            },
+            "title": "By Ticker",
+            "type": "array"
+          },
+          "mark_dates": {
+            "additionalProperties": {
+              "format": "date",
+              "type": "string"
+            },
+            "description": "Última marcação usada por ativo.",
+            "title": "Mark Dates",
+            "type": "object"
+          },
+          "positions_open": {
+            "title": "Positions Open",
+            "type": "integer"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExposureOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "positions_open",
+          "mark_dates",
+          "warnings",
+          "total",
+          "by_ticker",
+          "by_expiry"
+        ],
+        "title": "PortfolioResponse",
+        "type": "object"
+      },
       "PositionCreate": {
         "additionalProperties": false,
         "description": "Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,\nsimulação e dimensionamento; o cliente não impõe números calculados (PRD §7).",
@@ -3865,8 +5141,19 @@
                 "type": "null"
               }
             ],
-            "description": "Obrigatório fora de \"edge líquido\" na direção da estrutura ou acima do tamanho sugerido.",
+            "description": "Obrigatório fora de \"edge líquido\" na direção da estrutura, acima do tamanho sugerido ou com limite da carteira ultrapassado (pró-forma).",
             "title": "Override Reason"
+          },
+          "roll_from": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RollFrom"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rolagem: fecha as pernas da posição de origem na mesma transação."
           },
           "stock": {
             "anyOf": [
@@ -3913,6 +5200,13 @@
             "title": "As Of",
             "type": "string"
           },
+          "attribution": {
+            "items": {
+              "$ref": "#/components/schemas/AttributionOut"
+            },
+            "title": "Attribution",
+            "type": "array"
+          },
           "config_version_id": {
             "title": "Config Version Id",
             "type": "integer"
@@ -3922,10 +5216,27 @@
             "title": "Created At",
             "type": "string"
           },
+          "cs04": {
+            "$ref": "#/components/schemas/Cs04Out"
+          },
+          "cs04_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cs04 Ratio"
+          },
           "decision_snapshot": {
             "additionalProperties": true,
             "title": "Decision Snapshot",
             "type": "object"
+          },
+          "delta_band": {
+            "$ref": "#/components/schemas/DeltaBandOut"
           },
           "direction": {
             "enum": [
@@ -3955,14 +5266,49 @@
             "title": "Entries",
             "type": "array"
           },
+          "error_days": {
+            "title": "Error Days",
+            "type": "integer"
+          },
           "expiry": {
             "format": "date",
             "title": "Expiry",
             "type": "string"
           },
+          "holdings": {
+            "items": {
+              "$ref": "#/components/schemas/HoldingOut"
+            },
+            "title": "Holdings",
+            "type": "array"
+          },
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "last_mark_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Mark Date"
+          },
+          "ledger_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Livro de lançamentos inconsistente (RS-06), com o motivo.",
+            "title": "Ledger Error"
           },
           "lots": {
             "title": "Lots",
@@ -3973,6 +5319,13 @@
               "$ref": "#/components/schemas/ManualInputOut"
             },
             "title": "Manual Inputs",
+            "type": "array"
+          },
+          "marks": {
+            "items": {
+              "$ref": "#/components/schemas/MarkOut"
+            },
+            "title": "Marks",
             "type": "array"
           },
           "model": {
@@ -4005,10 +5358,234 @@
             ],
             "title": "Override Reason"
           },
+          "pending_expiry": {
+            "description": "Pernas vencidas ainda em aberto (LC-08).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Pending Expiry",
+            "type": "array"
+          },
+          "pnl_total_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mercado + execução e custos, até a última marcação.",
+            "title": "Pnl Total Brl"
+          },
+          "rolled_from_position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled From Position Id"
+          },
           "status": {
-            "const": "open",
-            "default": "open",
-            "description": "Lançamentos de saída na Etapa 7.",
+            "description": "Derivado dos lançamentos (PRD 1.10 §5.9).",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "structure": {
+            "enum": [
+              "short_straddle",
+              "short_strangle",
+              "covered_call",
+              "long_straddle",
+              "long_strangle"
+            ],
+            "title": "Structure",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "totals": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotalsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "ticker",
+          "structure",
+          "direction",
+          "expiry",
+          "lots",
+          "edge_state",
+          "model",
+          "config_version_id",
+          "overridden",
+          "status",
+          "rolled_from_position_id",
+          "pnl_total_brl",
+          "last_mark_date",
+          "cs04_ratio",
+          "error_days",
+          "pending_expiry",
+          "ledger_error",
+          "as_of",
+          "engine_version",
+          "override_reason",
+          "note",
+          "entries",
+          "manual_inputs",
+          "decision_snapshot",
+          "holdings",
+          "marks",
+          "attribution",
+          "totals",
+          "cs04",
+          "delta_band"
+        ],
+        "title": "PositionOut",
+        "type": "object"
+      },
+      "PositionSummary": {
+        "properties": {
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "cs04_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cs04 Ratio"
+          },
+          "direction": {
+            "enum": [
+              "sell",
+              "buy"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "edge_state": {
+            "enum": [
+              "edge",
+              "inconclusive",
+              "no_edge"
+            ],
+            "title": "Edge State",
+            "type": "string"
+          },
+          "error_days": {
+            "title": "Error Days",
+            "type": "integer"
+          },
+          "expiry": {
+            "format": "date",
+            "title": "Expiry",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_mark_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Mark Date"
+          },
+          "ledger_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Livro de lançamentos inconsistente (RS-06), com o motivo.",
+            "title": "Ledger Error"
+          },
+          "lots": {
+            "title": "Lots",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "overridden": {
+            "title": "Overridden",
+            "type": "boolean"
+          },
+          "pending_expiry": {
+            "description": "Pernas vencidas ainda em aberto (LC-08).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Pending Expiry",
+            "type": "array"
+          },
+          "pnl_total_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Mercado + execução e custos, até a última marcação.",
+            "title": "Pnl Total Brl"
+          },
+          "rolled_from_position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolled From Position Id"
+          },
+          "status": {
+            "description": "Derivado dos lançamentos (PRD 1.10 §5.9).",
+            "enum": [
+              "open",
+              "closed"
+            ],
             "title": "Status",
             "type": "string"
           },
@@ -4040,101 +5617,14 @@
           "model",
           "config_version_id",
           "overridden",
-          "as_of",
-          "engine_version",
-          "override_reason",
-          "note",
-          "entries",
-          "manual_inputs",
-          "decision_snapshot"
-        ],
-        "title": "PositionOut",
-        "type": "object"
-      },
-      "PositionSummary": {
-        "properties": {
-          "config_version_id": {
-            "title": "Config Version Id",
-            "type": "integer"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "direction": {
-            "enum": [
-              "sell",
-              "buy"
-            ],
-            "title": "Direction",
-            "type": "string"
-          },
-          "edge_state": {
-            "enum": [
-              "edge",
-              "inconclusive",
-              "no_edge"
-            ],
-            "title": "Edge State",
-            "type": "string"
-          },
-          "expiry": {
-            "format": "date",
-            "title": "Expiry",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "lots": {
-            "title": "Lots",
-            "type": "integer"
-          },
-          "model": {
-            "title": "Model",
-            "type": "string"
-          },
-          "overridden": {
-            "title": "Overridden",
-            "type": "boolean"
-          },
-          "status": {
-            "const": "open",
-            "default": "open",
-            "description": "Lançamentos de saída na Etapa 7.",
-            "title": "Status",
-            "type": "string"
-          },
-          "structure": {
-            "enum": [
-              "short_straddle",
-              "short_strangle",
-              "covered_call",
-              "long_straddle",
-              "long_strangle"
-            ],
-            "title": "Structure",
-            "type": "string"
-          },
-          "ticker": {
-            "title": "Ticker",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "created_at",
-          "ticker",
-          "structure",
-          "direction",
-          "expiry",
-          "lots",
-          "edge_state",
-          "model",
-          "config_version_id",
-          "overridden"
+          "status",
+          "rolled_from_position_id",
+          "pnl_total_brl",
+          "last_mark_date",
+          "cs04_ratio",
+          "error_days",
+          "pending_expiry",
+          "ledger_error"
         ],
         "title": "PositionSummary",
         "type": "object"
@@ -4819,6 +6309,153 @@
         "title": "RealizedVolResponse",
         "type": "object"
       },
+      "RiskParams": {
+        "additionalProperties": false,
+        "description": "Bloco `risk` (PRD 1.10 §5.9; RF-RSK-03/04, QA-12). Limites \"não calibrados\".",
+        "properties": {
+          "crisis_episodes": {
+            "items": {
+              "$ref": "#/components/schemas/CrisisEpisode"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Crisis Episodes",
+            "type": "array"
+          },
+          "crisis_horizon_bd": {
+            "default": 5,
+            "description": "Pregões da pior janela do episódio.",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Crisis Horizon Bd",
+            "type": "integer"
+          },
+          "crisis_overrides": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/CrisisOverride"
+              },
+              "type": "object"
+            },
+            "description": "Por ativo e episódio: {'PETR4': {'mar2020': {...}}}.",
+            "maxProperties": 50,
+            "title": "Crisis Overrides",
+            "type": "object"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsParams"
+          },
+          "stress_gap": {
+            "default": 0.1,
+            "description": "Gap do ativo nos stresses simples (±).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 0.5,
+            "title": "Stress Gap",
+            "type": "number"
+          },
+          "stress_vol_pts": {
+            "default": 0.1,
+            "description": "Choque de vol (decimal).",
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "Stress Vol Pts",
+            "type": "number"
+          }
+        },
+        "title": "RiskParams",
+        "type": "object"
+      },
+      "RollFrom": {
+        "additionalProperties": false,
+        "properties": {
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/RollLeg"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Legs",
+            "type": "array"
+          },
+          "position_id": {
+            "minimum": 1.0,
+            "title": "Position Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position_id",
+          "legs"
+        ],
+        "title": "RollFrom",
+        "type": "object"
+      },
+      "RollLeg": {
+        "additionalProperties": false,
+        "description": "Fechamento de uma perna da posição de origem na rolagem (RN-GES-04).",
+        "properties": {
+          "brokerage_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Brokerage Brl"
+          },
+          "fees_brl": {
+            "anyOf": [
+              {
+                "maximum": 10000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Fees Brl"
+          },
+          "instrument": {
+            "pattern": "^[A-Z0-9]{4,12}$",
+            "title": "Instrument",
+            "type": "string"
+          },
+          "price_brl": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price Brl"
+          },
+          "quantity": {
+            "description": "Com sinal: reduz a perna até zero.",
+            "maximum": 10000000.0,
+            "minimum": -10000000.0,
+            "title": "Quantity",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "instrument",
+          "quantity",
+          "price_brl"
+        ],
+        "title": "RollLeg",
+        "type": "object"
+      },
       "RunSummary": {
         "properties": {
           "config_version_id": {
@@ -4909,6 +6546,88 @@
           "config_version_id"
         ],
         "title": "RunSummary",
+        "type": "object"
+      },
+      "ScenarioOut": {
+        "properties": {
+          "by_expiry": {
+            "items": {
+              "$ref": "#/components/schemas/PnlByExpiry"
+            },
+            "title": "By Expiry",
+            "type": "array"
+          },
+          "by_ticker": {
+            "items": {
+              "$ref": "#/components/schemas/PnlByTicker"
+            },
+            "title": "By Ticker",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "standard",
+              "crisis",
+              "custom"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "loss_brl": {
+            "title": "Loss Brl",
+            "type": "string"
+          },
+          "missing_tickers": {
+            "description": "Ativos sem choque neste cenário (crise indisponível).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Tickers",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "estimated",
+              "approximate",
+              "manual"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "pnl_brl": {
+            "title": "Pnl Brl",
+            "type": "string"
+          },
+          "shocks": {
+            "description": "Choque aplicado a cada ativo.",
+            "items": {
+              "$ref": "#/components/schemas/ShockOut"
+            },
+            "title": "Shocks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "label",
+          "kind",
+          "pnl_brl",
+          "loss_brl",
+          "by_ticker",
+          "by_expiry",
+          "missing_tickers",
+          "origin",
+          "shocks"
+        ],
+        "title": "ScenarioOut",
         "type": "object"
       },
       "SeriesOut": {
@@ -5062,6 +6781,31 @@
           "series"
         ],
         "title": "SeriesResponse",
+        "type": "object"
+      },
+      "ShockOut": {
+        "properties": {
+          "spot_shock": {
+            "description": "Relativo (−0,10 = queda de 10%).",
+            "title": "Spot Shock",
+            "type": "number"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          },
+          "vol_shock": {
+            "description": "Pontos de vol em decimal.",
+            "title": "Vol Shock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "ticker",
+          "spot_shock",
+          "vol_shock"
+        ],
+        "title": "ShockOut",
         "type": "object"
       },
       "SimulationParams": {
@@ -5694,6 +7438,14 @@
             "title": "Stress",
             "type": "array"
           },
+          "stress_notes": {
+            "description": "Cenários de crise indisponíveis (o teto fica sem eles).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Stress Notes",
+            "type": "array"
+          },
           "variance_brl2": {
             "anyOf": [
               {
@@ -5724,7 +7476,8 @@
           "rule",
           "margin_per_lot_brl",
           "margin_total_brl",
-          "margin_share_of_capital"
+          "margin_share_of_capital",
+          "stress_notes"
         ],
         "title": "SizingOut",
         "type": "object"
@@ -5781,7 +7534,7 @@
           },
           "stress_gap": {
             "default": 0.1,
-            "description": "Gap do ativo no stress (±).",
+            "description": "Obsoleto desde a Etapa 7: o teto usa `risk.stress_gap`.",
             "exclusiveMinimum": 0.0,
             "maximum": 0.5,
             "title": "Stress Gap",
@@ -5789,7 +7542,7 @@
           },
           "stress_vol_pts": {
             "default": 0.1,
-            "description": "Choque de vol no stress (decimal).",
+            "description": "Obsoleto desde a Etapa 7: o teto usa `risk.stress_vol_pts`.",
             "exclusiveMinimum": 0.0,
             "maximum": 1.0,
             "title": "Stress Vol Pts",
@@ -5921,6 +7674,10 @@
       },
       "SizingResponse": {
         "properties": {
+          "limits": {
+            "$ref": "#/components/schemas/LimitsResponse",
+            "description": "Limites da carteira com a nova posição (pró-forma, PR-04)."
+          },
           "simulation": {
             "$ref": "#/components/schemas/SimulationResponse"
           },
@@ -5930,7 +7687,8 @@
         },
         "required": [
           "simulation",
-          "sizing"
+          "sizing",
+          "limits"
         ],
         "title": "SizingResponse",
         "type": "object"
@@ -6248,6 +8006,31 @@
         "title": "StressOut",
         "type": "object"
       },
+      "StressRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "spot_shock": {
+            "description": "Relativo (−0,10 = queda de 10%).",
+            "maximum": 0.9,
+            "minimum": -0.9,
+            "title": "Spot Shock",
+            "type": "number"
+          },
+          "vol_shock": {
+            "description": "Pontos de vol em decimal (0,10 = +10 pontos).",
+            "maximum": 2.0,
+            "minimum": -0.5,
+            "title": "Vol Shock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "spot_shock",
+          "vol_shock"
+        ],
+        "title": "StressRequest",
+        "type": "object"
+      },
       "TermPointOut": {
         "properties": {
           "atm_iv": {
@@ -6367,6 +8150,54 @@
           "points"
         ],
         "title": "TermStructureResponse",
+        "type": "object"
+      },
+      "TotalsOut": {
+        "properties": {
+          "delta_brl": {
+            "title": "Delta Brl",
+            "type": "string"
+          },
+          "execution_brl": {
+            "title": "Execution Brl",
+            "type": "string"
+          },
+          "gamma_brl": {
+            "title": "Gamma Brl",
+            "type": "string"
+          },
+          "market_brl": {
+            "title": "Market Brl",
+            "type": "string"
+          },
+          "residual_brl": {
+            "title": "Residual Brl",
+            "type": "string"
+          },
+          "theta_brl": {
+            "title": "Theta Brl",
+            "type": "string"
+          },
+          "total_brl": {
+            "title": "Total Brl",
+            "type": "string"
+          },
+          "vega_brl": {
+            "title": "Vega Brl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delta_brl",
+          "gamma_brl",
+          "theta_brl",
+          "vega_brl",
+          "residual_brl",
+          "market_brl",
+          "execution_brl",
+          "total_brl"
+        ],
+        "title": "TotalsOut",
         "type": "object"
       },
       "UnderlyingCreate": {
@@ -6579,7 +8410,7 @@
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -7534,9 +9365,136 @@
         ]
       }
     },
+    "/portfolio": {
+      "get": {
+        "operationId": "get_portfolio",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Greeks agregados e exposição por vencimento",
+        "tags": [
+          "carteira e risco"
+        ]
+      }
+    },
+    "/portfolio/limits": {
+      "get": {
+        "operationId": "get_limits",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LimitsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Stresses padrão e de crise e limites",
+        "tags": [
+          "carteira e risco"
+        ]
+      }
+    },
+    "/portfolio/stress": {
+      "post": {
+        "operationId": "post_stress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Stress avulso da carteira (não grava)",
+        "tags": [
+          "carteira e risco"
+        ]
+      }
+    },
     "/positions": {
       "get": {
         "operationId": "list_positions",
+        "parameters": [
+          {
+            "description": "Filtra pelo status derivado.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "closed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo status derivado.",
+              "title": "Status"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -7563,7 +9521,7 @@
             "description": "Erro (RFC 9457)"
           }
         },
-        "summary": "Operações registradas",
+        "summary": "Operações registradas (diário)",
         "tags": [
           "simulação"
         ]
@@ -7685,9 +9643,82 @@
             "description": "Erro (RFC 9457)"
           }
         },
-        "summary": "Uma operação, com o retrato da decisão",
+        "summary": "Uma operação: retrato, lançamentos, marcações D-1 e atribuição",
         "tags": [
           "simulação"
+        ]
+      }
+    },
+    "/positions/{position_id}/entries": {
+      "post": {
+        "operationId": "post_entry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "position_id",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Position Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Operação inexistente."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Lançamento inconsistente (RS-06), com o motivo."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Lançar hedge, saída, exercício, designação, ajuste de strike ou estorno",
+        "tags": [
+          "diário"
         ]
       }
     },
@@ -7741,6 +9772,68 @@
         "summary": "Ranking dos ativos com semáforo de edge",
         "tags": [
           "ranking"
+        ]
+      }
+    },
+    "/risk/crisis": {
+      "get": {
+        "operationId": "get_crisis",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrisisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Choques dos cenários de crise (QA-12)",
+        "tags": [
+          "carteira e risco"
+        ]
+      }
+    },
+    "/risk/crisis/measure": {
+      "post": {
+        "operationId": "post_crisis_measure",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CrisisMeasureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Medir os cenários de crise (enfileira o download dos COTAHIST anuais)",
+        "tags": [
+          "carteira e risco"
         ]
       }
     },
