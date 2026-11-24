@@ -11,7 +11,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from vollab.analytics.simulation import SimulationComputer, SimulationInputError, money
 from vollab.api.schemas.common import ProblemDetails
@@ -294,8 +294,10 @@ def _position_out(session: Session, p: Position) -> PositionOut:
 
 @router.get("/positions", response_model=list[PositionSummary], summary="Operações registradas")
 def list_positions(session: SessionDep) -> list[PositionSummary]:
+    # Sem o retrato JSONB (~7 KB por linha): a lista só usa o resumo (revisão da Etapa 6, M-2).
     rows = session.scalars(
         select(Position)
+        .options(defer(Position.decision_snapshot))
         .where(Position.user_id == FIXED_USER_ID)
         .order_by(Position.id.desc())
         .limit(MAX_POSITIONS)

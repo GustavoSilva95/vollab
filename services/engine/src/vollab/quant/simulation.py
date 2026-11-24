@@ -22,7 +22,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from vollab.quant.edge import Direction
-from vollab.quant.pricing import BUSINESS_DAYS_PER_YEAR, bs_greeks, bs_price
+from vollab.quant.pricing import BUSINESS_DAYS_PER_YEAR, bs_delta, bs_greeks, bs_price
 
 FloatArray = NDArray[np.float64]
 
@@ -134,6 +134,9 @@ class HedgeRule:
     cost_rate: float  # λ do ativo-objeto: meio spread + taxa (decimal)
 
 
+PATH_BLOCK = 5_000  # caminhos por bloco: pico de memória ~10 MB por 100 pregões
+
+
 @dataclass(frozen=True, slots=True)
 class PathResult:
     """P&L por unidade em cada caminho, com os componentes usados nos resumos."""
@@ -164,54 +167,58 @@ def simulate_paths(
     if h < 1 or paths < 1 or z.size == 0:
         raise ValueError("simulate_paths: prazo, caminhos e amostra positivos.")
     rng = np.random.default_rng(seed)
-    draws = z[rng.integers(0, z.size, size=(paths, h))]
     sigma_d2 = float(np.mean(z * z))
     r_d = market.rate_c / BUSINESS_DAYS_PER_YEAR
     growth = math.exp(r_d)
     divs = dict(market.dividends)
+    pv_by_step = [market.pv_dividends(step) for step in range(h)]
 
     k = np.array([leg.strike for leg in legs])
     q = np.array([leg.quantity for leg in legs], dtype=np.float64)
     call = np.array([leg.is_call for leg in legs])
     iv = np.array([leg.iv for leg in legs])
     price0 = np.array([leg.price for leg in legs])
-
-    def options_delta(spot: FloatArray, step: int) -> FloatArray:
-        t = (h - step) / BUSINESS_DAYS_PER_YEAR
-        g = bs_greeks(spot[:, None], k, t, market.rate_c, iv, call, market.pv_dividends(step))
-        return np.asarray(g.delta @ q, dtype=np.float64)
-
-    s = np.full(paths, market.spot)
     entry_cost = float(
         sum(abs(leg.quantity) * (leg.price * leg.entry_cost_rate + leg.entry_cost_fixed) for leg in legs)
     )
-    cash = np.full(paths, -float(q @ price0) - entry_cost)
-    n = -options_delta(s, 0) + stock_qty if rule.dynamic else np.full(paths, float(stock_qty))
-    hedge_cost = np.abs(n) * s * rule.cost_rate
-    cash -= n * s + hedge_cost
-    rehedges = np.zeros(paths, dtype=np.int64)
 
-    for step in range(1, h + 1):
-        d = divs.get(step, 0.0)
-        s = np.maximum(s * np.exp(draws[:, step - 1] - 0.5 * sigma_d2 + r_d) - d, 1e-8)
-        cash = cash * growth + n * d
-        if step < h and rule.dynamic:
-            trade = rehedge(options_delta(s, step) + n, rule.half_width)
-            moved = trade != 0.0
-            cost = np.abs(trade) * s * rule.cost_rate
-            n = n + trade
-            cash -= trade * s + cost
-            hedge_cost += cost
-            rehedges += moved
+    def options_delta(spot: FloatArray, step: int) -> FloatArray:
+        t = (h - step) / BUSINESS_DAYS_PER_YEAR
+        return np.asarray(bs_delta(spot[:, None], k, t, market.rate_c, iv, call, pv_by_step[step]) @ q)
 
-    intrinsic = np.where(call, np.maximum(s[:, None] - k, 0.0), np.maximum(k - s[:, None], 0.0))
-    itm = np.where(call, s[:, None] > k, s[:, None] < k)
-    # Ações entregues ou recebidas no exercício: call comprada recebe, put comprada entrega.
-    exercised = (itm * np.where(call, 1.0, -1.0)) @ q
-    final_shares = n + exercised
-    close_cost = np.abs(final_shares) * s * rule.cost_rate
-    hedge_cost += close_cost
-    pnl = cash + intrinsic @ q + n * s - close_cost
+    def block(rows: int) -> tuple[FloatArray, NDArray[np.int64], FloatArray]:
+        # Sorteio de um bloco de caminhos: blocos de linhas em sequência consomem o mesmo fluxo do
+        # gerador que o sorteio único (resultado idêntico), com memória limitada (revisão da Etapa 6, I-1).
+        idx = rng.integers(0, z.size, size=(rows, h))
+        s = np.full(rows, market.spot)
+        cash = np.full(rows, -float(q @ price0) - entry_cost)
+        n = -options_delta(s, 0) + stock_qty if rule.dynamic else np.full(rows, float(stock_qty))
+        hedge_cost = np.abs(n) * s * rule.cost_rate
+        cash -= n * s + hedge_cost
+        rehedges = np.zeros(rows, dtype=np.int64)
+        for step in range(1, h + 1):
+            d = divs.get(step, 0.0)
+            s = np.maximum(s * np.exp(z[idx[:, step - 1]] - 0.5 * sigma_d2 + r_d) - d, 1e-8)
+            cash = cash * growth + n * d
+            if step < h and rule.dynamic:
+                trade = rehedge(options_delta(s, step) + n, rule.half_width)
+                cost = np.abs(trade) * s * rule.cost_rate
+                n = n + trade
+                cash -= trade * s + cost
+                hedge_cost += cost
+                rehedges += trade != 0.0
+        intrinsic = np.where(call, np.maximum(s[:, None] - k, 0.0), np.maximum(k - s[:, None], 0.0))
+        itm = np.where(call, s[:, None] > k, s[:, None] < k)
+        # Ações entregues ou recebidas no exercício: call comprada recebe, put comprada entrega.
+        exercised = (itm * np.where(call, 1.0, -1.0)) @ q
+        close_cost = np.abs(n + exercised) * s * rule.cost_rate
+        hedge_cost += close_cost
+        return cash + intrinsic @ q + n * s - close_cost, rehedges, hedge_cost
+
+    parts = [block(min(PATH_BLOCK, paths - start)) for start in range(0, paths, PATH_BLOCK)]
+    pnl = np.concatenate([p[0] for p in parts])
+    rehedges = np.concatenate([p[1] for p in parts])
+    hedge_cost = np.concatenate([p[2] for p in parts])
     return PathResult(pnl=pnl, rehedges=rehedges, hedge_cost=hedge_cost, entry_cost=entry_cost)
 
 

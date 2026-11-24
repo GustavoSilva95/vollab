@@ -31,7 +31,7 @@ import {
   STRESS_LABEL,
   STRUCTURE_LABEL,
 } from '@/lib/simulator/labels';
-import { StateBadge } from '../ranking/RankingView';
+import StateBadge from '../edge/StateBadge';
 import EstimatedValueView from '../vol/EstimatedValueView';
 import styles from '../vol/vol.module.css';
 import local from './simulator.module.css';

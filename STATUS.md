@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**, testes locais verdes (engine 295, web 95, Playwright 8); aguarda CI no GitHub e aprovação do fechamento
+**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**; CI verde no GitHub nos 6 jobs (run 45309490121, PR #7); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos); testes locais: engine 297, web 95, Playwright 8; aguarda aprovação do fechamento
 **Etapa anterior:** Etapa 5 concluída e aprovada (2026-11-23), mesclada na `main`
 
 ## Aprovações
@@ -104,6 +104,8 @@
   - Tela `/app/simulador` (navegação habilitada; links no ranking e no ativo): semáforo e edge da estrutura no topo, pernas, Greeks, custos (Leland do semáforo × custo da banda simulado), payoff, histograma com ES e percentis, dimensionamento com a regra que prevaleceu e zero explicado, registro da entrada com o retrato.
   - Testes: **T-REF-07 passando** (27 de referência: Kelly, teto, empate, zero por semáforo, direção e μ ≤ 0, piso exato; reescala; determinismo; banda × referência; P&L médio do straddle hedgeado × ΔBS; dispersão × banda e eq. 7.7; payoff; proventos; stress e ES à mão); engine 295 (8 de integração com fixtures reais e 9 de privilégios do papel); web 95; Playwright 8 (novo: **fluxo 2**). Ruff, mypy estrito, ESLint, tsc, `next build` e contrato determinístico ok.
   - **Desempenho (meta PRD-NF-06: 10.000 caminhos < 3 s):** ~0,04–0,12 s no motor (21–63 du); `/sizing` ~50 ms e `/chain` ~8 ms por HTTP com as fixtures. JS da rota `/app/simulador` ~108 KiB gzip (Plotly à parte, sob demanda); landing ~15 KiB.
+  - **Revisão de performance (2026-11-23): sem bloqueantes, dentro das metas** (10.000 caminhos ~1,0 s no pior vencimento real de 520 du; `/sizing` 55–62 ms com 23 consultas constantes, sem N+1; `/chain` 10–25 ms; índices suficientes). Corrigidos: **I-1** (50.000 caminhos × 520 du levava 4,9 s e ~0,5 GB: `bs_delta` só com o delta no hedge e caminhos em blocos de 5.000 com o mesmo fluxo do gerador, resultado idêntico → 1,5 s e 22 MB), **I-2** (`StateBadge` fora do módulo da tabela do ranking: JS do simulador 108 → 92 KiB gzip) e M-2 (`GET /positions` sem ler o retrato JSONB). Backlog: M-1 (leituras repetidas e `EventContext` ansioso em `compute`, ~5–20 ms com volume real), M-3 (`bs_price` em laço na `/chain`), M-4 (`staleTime` maior para a cadeia).
+  - **Bug do `implied_vol` (Etapa 3) achado pelo hypothesis no T-REF-02 e corrigido:** quando o Newton acertava a raiz exatamente, o passo seguinte virava bisseção e a IV voltava como o ponto médio do intervalo com status OK (put K/S 0,6, σ 100%, 177 du: 0,50005 em vez de 1,0). Agora, convergindo pelo preço, fica o σ que reprecifica; teste de regressão adicionado. Afetava casos raros de IV muito alta; a IV histórica gravada é refeita no próximo `vol_recompute`.
   - Com as fixtures (PETR4, 19/11/2026, combinação): straddle comprado ATM 18/12 → edge líquido de compra, P&L médio R$ 143/lote, ES 99% R$ 105, Kelly 102 × teto 66 lotes com R$ 100 mil → **teto prevalece (66)**. Estruturas vendidas: zero, "direção oposta ao sinal". Mesma ressalva da Etapa 5: σ̂ inflado pelos gaps de 26/10 das fixtures.
 
 ## Decisões registradas

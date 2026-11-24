@@ -145,6 +145,25 @@ def bs_greeks(
     )
 
 
+def bs_delta(
+    spot: ArrayLike,
+    strike: ArrayLike,
+    t: ArrayLike,
+    rate: ArrayLike,
+    sigma: ArrayLike,
+    is_call: ArrayLike,
+    pv_div: ArrayLike = 0.0,
+) -> FloatArray:
+    """Só o delta (mesma fórmula de `bs_greeks`): o hedge da simulação não precisa dos outros Greeks
+    (revisão de performance da Etapa 6, I-1: ~5,7× mais rápido por pregão)."""
+    s_star = _as_array(spot) - _as_array(pv_div)
+    tt = _as_array(t)
+    vol = _as_array(sigma)
+    d1 = (np.log(s_star / _as_array(strike)) + (_as_array(rate) + 0.5 * vol * vol) * tt) / (vol * np.sqrt(tt))
+    n1 = ndtr(d1)
+    return np.where(np.asarray(is_call, dtype=bool), n1, n1 - 1.0)
+
+
 class IvStatus(IntEnum):
     """Resultado do cálculo da IV de cada negócio (T-REF-02: falha explícita, sem número)."""
 
@@ -245,10 +264,13 @@ def implied_vol(
         hi_t = np.where(diff > 0, sig, hi[todo])
         with np.errstate(divide="ignore", invalid="ignore"):
             newton = sig - diff / vega
-        inside = np.isfinite(newton) & (newton > lo_t) & (newton < hi_t)
+        inside = np.isfinite(newton) & (newton >= lo_t) & (newton <= hi_t)
         new_sig = np.where(inside, newton, 0.5 * (lo_t + hi_t))
-        done = (np.abs(new_sig - sig) < tol) | (np.abs(diff) < tol * np.maximum(p[todo], 1e-300))
-        done |= (hi_t - lo_t) < tol
+        # Convergência pelo preço: fica com o sigma que reprecifica (antes, o passo seguinte podia cair
+        # na fronteira do intervalo, virar bisseção e devolver o ponto médio com status OK).
+        priced = np.abs(diff) < tol * np.maximum(p[todo], 1e-300)
+        new_sig = np.where(priced, sig, new_sig)
+        done = priced | (np.abs(new_sig - sig) < tol) | ((hi_t - lo_t) < tol)
         lo[todo] = lo_t
         hi[todo] = hi_t
         sigma[todo] = new_sig
