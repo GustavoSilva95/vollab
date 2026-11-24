@@ -323,17 +323,11 @@ def refresh_strike_adjustment_actions(
 
 
 def ensure_trades_partition(session: Session, day: date) -> None:
-    """Cria a partição mensal de `trades` se ainda não existir (PRD-QA-02)."""
-    start = day.replace(day=1)
-    end = date(start.year + (start.month == 12), start.month % 12 + 1, 1)
-    name = f"trades_y{start.year:04d}m{start.month:02d}"
-    # Nome e limites derivados de uma data validada: sem entrada externa no DDL.
-    session.execute(
-        text(
-            f"CREATE TABLE IF NOT EXISTS {name} PARTITION OF trades "
-            f"FOR VALUES FROM ('{start.isoformat()}') TO ('{end.isoformat()}')"
-        )
-    )
+    """Cria a partição mensal de `trades` se ainda não existir (PRD-QA-02).
+
+    Pela função `create_trades_partition` (migration 0007, `SECURITY DEFINER`): o papel da aplicação
+    não tem DDL (backlog M-2 b)."""
+    session.execute(text("SELECT create_trades_partition(:d)"), {"d": day})
 
 
 def _dedupe(rows: Sequence[TradeRow]) -> list[TradeRow]:

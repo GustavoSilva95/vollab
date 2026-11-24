@@ -8,13 +8,23 @@ from fastapi.routing import APIRoute
 
 from vollab.api.errors import install_error_handlers
 from vollab.api.host_guard import HostGuardMiddleware
-from vollab.api.routes import collection, config, events, forecast, health, ranking, underlyings, vol
+from vollab.api.routes import (
+    collection,
+    config,
+    events,
+    forecast,
+    health,
+    ranking,
+    simulation,
+    underlyings,
+    vol,
+)
 from vollab.api.schemas.common import ProblemDetails
 from vollab.settings import get_settings
 
 # Versão do CONTRATO (OpenAPI). Não é o git sha: este valor entra no arquivo gerado e
 # versionado, e mudar a cada commit faria o contract-drift falhar sem motivo.
-API_VERSION = "0.5.0"
+API_VERSION = "0.6.0"
 
 
 def _operation_id(route: APIRoute) -> str:
@@ -44,4 +54,5 @@ def create_app(*, allowed_hosts: list[str] | None = None) -> FastAPI:
     app.include_router(forecast.router)
     app.include_router(ranking.router)
     app.include_router(config.router)
+    app.include_router(simulation.router)
     return app

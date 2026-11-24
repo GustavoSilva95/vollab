@@ -5,6 +5,112 @@ export type ClientOptions = {
 };
 
 /**
+ * ChainResponse
+ */
+export type ChainResponse = {
+    /**
+     * As Of
+     */
+    as_of: string | null;
+    /**
+     * Days To Expiry Bd
+     */
+    days_to_expiry_bd: number | null;
+    /**
+     * Expiries
+     */
+    expiries: Array<string>;
+    /**
+     * Expiries With Iv
+     *
+     * Vencimentos com IV de referência no pregão.
+     */
+    expiries_with_iv: Array<string>;
+    /**
+     * Expiry
+     */
+    expiry: string | null;
+    /**
+     * Forward
+     */
+    forward: number | null;
+    /**
+     * Series
+     */
+    series: Array<ChainSeries>;
+    /**
+     * Spot Brl
+     */
+    spot_brl: string | null;
+    /**
+     * Suggestions
+     *
+     * Séries sugeridas por estrutura (editáveis).
+     */
+    suggestions: {
+        [key: string]: Array<number>;
+    };
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * ChainSeries
+ */
+export type ChainSeries = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Effective Strike
+     */
+    effective_strike: number;
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Iv
+     *
+     * IV de referência do pregão (RN-VOL-06); nula sem IV.
+     */
+    iv: number | null;
+    /**
+     * K Over F
+     */
+    k_over_f: number;
+    /**
+     * Liquid
+     */
+    liquid: boolean;
+    /**
+     * Option Type
+     */
+    option_type: 'call' | 'put';
+    /**
+     * Price Brl
+     *
+     * Preço BS com a IV de referência e o fechamento.
+     */
+    price_brl: string | null;
+    /**
+     * Series Id
+     */
+    series_id: number;
+    /**
+     * Strike
+     */
+    strike: number;
+    /**
+     * Trades Count
+     */
+    trades_count: number | null;
+};
+
+/**
  * CollectionGapsResponse
  */
 export type CollectionGapsResponse = {
@@ -219,6 +325,8 @@ export type ConfigParamsInput = {
     costs?: CostParams;
     edge?: EdgeParams;
     forecast?: ForecastParams;
+    simulation?: SimulationParams;
+    sizing?: SizingParams;
     vol?: VolParams;
 };
 
@@ -232,6 +340,8 @@ export type ConfigParamsOutput = {
     costs?: CostParams;
     edge?: EdgeParams;
     forecast?: ForecastParams;
+    simulation?: SimulationParams;
+    sizing?: SizingParams;
     vol?: VolParams;
 };
 
@@ -543,6 +653,174 @@ export type CostParams = {
 };
 
 /**
+ * CostsOut
+ *
+ * Custos por lote em BRL e em pontos de vol (decimal). Sempre estimativa.
+ */
+export type CostsOut = {
+    /**
+     * Band Hedge Cost Brl
+     *
+     * Custo médio do hedge pela regra de banda (simulação).
+     */
+    band_hedge_cost_brl: string | null;
+    /**
+     * Hedge Buy Vol Pts
+     */
+    hedge_buy_vol_pts: number | null;
+    /**
+     * Hedge Half Spread
+     */
+    hedge_half_spread: number;
+    /**
+     * Hedge Interval Bd
+     */
+    hedge_interval_bd: number;
+    /**
+     * Hedge Sell Vol Pts
+     */
+    hedge_sell_vol_pts: number;
+    /**
+     * Options Brokerage Brl
+     */
+    options_brokerage_brl: string;
+    /**
+     * Options Fees Brl
+     */
+    options_fees_brl: string;
+    /**
+     * Options Spread Brl
+     */
+    options_spread_brl: string;
+    /**
+     * Options Vol Pts
+     */
+    options_vol_pts: number;
+    /**
+     * Stock Brl
+     */
+    stock_brl: string;
+    /**
+     * Total Buy Vol Pts
+     */
+    total_buy_vol_pts: number | null;
+    /**
+     * Total Sell Vol Pts
+     */
+    total_sell_vol_pts: number;
+    /**
+     * Underlying Spread
+     */
+    underlying_spread: number;
+    /**
+     * Underlying Spread Estimated
+     */
+    underlying_spread_estimated: boolean;
+};
+
+/**
+ * DistributionOut
+ */
+export type DistributionOut = {
+    /**
+     * Delta Band
+     */
+    delta_band: number;
+    /**
+     * Delta Band Calibrated
+     */
+    delta_band_calibrated: boolean;
+    /**
+     * Es Brl
+     */
+    es_brl: string | null;
+    /**
+     * Es Level
+     */
+    es_level: number;
+    /**
+     * Hist Counts
+     */
+    hist_counts: Array<number>;
+    /**
+     * Hist Edges Brl
+     */
+    hist_edges_brl: Array<number>;
+    /**
+     * Iv Constant
+     *
+     * IV de cada perna constante na simulação.
+     */
+    iv_constant: boolean;
+    /**
+     * Kamal Derman Std Brl
+     *
+     * Eq. 7.7 com hedge diário (aproximado).
+     */
+    kamal_derman_std_brl: string | null;
+    /**
+     * Mean Band Hedge Cost Brl
+     */
+    mean_band_hedge_cost_brl: string | null;
+    /**
+     * Mean Brl
+     */
+    mean_brl: string | null;
+    /**
+     * Mean Rehedges
+     */
+    mean_rehedges: number | null;
+    /**
+     * Origin
+     */
+    origin: 'estimated' | 'approximate';
+    /**
+     * Paths
+     */
+    paths: number;
+    /**
+     * Percentiles
+     */
+    percentiles: Array<PercentileOut>;
+    /**
+     * Prob Loss
+     */
+    prob_loss: number | null;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sample End
+     */
+    sample_end: string | null;
+    /**
+     * Sample Size
+     */
+    sample_size: number;
+    /**
+     * Sample Start
+     */
+    sample_start: string | null;
+    /**
+     * Seed
+     */
+    seed: number;
+    /**
+     * Status
+     */
+    status: 'ok' | 'insufficient_data' | 'unavailable';
+    /**
+     * Std Brl
+     */
+    std_brl: string | null;
+    /**
+     * Variance Brl2
+     */
+    variance_brl2: number | null;
+};
+
+/**
  * EdgeParams
  *
  * Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.
@@ -581,6 +859,48 @@ export type EdgeParams = {
      * Limiar somado aos custos no semáforo (0,01 = 1 ponto).
      */
     threshold_vol_pts?: number;
+};
+
+/**
+ * EntryOut
+ */
+export type EntryOut = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl: string;
+    /**
+     * Executed At
+     */
+    executed_at: string;
+    /**
+     * Fees Brl
+     */
+    fees_brl: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Instrument
+     */
+    instrument: string;
+    /**
+     * Kind
+     */
+    kind: string;
+    /**
+     * Price Brl
+     */
+    price_brl: string;
+    /**
+     * Quantity
+     */
+    quantity: number;
+    /**
+     * Series Id
+     */
+    series_id: number | null;
 };
 
 /**
@@ -1013,6 +1333,52 @@ export type EventUpdate = {
 };
 
 /**
+ * ExecutedLeg
+ */
+export type ExecutedLeg = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl?: number | string;
+    /**
+     * Fees Brl
+     */
+    fees_brl?: number | string;
+    /**
+     * Price Brl
+     */
+    price_brl: number | string;
+    /**
+     * Series Id
+     */
+    series_id: number;
+};
+
+/**
+ * ExecutedStock
+ *
+ * Ação executada na entrada: a da venda coberta ou o hedge inicial (com sinal).
+ */
+export type ExecutedStock = {
+    /**
+     * Brokerage Brl
+     */
+    brokerage_brl?: number | string;
+    /**
+     * Fees Brl
+     */
+    fees_brl?: number | string;
+    /**
+     * Price Brl
+     */
+    price_brl: number | string;
+    /**
+     * Quantity
+     */
+    quantity: number;
+};
+
+/**
  * ForecastOut
  */
 export type ForecastOut = {
@@ -1179,6 +1545,28 @@ export type GapSummary = {
      * Kind
      */
     kind: 'missing_bar' | 'r4_diverged' | 'calendar_alert' | 'cotahist_failed' | 'underlying_trades_failed' | 'options_failed';
+};
+
+/**
+ * GreeksOut
+ */
+export type GreeksOut = {
+    /**
+     * Delta Shares
+     */
+    delta_shares: number;
+    /**
+     * Gamma
+     */
+    gamma: number;
+    /**
+     * Theta Per Bd Brl
+     */
+    theta_per_bd_brl: number;
+    /**
+     * Vega Per Point Brl
+     */
+    vega_per_point_brl: number;
 };
 
 /**
@@ -1422,6 +1810,103 @@ export type IvQuality = {
 };
 
 /**
+ * LegInput
+ */
+export type LegInput = {
+    /**
+     * Manual Price At
+     *
+     * Data e hora do preço manual.
+     */
+    manual_price_at?: string | null;
+    /**
+     * Manual Price Brl
+     *
+     * Preço do momento (RF-SIM-03).
+     */
+    manual_price_brl?: number | string | null;
+    /**
+     * Series Id
+     */
+    series_id: number;
+};
+
+/**
+ * LegOut
+ */
+export type LegOut = {
+    /**
+     * Band
+     */
+    band: 'low' | 'atm' | 'high';
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Delta
+     */
+    delta: number;
+    /**
+     * Effective Strike
+     */
+    effective_strike: number;
+    /**
+     * Gamma
+     */
+    gamma: number;
+    iv: EstimatedValue;
+    /**
+     * K Over F
+     */
+    k_over_f: number;
+    /**
+     * Option Type
+     */
+    option_type: 'call' | 'put';
+    /**
+     * Price At
+     */
+    price_at: string | null;
+    /**
+     * Price Brl
+     */
+    price_brl: string;
+    /**
+     * Price Origin
+     */
+    price_origin: 'observed' | 'estimated' | 'manual';
+    /**
+     * Quantity Per Lot
+     *
+     * Opções por lote, com sinal (− vendida).
+     */
+    quantity_per_lot: number;
+    /**
+     * Series Id
+     */
+    series_id: number;
+    /**
+     * Spread Conservative
+     *
+     * Spread relativo da faixa (estimativa).
+     */
+    spread_conservative: number | null;
+    /**
+     * Strike
+     */
+    strike: number;
+    /**
+     * Theta Per Bd
+     */
+    theta_per_bd: number;
+    /**
+     * Vega Per Point
+     */
+    vega_per_point: number;
+};
+
+/**
  * LiquidityFilter
  *
  * Série elegível para a coleta intradiária e para a IV (QA-06, RN-VOL-04).
@@ -1518,6 +2003,28 @@ export type LiquidityOut = {
 };
 
 /**
+ * ManualInputOut
+ */
+export type ManualInputOut = {
+    /**
+     * Instrument
+     */
+    instrument: string;
+    /**
+     * Kind
+     */
+    kind: 'spot' | 'option_price' | 'margin';
+    /**
+     * Observed At
+     */
+    observed_at: string;
+    /**
+     * Value Brl
+     */
+    value_brl: string;
+};
+
+/**
  * ModelSelectionIn
  */
 export type ModelSelectionIn = {
@@ -1603,6 +2110,278 @@ export type ModelState = {
      * Janela dos estimadores combinados.
      */
     window_bd?: number | null;
+};
+
+/**
+ * PayoffCurve
+ */
+export type PayoffCurve = {
+    /**
+     * Day
+     */
+    day: string;
+    /**
+     * Label
+     */
+    label: string;
+    /**
+     * Pnl Brl
+     *
+     * P&L por lote, sem hedge nem custos.
+     */
+    pnl_brl: Array<number>;
+    /**
+     * Step Bd
+     */
+    step_bd: number;
+};
+
+/**
+ * PayoffOut
+ */
+export type PayoffOut = {
+    /**
+     * Curves
+     */
+    curves: Array<PayoffCurve>;
+    /**
+     * Spots
+     */
+    spots: Array<number>;
+};
+
+/**
+ * PercentileOut
+ */
+export type PercentileOut = {
+    /**
+     * Percentile
+     */
+    percentile: number;
+    /**
+     * Pnl Brl
+     */
+    pnl_brl: string;
+};
+
+/**
+ * PositionCreate
+ *
+ * Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,
+ * simulação e dimensionamento; o cliente não impõe números calculados (PRD §7).
+ */
+export type PositionCreate = {
+    /**
+     * Base Config Version Id
+     *
+     * 409 se não for mais a vigente.
+     */
+    base_config_version_id: number;
+    /**
+     * Capital Brl
+     *
+     * Capital alocado para opções (RN-SIZ-01); sem ele vale o da configuração.
+     */
+    capital_brl?: number | string | null;
+    /**
+     * Executed At
+     */
+    executed_at: string;
+    /**
+     * Executed Legs
+     */
+    executed_legs: Array<ExecutedLeg>;
+    /**
+     * Legs
+     */
+    legs: Array<LegInput>;
+    /**
+     * Lots
+     *
+     * Lotes para os Greeks da posição.
+     */
+    lots?: number;
+    /**
+     * Manual Spot At
+     */
+    manual_spot_at?: string | null;
+    /**
+     * Manual Spot Brl
+     *
+     * Preço manual do ativo-objeto.
+     */
+    manual_spot_brl?: number | string | null;
+    /**
+     * Margin At
+     */
+    margin_at?: string | null;
+    /**
+     * Margin Per Lot Brl
+     *
+     * Margem manual (RN-SIZ-06).
+     */
+    margin_per_lot_brl?: number | string | null;
+    /**
+     * Note
+     */
+    note?: string | null;
+    /**
+     * Override Reason
+     *
+     * Obrigatório fora de "edge líquido" na direção da estrutura ou acima do tamanho sugerido.
+     */
+    override_reason?: string | null;
+    stock?: ExecutedStock | null;
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * PositionOut
+ */
+export type PositionOut = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Decision Snapshot
+     */
+    decision_snapshot: {
+        [key: string]: unknown;
+    };
+    /**
+     * Direction
+     */
+    direction: 'sell' | 'buy';
+    /**
+     * Edge State
+     */
+    edge_state: 'edge' | 'inconclusive' | 'no_edge';
+    /**
+     * Engine Version
+     */
+    engine_version: string;
+    /**
+     * Entries
+     */
+    entries: Array<EntryOut>;
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Lots
+     */
+    lots: number;
+    /**
+     * Manual Inputs
+     */
+    manual_inputs: Array<ManualInputOut>;
+    /**
+     * Model
+     */
+    model: string;
+    /**
+     * Note
+     */
+    note: string | null;
+    /**
+     * Overridden
+     */
+    overridden: boolean;
+    /**
+     * Override Reason
+     */
+    override_reason: string | null;
+    /**
+     * Status
+     *
+     * Lançamentos de saída na Etapa 7.
+     */
+    status?: 'open';
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * PositionSummary
+ */
+export type PositionSummary = {
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Direction
+     */
+    direction: 'sell' | 'buy';
+    /**
+     * Edge State
+     */
+    edge_state: 'edge' | 'inconclusive' | 'no_edge';
+    /**
+     * Expiry
+     */
+    expiry: string;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Lots
+     */
+    lots: number;
+    /**
+     * Model
+     */
+    model: string;
+    /**
+     * Overridden
+     */
+    overridden: boolean;
+    /**
+     * Status
+     *
+     * Lançamentos de saída na Etapa 7.
+     */
+    status?: 'open';
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    /**
+     * Ticker
+     */
+    ticker: string;
 };
 
 /**
@@ -2143,6 +2922,432 @@ export type SeriesResponse = {
 };
 
 /**
+ * SimulationParams
+ *
+ * Bloco `simulation` (PRD 1.9 §5.8; QA-10, QA-11 parcial). Banda de delta "não calibrada".
+ */
+export type SimulationParams = {
+    /**
+     * Delta Band
+     *
+     * Meia-largura da banda de delta, em ações por opção (QA-11).
+     */
+    delta_band?: number;
+    /**
+     * Histogram Bins
+     */
+    histogram_bins?: number;
+    /**
+     * Min Returns
+     *
+     * Retornos mínimos da amostra.
+     */
+    min_returns?: number;
+    /**
+     * Paths
+     *
+     * Caminhos do bootstrap.
+     */
+    paths?: number;
+    /**
+     * Payoff Points
+     */
+    payoff_points?: number;
+    /**
+     * Payoff Range
+     *
+     * Grade do payoff: ±fração de S.
+     */
+    payoff_range?: number;
+    /**
+     * Sample Bd
+     *
+     * Pregões da amostra de retornos.
+     */
+    sample_bd?: number;
+    /**
+     * Seed
+     *
+     * Semente (resultado determinístico).
+     */
+    seed?: number;
+};
+
+/**
+ * SimulationRequest
+ */
+export type SimulationRequest = {
+    /**
+     * Legs
+     */
+    legs: Array<LegInput>;
+    /**
+     * Lots
+     *
+     * Lotes para os Greeks da posição.
+     */
+    lots?: number;
+    /**
+     * Manual Spot At
+     */
+    manual_spot_at?: string | null;
+    /**
+     * Manual Spot Brl
+     *
+     * Preço manual do ativo-objeto.
+     */
+    manual_spot_brl?: number | string | null;
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * SimulationResponse
+ */
+export type SimulationResponse = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Ci Level
+     */
+    ci_level: number;
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    costs: CostsOut | null;
+    /**
+     * Direction
+     */
+    direction: 'sell' | 'buy';
+    /**
+     * Direction Match
+     */
+    direction_match: boolean;
+    distribution: DistributionOut;
+    /**
+     * Dynamic Hedge
+     */
+    dynamic_hedge: boolean;
+    /**
+     * Engine Version
+     */
+    engine_version: string;
+    /**
+     * Events Removed
+     */
+    events_removed: Array<number>;
+    /**
+     * Expected As Of
+     */
+    expected_as_of: string;
+    /**
+     * Expected Pnl Approx Brl
+     *
+     * Vega × (|p| − c) por lote (aproximado).
+     */
+    expected_pnl_approx_brl: string | null;
+    /**
+     * Expected Pnl Brl
+     *
+     * Média da distribuição por lote (RF-SIM-05).
+     */
+    expected_pnl_brl: string | null;
+    /**
+     * Expiry
+     */
+    expiry: string;
+    forecast: EstimatedValue;
+    greeks_lot: GreeksOut;
+    greeks_position: GreeksOut;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * IV da estrutura (ponderada pela vega), ex-evento.
+     */
+    iv: EstimatedValue;
+    iv_with_events: EstimatedValue;
+    /**
+     * Legs
+     */
+    legs: Array<LegOut>;
+    /**
+     * Lot Size
+     */
+    lot_size: number;
+    /**
+     * Lots
+     */
+    lots: number;
+    /**
+     * Model
+     */
+    model: string;
+    /**
+     * Net Premium
+     */
+    net_premium: number | null;
+    /**
+     * Net Relative Edge
+     */
+    net_relative_edge: number | null;
+    normal_spread: EstimatedValue;
+    payoff: PayoffOut;
+    premium: EstimatedValue;
+    /**
+     * Rate
+     *
+     * Selic do pregão (decimal anual exponencial).
+     */
+    rate: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    relative_edge: EstimatedValue;
+    /**
+     * Required Buy
+     */
+    required_buy: number | null;
+    /**
+     * Required Sell
+     */
+    required_sell: number | null;
+    /**
+     * Signal Direction
+     */
+    signal_direction: 'sell' | 'buy' | null;
+    /**
+     * Spot At
+     */
+    spot_at: string | null;
+    /**
+     * Spot Brl
+     */
+    spot_brl: string;
+    /**
+     * Spot Origin
+     */
+    spot_origin: 'observed' | 'manual';
+    /**
+     * State
+     */
+    state: 'edge' | 'inconclusive' | 'no_edge' | 'unavailable';
+    stock: StockOut | null;
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    threshold: EstimatedValue;
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * SizingOut
+ */
+export type SizingOut = {
+    /**
+     * Capital Brl
+     */
+    capital_brl: string | null;
+    /**
+     * Es Brl
+     */
+    es_brl: string | null;
+    /**
+     * Kelly Fraction
+     */
+    kelly_fraction: number;
+    /**
+     * Kelly Full Lots
+     */
+    kelly_full_lots: number | null;
+    /**
+     * Margin Origin
+     */
+    margin_origin?: 'manual';
+    /**
+     * Margin Per Lot Brl
+     */
+    margin_per_lot_brl: string | null;
+    /**
+     * Margin Share Of Capital
+     */
+    margin_share_of_capital: number | null;
+    /**
+     * Margin Total Brl
+     */
+    margin_total_brl: string | null;
+    /**
+     * Max Loss Brl
+     */
+    max_loss_brl: string | null;
+    /**
+     * Max Loss Fraction
+     */
+    max_loss_fraction: number;
+    /**
+     * Mu Brl
+     *
+     * P&L esperado por lote no limite inferior do edge.
+     */
+    mu_brl: string | null;
+    /**
+     * N Cap
+     */
+    n_cap: number | null;
+    /**
+     * N Final
+     */
+    n_final: number;
+    /**
+     * N Kelly
+     */
+    n_kelly: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Rule
+     */
+    rule: 'kelly' | 'cap' | 'tie' | 'zero';
+    /**
+     * Status
+     */
+    status: 'ok' | 'unavailable';
+    /**
+     * Stress
+     */
+    stress: Array<StressOut>;
+    /**
+     * Variance Brl2
+     */
+    variance_brl2: number | null;
+};
+
+/**
+ * SizingParams
+ *
+ * Bloco `sizing` (PRD 1.9 §5.8; RN-SIZ-01..06, QA-09).
+ */
+export type SizingParams = {
+    /**
+     * Capital Brl
+     *
+     * Capital alocado para opções (RN-SIZ-01); sem padrão.
+     */
+    capital_brl?: number | null;
+    /**
+     * Es Level
+     *
+     * Nível do expected shortfall (QA-09).
+     */
+    es_level?: number;
+    /**
+     * Kelly Fraction
+     *
+     * Fração de Kelly (RN-SIZ-02).
+     */
+    kelly_fraction?: number;
+    /**
+     * Lot Size
+     *
+     * Opções por lote.
+     */
+    lot_size?: number;
+    /**
+     * Max Loss Fraction
+     *
+     * Teto de perda por trade sobre o capital (RN-SIZ-03).
+     */
+    max_loss_fraction?: number;
+    /**
+     * Stress Gap
+     *
+     * Gap do ativo no stress (±).
+     */
+    stress_gap?: number;
+    /**
+     * Stress Vol Pts
+     *
+     * Choque de vol no stress (decimal).
+     */
+    stress_vol_pts?: number;
+};
+
+/**
+ * SizingRequest
+ */
+export type SizingRequest = {
+    /**
+     * Capital Brl
+     *
+     * Capital alocado para opções (RN-SIZ-01); sem ele vale o da configuração.
+     */
+    capital_brl?: number | string | null;
+    /**
+     * Legs
+     */
+    legs: Array<LegInput>;
+    /**
+     * Lots
+     *
+     * Lotes para os Greeks da posição.
+     */
+    lots?: number;
+    /**
+     * Manual Spot At
+     */
+    manual_spot_at?: string | null;
+    /**
+     * Manual Spot Brl
+     *
+     * Preço manual do ativo-objeto.
+     */
+    manual_spot_brl?: number | string | null;
+    /**
+     * Margin At
+     */
+    margin_at?: string | null;
+    /**
+     * Margin Per Lot Brl
+     *
+     * Margem manual (RN-SIZ-06).
+     */
+    margin_per_lot_brl?: number | string | null;
+    /**
+     * Structure
+     */
+    structure: 'short_straddle' | 'short_strangle' | 'covered_call' | 'long_straddle' | 'long_strangle';
+    /**
+     * Ticker
+     */
+    ticker: string;
+};
+
+/**
+ * SizingResponse
+ */
+export type SizingResponse = {
+    simulation: SimulationResponse;
+    sizing: SizingOut;
+};
+
+/**
  * SmilePointOut
  */
 export type SmilePointOut = {
@@ -2282,6 +3487,42 @@ export type SpreadsResponse = {
      * Ticker
      */
     ticker: string;
+};
+
+/**
+ * StockOut
+ */
+export type StockOut = {
+    /**
+     * Price Brl
+     */
+    price_brl: string;
+    /**
+     * Quantity Per Lot
+     */
+    quantity_per_lot: number;
+};
+
+/**
+ * StressOut
+ */
+export type StressOut = {
+    /**
+     * Loss Brl
+     */
+    loss_brl: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Spot Shock
+     */
+    spot_shock: number;
+    /**
+     * Vol Shock
+     */
+    vol_shock: number;
 };
 
 /**
@@ -3027,6 +4268,104 @@ export type PutModelSelectionResponses = {
 
 export type PutModelSelectionResponse = PutModelSelectionResponses[keyof PutModelSelectionResponses];
 
+export type ListPositionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/positions';
+};
+
+export type ListPositionsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type ListPositionsError = ListPositionsErrors[keyof ListPositionsErrors];
+
+export type ListPositionsResponses = {
+    /**
+     * Response List Positions
+     *
+     * Successful Response
+     */
+    200: Array<PositionSummary>;
+};
+
+export type ListPositionsResponse = ListPositionsResponses[keyof ListPositionsResponses];
+
+export type PostPositionData = {
+    body: PositionCreate;
+    path?: never;
+    query?: never;
+    url: '/positions';
+};
+
+export type PostPositionErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * A configuração mudou.
+     */
+    409: ProblemDetails;
+    /**
+     * Insumo inválido ou ausente (com o motivo).
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostPositionError = PostPositionErrors[keyof PostPositionErrors];
+
+export type PostPositionResponses = {
+    /**
+     * Successful Response
+     */
+    201: PositionOut;
+};
+
+export type PostPositionResponse = PostPositionResponses[keyof PostPositionResponses];
+
+export type GetPositionData = {
+    body?: never;
+    path: {
+        /**
+         * Position Id
+         */
+        position_id: number;
+    };
+    query?: never;
+    url: '/positions/{position_id}';
+};
+
+export type GetPositionErrors = {
+    /**
+     * Operação inexistente.
+     */
+    404: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetPositionError = GetPositionErrors[keyof GetPositionErrors];
+
+export type GetPositionResponses = {
+    /**
+     * Successful Response
+     */
+    200: PositionOut;
+};
+
+export type GetPositionResponse = GetPositionResponses[keyof GetPositionResponses];
+
 export type GetRankingData = {
     body?: never;
     path?: never;
@@ -3058,6 +4397,72 @@ export type GetRankingResponses = {
 };
 
 export type GetRankingResponse = GetRankingResponses[keyof GetRankingResponses];
+
+export type PostSimulationData = {
+    body: SimulationRequest;
+    path?: never;
+    query?: never;
+    url: '/simulations';
+};
+
+export type PostSimulationErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Insumo inválido ou ausente (com o motivo).
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostSimulationError = PostSimulationErrors[keyof PostSimulationErrors];
+
+export type PostSimulationResponses = {
+    /**
+     * Successful Response
+     */
+    200: SimulationResponse;
+};
+
+export type PostSimulationResponse = PostSimulationResponses[keyof PostSimulationResponses];
+
+export type PostSizingData = {
+    body: SizingRequest;
+    path?: never;
+    query?: never;
+    url: '/sizing';
+};
+
+export type PostSizingErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Insumo inválido ou ausente (com o motivo).
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PostSizingError = PostSizingErrors[keyof PostSizingErrors];
+
+export type PostSizingResponses = {
+    /**
+     * Successful Response
+     */
+    200: SizingResponse;
+};
+
+export type PostSizingResponse = PostSizingResponses[keyof PostSizingResponses];
 
 export type ListUnderlyingsData = {
     body?: never;
@@ -3152,6 +4557,51 @@ export type UpdateUnderlyingResponses = {
 };
 
 export type UpdateUnderlyingResponse = UpdateUnderlyingResponses[keyof UpdateUnderlyingResponses];
+
+export type GetChainData = {
+    body?: never;
+    path: {
+        /**
+         * Ticker
+         */
+        ticker: string;
+    };
+    query?: {
+        /**
+         * Expiry
+         *
+         * Vencimento; sem ele, o mais próximo.
+         */
+        expiry?: string | null;
+    };
+    url: '/underlyings/{ticker}/chain';
+};
+
+export type GetChainErrors = {
+    /**
+     * Ativo não cadastrado.
+     */
+    404: ProblemDetails;
+    /**
+     * Insumo inválido ou ausente (com o motivo).
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetChainError = GetChainErrors[keyof GetChainErrors];
+
+export type GetChainResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChainResponse;
+};
+
+export type GetChainResponse = GetChainResponses[keyof GetChainResponses];
 
 export type GetEventJumpsData = {
     body?: never;

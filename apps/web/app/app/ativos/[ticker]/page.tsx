@@ -26,6 +26,9 @@ export default async function AssetPage({ params }: PageProps<'/app/ativos/[tick
           <Link href="/app/ativos">Ativos</Link> /
         </p>
         <h1 className={styles.title}>{ticker}</h1>
+        <p className={styles.subtitle}>
+          <Link href={`/app/simulador?ticker=${ticker}`}>Simular estrutura em {ticker}</Link>
+        </p>
       </header>
       <AssetView ticker={ticker} />
     </>

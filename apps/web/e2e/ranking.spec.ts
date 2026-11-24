@@ -1,4 +1,5 @@
-import { expect, test, type APIRequestContext } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { ensureForecasts } from './helpers';
 
 /**
  * Etapa 5: ranking e configuração versionada (PRD 1.8 §8.1 e §10.2; RF-RNK-01/02, RN-EDG-03..07), contra
@@ -7,21 +8,6 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
  * Fixtures: só PETR4 tem IV (fallback da ATM de 18/12, "aproximado"); a combinação é o único modelo com
  * avaliação suficiente; spread normal e limiar não calibrados.
  */
-async function ensureForecasts(request: APIRequestContext): Promise<void> {
-  const deadline = Date.now() + 180_000;
-  for (;;) {
-    const pending = await (await request.get('/api/engine/collection/pending')).json();
-    const res = await request.get('/api/engine/forecasts?underlying=PETR4');
-    const ready = res.ok() && (await res.json()).items.length > 0;
-    if (ready && !pending.active_run) return;
-    if (!pending.active_run && !pending.last_run) {
-      await request.post('/api/engine/collection/runs');
-    }
-    if (Date.now() > deadline) throw new Error('A previsão não ficou pronta a tempo.');
-    await new Promise((r) => setTimeout(r, 2_000));
-  }
-}
-
 async function saveThreshold(page: import('@playwright/test').Page, points: string, note: string): Promise<void> {
   await page.goto('/app/configuracoes');
   await expect(page.getByRole('heading', { level: 1, name: 'Configurações' })).toBeVisible();

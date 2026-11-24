@@ -24,9 +24,10 @@ import {
   formatSmallRate,
   formatVolPoints,
 } from '@/lib/format';
-import { NOT_CALIBRATED_HELP, SPREAD_ESTIMATE_HELP, STATE_HELP, stateText } from '@/lib/edge/labels';
+import { NOT_CALIBRATED_HELP, SPREAD_ESTIMATE_HELP } from '@/lib/edge/labels';
 import { MODEL_LABEL } from '@/lib/forecast/labels';
 import { EVENT_KIND_LABEL } from '@/lib/vol/labels';
+import StateBadge from '../edge/StateBadge';
 import EstimatedValueView from '../vol/EstimatedValueView';
 import styles from '../vol/vol.module.css';
 import local from './ranking.module.css';
@@ -42,14 +43,6 @@ function NotCalibrated({ value }: { value: EstimatedValue }) {
   return (
     <span className={styles.tag} title={NOT_CALIBRATED_HELP}>
       não calibrado
-    </span>
-  );
-}
-
-export function StateBadge({ row }: { row: Pick<RankingRow, 'state' | 'direction' | 'reason'> }) {
-  return (
-    <span className={local.badge} data-state={row.state} title={row.reason ?? STATE_HELP[row.state]}>
-      {stateText(row)}
     </span>
   );
 }
@@ -309,6 +302,11 @@ export function RowDetails({ row }: { row: RankingRow }) {
   const c = row.costs;
   return (
     <div className={local.details}>
+      <p>
+        <Link className={styles.link} href={`/app/simulador?ticker=${row.ticker}`}>
+          Simular estrutura em {row.ticker}
+        </Link>
+      </p>
       {row.reason && (
         <p className={row.state === 'unavailable' ? styles.warn : styles.muted}>
           <strong>Motivo:</strong> {row.reason}

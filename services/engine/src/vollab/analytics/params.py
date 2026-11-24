@@ -200,3 +200,48 @@ def cost_params_from_config(version: ConfigVersion) -> CostParams:
 
 def edge_params_from_config(version: ConfigVersion) -> EdgeParams:
     return EdgeParams.model_validate(dict(version.params.get("edge", {})))
+
+
+class SimulationParams(BaseModel):
+    """Bloco `simulation` (PRD 1.9 §5.8; QA-10, QA-11 parcial). Banda de delta "não calibrada"."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    paths: int = Field(default=10_000, ge=1_000, le=50_000, description="Caminhos do bootstrap.")
+    seed: int = Field(default=20261123, ge=0, le=2**31 - 1, description="Semente (resultado determinístico).")
+    sample_bd: int = Field(default=252, ge=60, le=1260, description="Pregões da amostra de retornos.")
+    min_returns: int = Field(default=120, ge=30, le=1260, description="Retornos mínimos da amostra.")
+    delta_band: float = Field(
+        default=0.10, ge=0, le=1, description="Meia-largura da banda de delta, em ações por opção (QA-11)."
+    )
+    histogram_bins: int = Field(default=50, ge=10, le=200)
+    payoff_range: float = Field(default=0.30, gt=0, le=1, description="Grade do payoff: ±fração de S.")
+    payoff_points: int = Field(default=61, ge=11, le=401)
+
+
+class SizingParams(BaseModel):
+    """Bloco `sizing` (PRD 1.9 §5.8; RN-SIZ-01..06, QA-09)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    capital_brl: float | None = Field(
+        default=None, gt=0, le=1e12, description="Capital alocado para opções (RN-SIZ-01); sem padrão."
+    )
+    kelly_fraction: float = Field(default=0.25, gt=0, le=1, description="Fração de Kelly (RN-SIZ-02).")
+    max_loss_fraction: float = Field(
+        default=0.07, gt=0, le=1, description="Teto de perda por trade sobre o capital (RN-SIZ-03)."
+    )
+    es_level: float = Field(
+        default=0.99, ge=0.9, le=0.999, description="Nível do expected shortfall (QA-09)."
+    )
+    stress_gap: float = Field(default=0.10, gt=0, le=0.5, description="Gap do ativo no stress (±).")
+    stress_vol_pts: float = Field(default=0.10, gt=0, le=1, description="Choque de vol no stress (decimal).")
+    lot_size: int = Field(default=100, ge=1, le=100_000, description="Opções por lote.")
+
+
+def simulation_params_from_config(version: ConfigVersion) -> SimulationParams:
+    return SimulationParams.model_validate(dict(version.params.get("simulation", {})))
+
+
+def sizing_params_from_config(version: ConfigVersion) -> SizingParams:
+    return SizingParams.model_validate(dict(version.params.get("sizing", {})))

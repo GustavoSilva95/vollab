@@ -282,6 +282,58 @@ export function toPlainInput(value: number): string {
   return String(roundDecimal(value)).replace('.', ',');
 }
 
+const MONEY_INPUT = /^\d{1,12}([.,]\d{1,6})?$/;
+
+/**
+ * Dinheiro digitado ("1,80", "R$ 42,67", "100000") → decimal exato em texto para a API ("1.80").
+ * Sem separador de milhar; sem passar por float. Inválido ou não positivo → null.
+ */
+export function parseMoneyInput(raw: string): string | null {
+  const text = raw.replace(/^\s*R\$\s*/, '').trim();
+  if (!MONEY_INPUT.test(text)) return null;
+  const normalized = text.replace(',', '.');
+  return /^0+(\.0+)?$/.test(normalized) ? null : normalized;
+}
+
+/** Decimal da API ("1.80") → texto de formulário ("1,80"). */
+export function toMoneyInput(value: string): string {
+  if (!DECIMAL_STRING.test(value)) throw new RangeError(`toMoneyInput: "${value}" não é um decimal válido.`);
+  return value.replace('.', ',');
+}
+
+const LOCAL_DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+/** Agora no fuso da B3, no formato do `<input type="datetime-local">` ("2026-11-19T17:30"). */
+export function nowMarketInput(now: Date = new Date()): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: MARKET_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map((p) => [p.type, p.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+/**
+ * Data e hora digitadas no fuso da B3 → ISO com offset (America/Sao_Paulo é UTC−3 sem horário de
+ * verão desde 2019). Inválido → null.
+ */
+export function marketInputToIso(local: string): string | null {
+  return LOCAL_DATETIME.test(local) ? `${local}:00-03:00` : null;
+}
+
+/** Eixos em BRL nos gráficos (payoff e distribuição de P&L). */
+export const CHART_MONEY_TICKPREFIX = 'R$ ';
+export const CHART_MONEY_TICKFORMAT = ',.0f';
+export const CHART_MONEY_HOVERFORMAT = ',.2f';
+
 /**
  * Formatação dentro dos gráficos (Plotly usa d3-format): separadores do pt-BR e eixos de vol em
  * decimal exibidos como percentual. Ficam aqui para que nenhum componente formate por conta própria.

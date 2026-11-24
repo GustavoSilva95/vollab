@@ -7,6 +7,7 @@ from vollab.db.models.events import Event
 from vollab.db.models.forecast import ForecastEvaluation, ForecastEvaluationPoint, RvForecast
 from vollab.db.models.job import Job, JobStatus
 from vollab.db.models.market import DailyBar, OptionDailyStat, RawFile, trades
+from vollab.db.models.positions import ManualInput, Position, PositionEntry
 from vollab.db.models.reference import (
     CorporateAction,
     ExchangeHoliday,
@@ -44,10 +45,13 @@ __all__ = [
     "IntradaySession",
     "Job",
     "JobStatus",
+    "ManualInput",
     "OptionDailyQuote",
     "OptionDailyStat",
     "OptionSeries",
     "OptionSpreadEstimate",
+    "Position",
+    "PositionEntry",
     "RawFile",
     "RealizedVol",
     "RiskFreeRate",

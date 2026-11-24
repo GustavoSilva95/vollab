@@ -62,9 +62,20 @@ def migrated_engine(database_url: str) -> Iterator[Engine]:
     engine.dispose()
 
 
+@pytest.fixture(scope="session")
+def app_engine(migrated_engine: Engine, database_url: str) -> Iterator[Engine]:
+    """Conexões como o papel da aplicação (`vollab_app`, migration 0007): os testes exercitam o código
+    com os mesmos privilégios da API e do worker."""
+    from vollab.db.session import APP_ROLE, make_engine
+
+    engine = make_engine(database_url, role=APP_ROLE)
+    yield engine
+    engine.dispose()
+
+
 @pytest.fixture
-def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
-    yield sessionmaker(bind=migrated_engine, expire_on_commit=False)
+def make_session(migrated_engine: Engine, app_engine: Engine) -> Iterator[sessionmaker[Session]]:
+    yield sessionmaker(bind=app_engine, expire_on_commit=False)
     # config_versions é imutável (inclusive contra TRUNCATE). Só a limpeza de testes desliga os
     # triggers, com session_replication_role = replica (exige superusuário, como no compose e no CI).
     with migrated_engine.begin() as conn:
@@ -74,13 +85,22 @@ def make_session(migrated_engine: Engine) -> Iterator[sessionmaker[Session]]:
                 "TRUNCATE jobs, config_versions, collection_items, collection_runs, trades, daily_bars, "
                 "option_daily_stats, series_adjustments, option_series, risk_free_rates, corporate_actions, "
                 "raw_files, intraday_bars, intraday_sessions, realized_vols, implied_vols, "
-                "option_daily_quotes, atm_term_structure, constant_maturity_vols, events "
+                "option_daily_quotes, atm_term_structure, constant_maturity_vols, events, rv_forecasts, "
+                "forecast_evaluations, forecast_evaluation_points, option_spread_estimates, positions, "
+                "position_entries, manual_inputs "
                 "RESTART IDENTITY CASCADE"
             )
         )
         # Universo inicial semeado pela migration 0003: volta ao estado original.
         conn.execute(text("DELETE FROM underlyings WHERE ticker NOT IN ('BOVA11', 'BBAS3', 'PETR4')"))
         conn.execute(text("UPDATE underlyings SET active = true"))
+
+
+@pytest.fixture
+def owner_session(migrated_engine: Engine, make_session: sessionmaker[Session]) -> Iterator[Session]:
+    """Sessão como o dono do banco (sem SET ROLE): para testar os triggers por trás dos privilégios."""
+    with Session(migrated_engine, expire_on_commit=False) as s:
+        yield s
 
 
 @pytest.fixture

@@ -121,6 +121,17 @@ def test_tref02_iv_round_trip(
         assert math.isnan(float(res.iv))
 
 
+@pytest.mark.parametrize("call", [False, True])
+def test_tref02_regression_exact_newton_hit(call: bool) -> None:
+    """Caso achado pelo hypothesis na Etapa 6: o Newton acertava a raiz exatamente, o passo seguinte
+    virava bisseção e a IV voltava como o ponto médio do intervalo (0,50005) com status OK."""
+    s, k, t, r = 100.0, 60.0, 177 / BUSINESS_DAYS_PER_YEAR, 0.13771824977854064
+    price = float(bs_price(s, k, t, r, 1.0, call))
+    res = implied_vol(price, s, k, t, r, call)
+    assert int(res.status) == IvStatus.OK
+    assert abs(float(res.iv) - 1.0) < 1e-6
+
+
 def test_tref02_explicit_failure_without_number() -> None:
     s, k, t, r = 100.0, 90.0, 0.25, 0.10
     intrinsic = s - k * math.exp(-r * t)
