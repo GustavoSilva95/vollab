@@ -181,12 +181,10 @@ def test_collection_is_idempotent_and_reprocessing_gives_same_state(session: Ses
         .where(CollectionItem.status.in_(("ok", "empty")))
         .order_by(CollectionItem.phase, CollectionItem.id)
     )
-    session.execute(
-        text(
-            "TRUNCATE trades, daily_bars, option_daily_stats, series_adjustments, risk_free_rates, "
-            "corporate_actions"
-        )
-    )
+    # DELETE, não TRUNCATE: os testes rodam como o papel da aplicação, sem TRUNCATE (migration 0007).
+    for table in ("trades", "daily_bars", "option_daily_stats", "series_adjustments", "risk_free_rates"):
+        session.execute(text(f"DELETE FROM {table}"))  # noqa: S608 (nomes fixos)
+    session.execute(text("DELETE FROM corporate_actions"))
     session.execute(text("DELETE FROM option_series"))
     for item, raw in ok_items:
         content = cache.read(raw.relative_path, expected_sha256=raw.sha256)

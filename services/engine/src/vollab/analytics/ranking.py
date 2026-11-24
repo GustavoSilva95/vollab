@@ -212,7 +212,7 @@ class RankingComputer:
             "net_relative_edge": None,
             "net_premium": None,
             "expected_pnl_brl": None,
-            "threshold": self._threshold(as_of),
+            "threshold": self.threshold_value(as_of),
             "required_sell": None,
             "required_buy": None,
             "costs": None,
@@ -272,10 +272,10 @@ class RankingComputer:
         )
 
         # 2. Previsão do modelo escolhido.
-        forecast = self._forecast(ticker, as_of, h_used, model, approximate)
+        forecast = self.forecast_value(ticker, as_of, h_used, model, approximate)
         base["forecast"] = forecast
         # 3. Spread normal.
-        ns_value, ns_pairs = self._normal_spread(ticker, as_of)
+        ns_value, ns_pairs = self.normal_spread_value(ticker, as_of)
         base["normal_spread"], base["normal_spread_pairs"] = ns_value, ns_pairs
         if forecast.status != "ok" or forecast.value is None:
             base["reason"] = forecast.reason or "sem previsão"
@@ -327,7 +327,7 @@ class RankingComputer:
 
     # Insumos ---------------------------------------------------------------------------------
 
-    def _threshold(self, as_of: date | None) -> EstimatedValue:
+    def threshold_value(self, as_of: date | None) -> EstimatedValue:
         return self.v.make(
             self.p.edge.threshold_vol_pts,
             as_of,
@@ -336,7 +336,9 @@ class RankingComputer:
             calibrated=False,
         )
 
-    def _forecast(self, ticker: str, as_of: date, h: int, model: str, approximate: bool) -> EstimatedValue:
+    def forecast_value(
+        self, ticker: str, as_of: date, h: int, model: str, approximate: bool
+    ) -> EstimatedValue:
         s = self.session
         ev = s.get(ForecastEvaluation, (ticker, model, self.eval_h))
         min_w = self.p.forecast.min_evaluation_windows
@@ -367,7 +369,7 @@ class RankingComputer:
             ci=(ci.low, ci.high),
         )
 
-    def _normal_spread(self, ticker: str, as_of: date) -> tuple[EstimatedValue, int]:
+    def normal_spread_value(self, ticker: str, as_of: date) -> tuple[EstimatedValue, int]:
         s = self.session
         lookback = self.p.edge.normal_spread_lookback_bd
         cutoff = as_of - timedelta(days=int(lookback * 365 / BUSINESS_DAYS_PER_YEAR) + 1)
@@ -410,7 +412,7 @@ class RankingComputer:
             )
         return value, ns.n_pairs
 
-    def _spread_days(self, ticker: str, as_of: date, band: Band) -> list[BandDay]:
+    def spread_days(self, ticker: str, as_of: date, band: Band) -> list[BandDay]:
         rows = self.session.execute(
             select(
                 OptionSpreadEstimate.n_series,
@@ -433,7 +435,7 @@ class RankingComputer:
         self, ticker: str, as_of: date, h: int, iv: float, sigma: float
     ) -> tuple[CostBreakdown | None, str | None]:
         c = self.p.costs
-        atm = spread_estimate(self._spread_days(ticker, as_of, Band.ATM))
+        atm = spread_estimate(self.spread_days(ticker, as_of, Band.ATM))
         if atm is None:
             return None, (
                 f"sem estimativa de spread das opções ATM nos últimos {c.spread_lookback_bd} pregões "
@@ -444,7 +446,7 @@ class RankingComputer:
         if bar is None or rate is None:
             return None, "sem OHLC oficial ou Selic no pregão da IV"
         spot = float(bar.close)
-        und = spread_estimate(self._spread_days(ticker, as_of, Band.UNDERLYING))
+        und = spread_estimate(self.spread_days(ticker, as_of, Band.UNDERLYING))
         und_spread = und.conservative if und else c.tick_brl / spot
         rate_c = continuous_rate(rate)
         t = h / BUSINESS_DAYS_PER_YEAR

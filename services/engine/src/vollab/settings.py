@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     engine_port: int = 8000
     # Hosts aceitos no cabeçalho Host / X-Forwarded-Host (defesa contra DNS rebinding).
     allowed_hosts: list[str] = Field(default=["127.0.0.1", "localhost", "[::1]"])
+    # Papel do Postgres assumido pela API e pelo worker (migration 0007, backlog M-2 b). Vazio
+    # desliga o SET ROLE (só para depuração local; o compose e o CI usam o padrão).
+    database_role: str = "vollab_app"
     # Versão gravada no retrato da decisão (PRD §5.4): git sha do build.
     engine_version: str = "dev"
     log_level: str = "INFO"

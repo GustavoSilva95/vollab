@@ -43,8 +43,9 @@ def test_config_versions_current_is_latest(session: Session) -> None:
 
 
 @pytest.mark.parametrize("operation", ["update", "delete"])
-def test_config_versions_are_immutable(session: Session, operation: str) -> None:
-    """PRD §5.3: editar cria versão nova; o banco recusa UPDATE e DELETE."""
+def test_config_versions_are_immutable(owner_session: Session, operation: str) -> None:
+    """PRD §5.3: editar cria versão nova; o banco recusa UPDATE e DELETE (trigger, mesmo para o dono)."""
+    session = owner_session
     version = create_config_version(session, user_id=FIXED_USER_ID, params={"a": 1})
     session.commit()
     if operation == "update":
@@ -58,7 +59,8 @@ def test_config_versions_are_immutable(session: Session, operation: str) -> None
     assert stored.params == {"a": 1}
 
 
-def test_config_versions_reject_truncate(session: Session) -> None:
+def test_config_versions_reject_truncate(owner_session: Session) -> None:
+    session = owner_session
     create_config_version(session, user_id=FIXED_USER_ID, params={"a": 1})
     session.commit()
     # CASCADE: desde a Etapa 2, collection_runs referencia config_versions; o trigger ainda barra.
@@ -66,6 +68,42 @@ def test_config_versions_reject_truncate(session: Session) -> None:
         session.execute(text("TRUNCATE config_versions CASCADE"))
     session.rollback()
     assert session.scalars(select(ConfigVersion)).one().params == {"a": 1}
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "UPDATE config_versions SET note = 'x'",
+        "DELETE FROM config_versions",
+        "TRUNCATE jobs",
+        "CREATE TABLE intrusa (id int)",
+        "DELETE FROM alembic_version",
+        "UPDATE positions SET lots = 2",
+        "DELETE FROM position_entries",
+        "DELETE FROM manual_inputs",
+    ],
+)
+def test_app_role_lacks_ddl_and_mutation_of_immutable_tables(session: Session, statement: str) -> None:
+    """Backlog M-2 (b), migration 0007: o papel da aplicação não tem DDL, TRUNCATE nem UPDATE/DELETE
+    nas tabelas imutáveis (antes até de chegar ao trigger)."""
+    assert session.execute(text("SELECT current_user")).scalar() == "vollab_app"
+    with pytest.raises(DBAPIError, match=r"permission denied|permissão negada"):
+        session.execute(text(statement))
+    session.rollback()
+
+
+def test_app_role_creates_trades_partition_through_function(session: Session) -> None:
+    from datetime import date
+
+    from vollab.collection.ingest import ensure_trades_partition
+
+    ensure_trades_partition(session, date(2031, 3, 17))
+    ensure_trades_partition(session, date(2031, 3, 1))  # idempotente
+    session.commit()
+    name = session.execute(
+        text("SELECT relname FROM pg_class WHERE relname = 'trades_y2031m03' AND relispartition")
+    ).scalar()
+    assert name == "trades_y2031m03"
 
 
 def test_health_ok_with_database(api_client: TestClient) -> None:

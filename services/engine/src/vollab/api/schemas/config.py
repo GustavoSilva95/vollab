@@ -5,7 +5,14 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from vollab.analytics.params import CostParams, EdgeParams, ForecastParams, VolParams
+from vollab.analytics.params import (
+    CostParams,
+    EdgeParams,
+    ForecastParams,
+    SimulationParams,
+    SizingParams,
+    VolParams,
+)
 from vollab.collection.params import CollectionParams
 
 
@@ -19,6 +26,8 @@ class ConfigParams(BaseModel):
     forecast: ForecastParams = Field(default_factory=ForecastParams)
     costs: CostParams = Field(default_factory=CostParams)
     edge: EdgeParams = Field(default_factory=EdgeParams)
+    simulation: SimulationParams = Field(default_factory=SimulationParams)
+    sizing: SizingParams = Field(default_factory=SizingParams)
 
 
 class ConfigVersionOut(BaseModel):
