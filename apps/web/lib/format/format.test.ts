@@ -219,3 +219,24 @@ describe('Etapa 5: edge relativo, taxas e entradas de formulário (PRD 1.8)', as
     expect(f.toPlainInput(0.95)).toBe('0,95');
   });
 });
+
+describe('entradas do simulador (Etapa 6)', () => {
+  it('converte dinheiro digitado em decimal exato, sem float', async () => {
+    const { parseMoneyInput, toMoneyInput } = await import('./index');
+    expect(parseMoneyInput('1,80')).toBe('1.80');
+    expect(parseMoneyInput('R$ 42,67')).toBe('42.67');
+    expect(parseMoneyInput('100000')).toBe('100000');
+    expect(parseMoneyInput('0,1234567')).toBeNull();
+    expect(parseMoneyInput('0')).toBeNull();
+    expect(parseMoneyInput('-1')).toBeNull();
+    expect(parseMoneyInput('1.234,56')).toBeNull();
+    expect(toMoneyInput('1.80')).toBe('1,80');
+  });
+
+  it('usa o fuso da B3 para data e hora digitadas', async () => {
+    const { nowMarketInput, marketInputToIso } = await import('./index');
+    expect(nowMarketInput(new Date('2026-11-19T20:30:00Z'))).toBe('2026-11-19T17:30');
+    expect(marketInputToIso('2026-11-19T17:30')).toBe('2026-11-19T17:30:00-03:00');
+    expect(marketInputToIso('19/11/2026 17:30')).toBeNull();
+  });
+});

@@ -18,15 +18,20 @@ describe('AppNav', () => {
 
   it('telas de etapas futuras aparecem desabilitadas, sem link', () => {
     render(<AppNav />);
-    expect(screen.queryByRole('link', { name: /Simulador/ })).not.toBeInTheDocument();
-    const simulator = screen.getByText('Simulador').closest('[aria-disabled]');
-    expect(simulator).toHaveAttribute('title', 'Disponível na Etapa 6');
+    expect(screen.queryByRole('link', { name: /Carteira/ })).not.toBeInTheDocument();
+    const portfolio = screen.getByText('Carteira').closest('[aria-disabled]');
+    expect(portfolio).toHaveAttribute('title', 'Disponível na Etapa 7');
   });
 
   it('Ranking e Configurações (Etapa 5) já são links', () => {
     render(<AppNav />);
     expect(screen.getByRole('link', { name: 'Ranking' })).toHaveAttribute('href', '/app/ranking');
     expect(screen.getByRole('link', { name: 'Configurações' })).toHaveAttribute('href', '/app/configuracoes');
+  });
+
+  it('Simulador (Etapa 6) já é um link', () => {
+    render(<AppNav />);
+    expect(screen.getByRole('link', { name: 'Simulador' })).toHaveAttribute('href', '/app/simulador');
   });
 
   it('Coleta (Etapa 2) já é um link', () => {

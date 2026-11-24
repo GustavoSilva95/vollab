@@ -309,6 +309,11 @@ export function RowDetails({ row }: { row: RankingRow }) {
   const c = row.costs;
   return (
     <div className={local.details}>
+      <p>
+        <Link className={styles.link} href={`/app/simulador?ticker=${row.ticker}`}>
+          Simular estrutura em {row.ticker}
+        </Link>
+      </p>
       {row.reason && (
         <p className={row.state === 'unavailable' ? styles.warn : styles.muted}>
           <strong>Motivo:</strong> {row.reason}
