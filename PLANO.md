@@ -110,7 +110,7 @@ Situação atual: [STATUS.md](STATUS.md).
 **Entregáveis:** simulação das 3 estruturas com séries reais e preços manuais; distribuição de P&L por bootstrap com a regra de hedge (QA-10); P&L esperado líquido; Kelly fracionado e teto (QA-09); registro da entrada com retrato da decisão.
 *(BRD 1.6 / PRD 1.9, aprovados em 2026-11-23)* 5 estruturas (as 3 vendidas + straddle e strangle comprados); bootstrap reescalado para σ̂ com banda de delta; perda máxima = maior entre ES 99% e stress; `positions`, `position_entries` (entrada) e `manual_inputs` imutáveis; papéis do Postgres separados (backlog M-2 b); tela `/app/simulador`.
 **Gate de início:** ✅ BRD 1.6 e PRD 1.9 aprovados pelo usuário (2026-11-23).
-**Gate:** implementada em 2026-11-23 (branch `etapa-6-simulador-dimensionamento`); T-REF-07 passando; Playwright fluxo 2 passando; CS-01 por construção (entrada sem semáforo recusada com 422); 10.000 caminhos em ~0,1 s (~1 s no pior vencimento). CI verde nos 6 jobs (runs 45309490121 e 45311502461); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos). Aguarda aprovação do fechamento.
+**Gate:** implementada em 2026-11-23 (branch `etapa-6-simulador-dimensionamento`); T-REF-07 passando; Playwright fluxo 2 passando; CS-01 por construção (entrada sem semáforo recusada com 422); 10.000 caminhos em ~0,1 s (~1 s no pior vencimento). CI verde nos 6 jobs (runs 45309490121 e 45311502461); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos). ✅ **Concluída em 2026-11-23** (fechamento aprovado pelo usuário; mesclada na `main`).
 **Critérios de saída:** T-REF-07; Playwright, fluxo 2; CS-01 garantido por construção (não existe entrada sem semáforo).
 **Revisões:** performance (10.000 caminhos em < 3 s).
 

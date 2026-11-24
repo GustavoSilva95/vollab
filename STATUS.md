@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) aprovados; **implementada**; CI verde no GitHub nos 6 jobs (runs 45309490121 e, com as correções, 45311502461; PR #7); revisão de performance sem bloqueantes (I-1, I-2 e M-2 corrigidos); testes locais: engine 297, web 95, Playwright 8; aguarda aprovação do fechamento
+**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **concluída (2026-11-23)**: CI verde, revisão de performance sem bloqueantes, fechamento aprovado pelo usuário; mesclada na `main` (PR #7)
 **Etapa anterior:** Etapa 5 concluída e aprovada (2026-11-23), mesclada na `main`
 
 ## Aprovações
@@ -26,6 +26,7 @@
 | BRD 1.5 (semáforo nas duas direções, QA-14, QA-11 parcial) / PRD 1.8 (§5.6.1 métodos da Etapa 5, `option_spread_estimates`, `/ranking`, `/config`, telas e testes) | 1.5 / 1.8 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 5 (testes do semáforo nos três estados e nos limites, rótulos "não calibrado", revisão de performance sem bloqueantes, PRD 1.8.1) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45290076552 e 45291444806) | 2026-11-23 |
 | BRD 1.6 / PRD 1.9 (§5.8: simulador e dimensionamento; QA-09, QA-10, QA-11 parcial; estruturas compradas) | 1.6 / 1.9 | Aprovado | 2026-11-23 |
+| Fechamento da Etapa 6 (T-REF-07, fluxo 2, CS-01 por construção, revisão de performance sem bloqueantes com I-1/I-2/M-2 corrigidos) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45309490121 e 45311502461, PR #7) | 2026-11-23 |
 
 ## Feito
 
@@ -194,5 +195,5 @@
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
 5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
-8. **Etapa 6:** implementada na branch `etapa-6-simulador-dimensionamento`. Falta: push e CI no GitHub, revisão de performance (meta cumprida nas medições locais), aprovação do fechamento pelo usuário e o merge. Depois: Etapa 7 (diário, carteira e risco; QA-12).
+8. **Etapa 6:** concluída e mesclada na `main` (PR #7). Próxima: Etapa 7 (diário, carteira e risco; QA-12 e o cenário de crise no teto), quando o usuário pedir.
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.
