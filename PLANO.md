@@ -108,8 +108,8 @@ Situação atual: [STATUS.md](STATUS.md).
 ## Etapa 6 — Simulador e dimensionamento
 
 **Entregáveis:** simulação das 3 estruturas com séries reais e preços manuais; distribuição de P&L por bootstrap com a regra de hedge (QA-10); P&L esperado líquido; Kelly fracionado e teto (QA-09); registro da entrada com retrato da decisão.
-*(BRD 1.6 / PRD 1.9, proposta)* 5 estruturas (as 3 vendidas + straddle e strangle comprados); bootstrap reescalado para σ̂ com banda de delta; perda máxima = maior entre ES 99% e stress; `positions`, `position_entries` (entrada) e `manual_inputs` imutáveis; papéis do Postgres separados (backlog M-2 b); tela `/app/simulador`.
-**Gate de início:** BRD 1.6 e PRD 1.9 aprovados pelo usuário.
+*(BRD 1.6 / PRD 1.9, aprovados em 2026-11-23)* 5 estruturas (as 3 vendidas + straddle e strangle comprados); bootstrap reescalado para σ̂ com banda de delta; perda máxima = maior entre ES 99% e stress; `positions`, `position_entries` (entrada) e `manual_inputs` imutáveis; papéis do Postgres separados (backlog M-2 b); tela `/app/simulador`.
+**Gate de início:** ✅ BRD 1.6 e PRD 1.9 aprovados pelo usuário (2026-11-23).
 **Critérios de saída:** T-REF-07; Playwright, fluxo 2; CS-01 garantido por construção (não existe entrada sem semáforo).
 **Revisões:** performance (10.000 caminhos em < 3 s).
 

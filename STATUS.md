@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-23
-**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; proposta BRD 1.6 / PRD 1.9 (§5.8) **aguardando aprovação**, sem código ainda
+**Etapa atual:** Etapa 6 — Simulador e dimensionamento: **iniciada (2026-11-23)**, branch `etapa-6-simulador-dimensionamento`; BRD 1.6 / PRD 1.9 (§5.8) **aprovados**; implementação em andamento
 **Etapa anterior:** Etapa 5 concluída e aprovada (2026-11-23), mesclada na `main`
 
 ## Aprovações
@@ -24,6 +24,7 @@
 | PRD 1.7: métodos de previsão e avaliação (§5.7), QA-07 e QA-08 | 1.7 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 4 (T-REF-09, revisão de performance sem bloqueantes; merge direto na `main` sem PR) | — | Aprovado pelo usuário; CI verde nos 6 jobs (run 45271823943) | 2026-11-23 |
 | BRD 1.5 (semáforo nas duas direções, QA-14, QA-11 parcial) / PRD 1.8 (§5.6.1 métodos da Etapa 5, `option_spread_estimates`, `/ranking`, `/config`, telas e testes) | 1.5 / 1.8 | Aprovado | 2026-11-23 |
+| BRD 1.6 / PRD 1.9 (§5.8: simulador e dimensionamento; QA-09, QA-10, QA-11 parcial; estruturas compradas) | 1.6 / 1.9 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 5 (testes do semáforo nos três estados e nos limites, rótulos "não calibrado", revisão de performance sem bloqueantes, PRD 1.8.1) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45290076552 e 45291444806) | 2026-11-23 |
 
 ## Feito
@@ -142,7 +143,7 @@
 | 2026-11-23 | Ranking com compra inviável (hedge de Leland consome tudo, a ≥ 1) e venda sem pagar custos = **sem edge** (nenhuma direção paga); edge relativo líquido de compra fica nulo | PRD 1.8 §5.6.1 |
 | 2026-11-23 | TanStack Table adotado no ranking (`@tanstack/react-table` 8.21); componente fora do React Compiler (`'use no memo'`) por incompatibilidade conhecida | PRD §3.1 |
 | 2026-11-23 | Taxas da B3 padrão (0,134% opções, 0,03% ações) **mantidas por enquanto** (decisão do usuário), rotuladas "a conferir" | PRD 1.8.1 §5.6.1 |
-| 2026-11-23 | **Etapa 6 — decisões do usuário (proposta BRD 1.6 / PRD 1.9):** QA-10 = bootstrap dos retornos diários reais do último ano, com média zero e reescalados para σ̂; QA-09 = perda máxima pela maior entre ES 99% da simulação e a pior perda nos stresses simples (gap ±10%, +10 pts, queda + alta de vol); straddle e strangle **comprados** entram no simulador; QA-11 parcial: **banda de delta** (0,10 por opção, não calibrada) como regra de hedge da simulação, com ajuste até a borda | BRD 1.6, PRD 1.9 §5.8 |
+| 2026-11-23 | **Etapa 6 — decisões do usuário (BRD 1.6 / PRD 1.9, aprovados):** QA-10 = bootstrap dos retornos diários reais do último ano, com média zero e reescalados para σ̂; QA-09 = perda máxima pela maior entre ES 99% da simulação e a pior perda nos stresses simples (gap ±10%, +10 pts, queda + alta de vol); straddle e strangle **comprados** entram no simulador; QA-11 parcial: **banda de delta** (0,10 por opção, não calibrada) como regra de hedge da simulação, com ajuste até a borda | BRD 1.6, PRD 1.9 §5.8 |
 | 2026-11-22 | **Universo inicial: BOVA11, BBAS3, PETR4** (configuração; BRD permite até 10). Carga inicial ≈ 18,0 mil req (~5,0 h, com ≥ 20 negócios); diária ≈ 285 req (~5 min) | PRD-NF-04 |
 
 ## Bloqueios e riscos ativos
@@ -178,5 +179,5 @@
 4. Depois da primeira carga real: conferir a cobertura intradiária (≥ 80%) e a fração de pares descartados pela janela de 10 s nos 3 ativos.
 5. Etapa 4 mesclada na `main` (d91b899); CI verde nos 6 jobs (run 45271823943).
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
-8. **Etapa 6:** aprovar BRD 1.6 e PRD 1.9 (§5.8); depois implementar na branch `etapa-6-simulador-dimensionamento`.
+8. **Etapa 6:** BRD 1.6 e PRD 1.9 aprovados (2026-11-23); implementação na branch `etapa-6-simulador-dimensionamento`.
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.
