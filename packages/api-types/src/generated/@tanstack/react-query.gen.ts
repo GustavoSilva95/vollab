@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getChain, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getEventJumps, getForecasts, getHealth, getModelsEvaluation, getModelsEvaluationPoints, getPosition, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listPositions, listUnderlyings, type Options, postConfig, postPosition, postSimulation, postSizing, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
-import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetChainData, GetChainError, GetChainResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPositionData, GetPositionError, GetPositionResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListPositionsData, ListPositionsError, ListPositionsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PostPositionData, PostPositionError, PostPositionResponse, PostSimulationData, PostSimulationError, PostSimulationResponse, PostSizingData, PostSizingError, PostSizingResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
+import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getChain, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getCrisis, getEventJumps, getForecasts, getHealth, getLimits, getModelsEvaluation, getModelsEvaluationPoints, getPortfolio, getPosition, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listPositions, listUnderlyings, type Options, postConfig, postCrisisMeasure, postEntry, postPosition, postSimulation, postSizing, postStress, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
+import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetChainData, GetChainError, GetChainResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetCrisisData, GetCrisisError, GetCrisisResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetLimitsData, GetLimitsError, GetLimitsResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPortfolioData, GetPortfolioError, GetPortfolioResponse, GetPositionData, GetPositionError, GetPositionResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListPositionsData, ListPositionsError, ListPositionsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PostCrisisMeasureData, PostCrisisMeasureError, PostCrisisMeasureResponse, PostEntryData, PostEntryError, PostEntryResponse, PostPositionData, PostPositionError, PostPositionResponse, PostSimulationData, PostSimulationError, PostSimulationResponse, PostSizingData, PostSizingError, PostSizingResponse, PostStressData, PostStressError, PostStressResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -398,10 +398,63 @@ export const putModelSelectionMutation = (options?: Partial<Options<PutModelSele
     return mutationOptions;
 };
 
+export const getPortfolioQueryKey = (options?: Options<GetPortfolioData>) => createQueryKey('getPortfolio', options);
+
+/**
+ * Greeks agregados e exposição por vencimento
+ */
+export const getPortfolioOptions = (options?: Options<GetPortfolioData>) => queryOptions<GetPortfolioResponse, GetPortfolioError, GetPortfolioResponse, ReturnType<typeof getPortfolioQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getPortfolio({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getPortfolioQueryKey(options)
+});
+
+export const getLimitsQueryKey = (options?: Options<GetLimitsData>) => createQueryKey('getLimits', options);
+
+/**
+ * Stresses padrão e de crise e limites
+ */
+export const getLimitsOptions = (options?: Options<GetLimitsData>) => queryOptions<GetLimitsResponse, GetLimitsError, GetLimitsResponse, ReturnType<typeof getLimitsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getLimits({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getLimitsQueryKey(options)
+});
+
+/**
+ * Stress avulso da carteira (não grava)
+ */
+export const postStressMutation = (options?: Partial<Options<PostStressData>>): UseMutationOptions<PostStressResponse, PostStressError, Options<PostStressData>> => {
+    const mutationOptions: UseMutationOptions<PostStressResponse, PostStressError, Options<PostStressData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postStress({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
 export const listPositionsQueryKey = (options?: Options<ListPositionsData>) => createQueryKey('listPositions', options);
 
 /**
- * Operações registradas
+ * Operações registradas (diário)
  */
 export const listPositionsOptions = (options?: Options<ListPositionsData>) => queryOptions<ListPositionsResponse, ListPositionsError, ListPositionsResponse, ReturnType<typeof listPositionsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -436,7 +489,7 @@ export const postPositionMutation = (options?: Partial<Options<PostPositionData>
 export const getPositionQueryKey = (options: Options<GetPositionData>) => createQueryKey('getPosition', options);
 
 /**
- * Uma operação, com o retrato da decisão
+ * Uma operação: retrato, lançamentos, marcações D-1 e atribuição
  */
 export const getPositionOptions = (options: Options<GetPositionData>) => queryOptions<GetPositionResponse, GetPositionError, GetPositionResponse, ReturnType<typeof getPositionQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
@@ -450,6 +503,23 @@ export const getPositionOptions = (options: Options<GetPositionData>) => queryOp
     },
     queryKey: getPositionQueryKey(options)
 });
+
+/**
+ * Lançar hedge, saída, exercício, designação, ajuste de strike ou estorno
+ */
+export const postEntryMutation = (options?: Partial<Options<PostEntryData>>): UseMutationOptions<PostEntryResponse, PostEntryError, Options<PostEntryData>> => {
+    const mutationOptions: UseMutationOptions<PostEntryResponse, PostEntryError, Options<PostEntryData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postEntry({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 export const getRankingQueryKey = (options?: Options<GetRankingData>) => createQueryKey('getRanking', options);
 
@@ -468,6 +538,41 @@ export const getRankingOptions = (options?: Options<GetRankingData>) => queryOpt
     },
     queryKey: getRankingQueryKey(options)
 });
+
+export const getCrisisQueryKey = (options?: Options<GetCrisisData>) => createQueryKey('getCrisis', options);
+
+/**
+ * Choques dos cenários de crise (QA-12)
+ */
+export const getCrisisOptions = (options?: Options<GetCrisisData>) => queryOptions<GetCrisisResponse, GetCrisisError, GetCrisisResponse, ReturnType<typeof getCrisisQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getCrisis({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getCrisisQueryKey(options)
+});
+
+/**
+ * Medir os cenários de crise (enfileira o download dos COTAHIST anuais)
+ */
+export const postCrisisMeasureMutation = (options?: Partial<Options<PostCrisisMeasureData>>): UseMutationOptions<PostCrisisMeasureResponse, PostCrisisMeasureError, Options<PostCrisisMeasureData>> => {
+    const mutationOptions: UseMutationOptions<PostCrisisMeasureResponse, PostCrisisMeasureError, Options<PostCrisisMeasureData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postCrisisMeasure({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
 
 /**
  * Simular uma estrutura (não grava nada)

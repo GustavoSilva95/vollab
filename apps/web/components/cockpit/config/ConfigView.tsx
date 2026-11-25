@@ -9,7 +9,9 @@ import {
   getConfigOptions,
   getConfigVersionOptions,
   listConfigVersionsOptions,
+  getCrisisOptions,
   postConfigMutation,
+  postCrisisMeasureMutation,
 } from '@vollab/api-types/react-query';
 import {
   BLOCK_LABEL,
@@ -22,10 +24,12 @@ import {
   type ConfigFormValues,
   type FieldName,
 } from '@/lib/config/form';
-import { formatDateTime, formatNumber } from '@/lib/format';
+import { formatDate, formatDateTime, formatNumber, formatReturn, formatVolShock } from '@/lib/format';
+import { NOT_CALIBRATED_HELP } from '@/lib/edge/labels';
+import { CRISIS_HELP } from '@/lib/journal/labels';
 import styles from '../vol/vol.module.css';
 
-const BLOCKS = ['costs', 'edge', 'vol', 'forecast'] as const;
+const BLOCKS = ['costs', 'edge', 'vol', 'forecast', 'risk', 'journal'] as const;
 
 function problemMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'detail' in error && typeof error.detail === 'string') {
@@ -37,7 +41,17 @@ function problemMessage(error: unknown): string {
 /** Consultas que dependem da configuração (ranking, previsão, modelos) e o histórico de versões. */
 function dependsOnConfig(key: readonly unknown[]): boolean {
   const id = (key[0] as { _id?: string } | undefined)?._id ?? '';
-  return ['getConfig', 'listConfigVersions', 'getRanking', 'getForecasts', 'getModelsEvaluation'].includes(id);
+  return [
+    'getConfig',
+    'listConfigVersions',
+    'getRanking',
+    'getForecasts',
+    'getModelsEvaluation',
+    'getPortfolio',
+    'getLimits',
+    'getCrisis',
+    'getPosition',
+  ].includes(id);
 }
 
 /**
@@ -53,6 +67,7 @@ export default function ConfigView() {
   return (
     <div className={styles.grid}>
       <ConfigForm key={data.id} current={data} saved={saved} onSaved={setSaved} />
+      <CrisisPanel />
       <VersionHistory />
     </div>
   );
@@ -116,6 +131,16 @@ export function ConfigForm({
                 {errors.band_high && <span className={styles.fieldError}>{errors.band_high.message}</span>}
               </div>
             )}
+            {b === 'risk' && (
+              <div className={styles.field}>
+                <label htmlFor="cfg-capital">Capital alocado para opções (R$)</label>
+                <input id="cfg-capital" className={styles.input} inputMode="decimal" placeholder="não informado" {...form.register('capital')} />
+                <span className={`${styles.muted} ${styles.small}`}>
+                  Base dos limites e do dimensionamento (RN-SIZ-01). Vazio: limites indisponíveis.
+                </span>
+                {errors.capital && <span className={styles.fieldError}>{errors.capital.message}</span>}
+              </div>
+            )}
           </fieldset>
         ))}
         <label className={styles.field}>
@@ -164,11 +189,93 @@ function Field({
           </span>
         )}
         {'nextRecompute' in spec && spec.nextRecompute && <span className={styles.tag}>próximo recálculo</span>}
+        {'uncalibrated' in spec && spec.uncalibrated && (
+          <span className={styles.tag} title={NOT_CALIBRATED_HELP}>
+            não calibrado
+          </span>
+        )}
       </label>
       <input id={id} className={styles.input} inputMode="decimal" aria-invalid={error != null} {...form.register(name)} />
       {'help' in spec && spec.help && <span className={`${styles.muted} ${styles.small}`}>{spec.help}</span>}
       {error && <span className={styles.fieldError}>{error}</span>}
     </div>
+  );
+}
+
+function CrisisPanel() {
+  const queryClient = useQueryClient();
+  const { data } = useQuery({ ...getCrisisOptions(), refetchInterval: (q) => (q.state.data?.job ? 5000 : false) });
+  const measure = useMutation({
+    ...postCrisisMeasureMutation(),
+    onSuccess: () => queryClient.invalidateQueries({ predicate: (q) => dependsOnConfig(q.queryKey) }),
+  });
+  if (!data) return null;
+  return (
+    <section className={`${styles.card} ${styles.wide}`} aria-labelledby="crisis-title">
+      <h2 id="crisis-title" className={`${styles.eyebrow} mono`}>
+        Cenários de crise (QA-12)
+      </h2>
+      <p className={`${styles.muted} ${styles.small}`}>{CRISIS_HELP}</p>
+      <p className={styles.small}>
+        Episódios:{' '}
+        {data.episodes.map((e) => `${e.label} (${formatDate(e.start)} a ${formatDate(e.end)})`).join('; ')} · janela de{' '}
+        {formatNumber(data.horizon_bd)} pregões.
+      </p>
+      <div className={styles.tableWrap}>
+        <table className={styles.table} data-testid="crisis-table">
+          <thead>
+            <tr>
+              <th scope="col">Ativo</th>
+              <th scope="col">Episódio</th>
+              <th scope="col">Janela</th>
+              <th scope="col" className={styles.num}>
+                Choque no ativo
+              </th>
+              <th scope="col" className={styles.num}>
+                Choque de vol
+              </th>
+              <th scope="col">Método · origem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.values.map((v) => (
+              <tr key={`${v.ticker}-${v.episode}`}>
+                <td>{v.ticker}</td>
+                <td>{v.label}</td>
+                <td>{v.window_start ? `${formatDate(v.window_start)} a ${formatDate(v.window_end)}` : '—'}</td>
+                <td className={styles.num}>{v.status === 'ok' ? formatReturn(v.price_shock, 1) : '—'}</td>
+                <td className={styles.num}>{v.status === 'ok' ? formatVolShock(v.vol_shock) : '—'}</td>
+                <td className={styles.small}>
+                  {v.status === 'ok' ? (
+                    <>
+                      {v.origin === 'manual' ? 'manual' : v.vol_method === 'atm_iv' ? 'IV ATM dos fechamentos' : 'RV de 20 pregões'}
+                      <span className={styles.tag}>{v.origin === 'manual' ? 'manual' : 'aproximado'}</span>
+                    </>
+                  ) : (
+                    <span className={styles.warn}>indisponível</span>
+                  )}
+                  {v.reason ? ` ${v.reason}` : ''}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <button
+          type="button"
+          className={styles.button}
+          onClick={() => measure.mutate({})}
+          disabled={measure.isPending || data.job != null}
+        >
+          {data.job ? 'Medindo no worker…' : 'Medir cenários de crise'}
+        </button>{' '}
+        <span className={`${styles.muted} ${styles.small}`}>
+          Baixa uma vez os COTAHIST anuais de 2017 e 2020 (dezenas de MB) no worker; anos passados ficam no cache bruto.
+        </span>
+      </p>
+      {measure.isError && <p className={styles.error}>{problemMessage(measure.error)}</p>}
+    </section>
   );
 }
 

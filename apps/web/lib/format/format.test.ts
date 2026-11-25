@@ -240,3 +240,22 @@ describe('entradas do simulador (Etapa 6)', () => {
     expect(marketInputToIso('19/11/2026 17:30')).toBeNull();
   });
 });
+
+describe('Etapa 7: choque de vol e dinheiro zero', () => {
+  it('formatVolShock aceita choques de crise acima de 100 pontos, com sinal', async () => {
+    const { formatVolShock } = await import('./index');
+    expect(formatVolShock(1.159)).toBe('+115,9 pts');
+    expect(formatVolShock(-0.05)).toBe('-5,0 pts');
+    expect(formatVolShock(0)).toBe('0,0 pts');
+    expect(() => formatVolShock(25)).toThrow(RangeError); // percentual por engano
+  });
+
+  it('parseMoneyOrZeroInput aceita zero e decimais com vírgula', async () => {
+    const { parseMoneyOrZeroInput } = await import('./index');
+    expect(parseMoneyOrZeroInput('0')).toBe('0');
+    expect(parseMoneyOrZeroInput('0,00')).toBe('0');
+    expect(parseMoneyOrZeroInput('1,80')).toBe('1.80');
+    expect(parseMoneyOrZeroInput('-1')).toBeNull();
+  });
+});
+

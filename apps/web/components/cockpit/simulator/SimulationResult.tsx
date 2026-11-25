@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
 import type { Data, Layout } from 'plotly.js';
-import type { SimulationResponse, SizingOut } from '@vollab/api-types';
+import type { LimitsResponse, SimulationResponse, SizingOut } from '@vollab/api-types';
 import Plot from '@/lib/charts/Plot';
 import { CHART_COLORS } from '@/lib/charts/theme';
 import {
@@ -19,6 +20,7 @@ import {
   formatRelative,
   formatSmallRate,
   formatVolPoints,
+  formatVolShock,
 } from '@/lib/format';
 import { DIRECTION_LABEL, NOT_CALIBRATED_HELP, SPREAD_ESTIMATE_HELP } from '@/lib/edge/labels';
 import { MODEL_LABEL } from '@/lib/forecast/labels';
@@ -28,9 +30,10 @@ import {
   IV_CONSTANT_HELP,
   KAMAL_DERMAN_HELP,
   RULE_LABEL,
-  STRESS_LABEL,
+  stressLabel,
   STRUCTURE_LABEL,
 } from '@/lib/simulator/labels';
+import { LIMIT_LABEL, LIMIT_STATE_LABEL } from '@/lib/journal/labels';
 import StateBadge from '../edge/StateBadge';
 import EstimatedValueView from '../vol/EstimatedValueView';
 import styles from '../vol/vol.module.css';
@@ -50,11 +53,20 @@ function Tag({ children, help }: { children: string; help: string }) {
  * Resultado da simulação e do dimensionamento (PRD 1.9 §5.8, §8.1). O semáforo e o número de edge
  * da estrutura ficam no topo (PRD-UI-01); estimativas e valores manuais são sempre rotulados (PRD-UI-02).
  */
-export default function SimulationResult({ sim, sizing }: { sim: SimulationResponse; sizing: SizingOut }) {
+export default function SimulationResult({
+  sim,
+  sizing,
+  limits = null,
+}: {
+  sim: SimulationResponse;
+  sizing: SizingOut;
+  limits?: LimitsResponse | null;
+}) {
   return (
     <div className={styles.grid}>
       <EdgeCard sim={sim} />
       <SizingCard sim={sim} sizing={sizing} />
+      {limits && <ProformaLimits limits={limits} />}
       <LegsCard sim={sim} />
       <DistributionCard sim={sim} />
       <PayoffCard sim={sim} />
@@ -193,15 +205,59 @@ function SizingCard({ sim, sizing }: { sim: SimulationResponse; sizing: SizingOu
           <tbody>
             {sizing.stress.map((s) => (
               <tr key={s.name}>
-                <td>{STRESS_LABEL[s.name] ?? s.name}</td>
-                <td className={styles.num}>{formatRelative(s.spot_shock, 0)}</td>
-                <td className={styles.num}>{s.vol_shock ? `+${formatVolPoints(s.vol_shock, 0)}` : '—'}</td>
+                <td>{stressLabel(s.name)}</td>
+                <td className={styles.num}>{formatRelative(s.spot_shock, 1)}</td>
+                <td className={styles.num}>{s.vol_shock ? formatVolShock(s.vol_shock, 1) : '—'}</td>
                 <td className={styles.num}>{formatMoney(s.loss_brl)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {(sizing.stress_notes ?? []).map((n) => (
+        <p key={n} className={`${styles.muted} ${styles.small}`}>
+          {n} (o teto fica sem este cenário).
+        </p>
+      ))}
+    </section>
+  );
+}
+
+function ProformaLimits({ limits }: { limits: LimitsResponse }) {
+  return (
+    <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sim-limits" data-testid="sim-limits">
+      <h2 id="sim-limits" className={`${styles.eyebrow} mono`}>
+        Limites da carteira com a nova posição (pró-forma)
+      </h2>
+      {limits.capital_brl == null ? (
+        <p className={styles.muted}>
+          Informe o capital na <Link href="/app/configuracoes">configuração</Link> para avaliar os limites (RF-RSK-04); o
+          capital digitado aqui vale só para o dimensionamento.
+        </p>
+      ) : (
+        <ul className={styles.small}>
+          {limits.limits.map((x) => (
+            <li key={`${x.name}-${x.scope ?? ''}`} data-state={x.state}>
+              {LIMIT_LABEL[x.name]}
+              {x.scope ? ` · ${x.scope}` : ''}: {formatRelative(x.value)} de {formatRelative(x.limit)}{' '}
+              {x.state === 'breached' ? (
+                <strong className={styles.warn}>{LIMIT_STATE_LABEL.breached}</strong>
+              ) : (
+                LIMIT_STATE_LABEL[x.state]
+              )}
+              <Tag help={NOT_CALIBRATED_HELP}>não calibrado</Tag>
+            </li>
+          ))}
+        </ul>
+      )}
+      {limits.breached && (
+        <p className={styles.warn}>Com a nova posição algum limite é ultrapassado: o registro exige justificativa (PR-04).</p>
+      )}
+      {limits.warnings.map((w) => (
+        <p key={w} className={`${styles.muted} ${styles.small}`}>
+          {w}
+        </p>
+      ))}
     </section>
   );
 }

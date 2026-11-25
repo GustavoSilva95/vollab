@@ -9,6 +9,8 @@ from vollab.analytics.params import (
     CostParams,
     EdgeParams,
     ForecastParams,
+    JournalParams,
+    RiskParams,
     SimulationParams,
     SizingParams,
     VolParams,
@@ -28,6 +30,8 @@ class ConfigParams(BaseModel):
     edge: EdgeParams = Field(default_factory=EdgeParams)
     simulation: SimulationParams = Field(default_factory=SimulationParams)
     sizing: SizingParams = Field(default_factory=SizingParams)
+    journal: JournalParams = Field(default_factory=JournalParams)
+    risk: RiskParams = Field(default_factory=RiskParams)
 
 
 class ConfigVersionOut(BaseModel):

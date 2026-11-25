@@ -21,6 +21,7 @@ from sqlalchemy import (
     Integer,
     Text,
     Uuid,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -31,7 +32,7 @@ from vollab.db.models.reference import MONEY
 STRUCTURES = ("short_straddle", "short_strangle", "covered_call", "long_straddle", "long_strangle")
 DIRECTIONS = ("sell", "buy")
 EDGE_STATES = ("edge", "inconclusive", "no_edge")
-ENTRY_KINDS = ("entry", "hedge", "strike_adjustment", "exercise", "assignment", "exit", "roll")
+ENTRY_KINDS = ("entry", "hedge", "strike_adjustment", "exercise", "assignment", "exit", "roll", "void")
 MANUAL_KINDS = ("spot", "option_price", "margin")
 
 
@@ -63,17 +64,29 @@ class Position(CreatedAtMixin, Base):
     override_reason: Mapped[str | None] = mapped_column(Text)
     note: Mapped[str | None] = mapped_column(Text)
     decision_snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    # Etapa 7 (RN-GES-04): a rolagem liga a posição nova à de origem.
+    rolled_from_position_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("positions.id"))
 
 
 class PositionEntry(CreatedAtMixin, Base):
-    """Lançamento tipado (RF-DIA-02/03). Na Etapa 6 só o tipo `entry`."""
+    """Lançamento tipado (RF-DIA-02/03, PRD 1.10 §5.9). Imutável: erro se corrige por estorno (`void`)."""
 
     __tablename__ = "position_entries"
     __table_args__ = (
         CheckConstraint(f"kind IN {ENTRY_KINDS}", name="kind"),
         CheckConstraint("quantity <> 0", name="quantity"),
         CheckConstraint("price >= 0 AND fees_brl >= 0 AND brokerage_brl >= 0", name="non_negative"),
+        CheckConstraint(
+            "kind <> 'void' OR (linked_entry_id IS NOT NULL AND void_reason IS NOT NULL)", name="void_linked"
+        ),
+        CheckConstraint("kind <> 'strike_adjustment' OR strike_after > 0", name="strike_after"),
         Index("ix_position_entries_position", "position_id"),
+        Index(
+            "ux_position_entries_void_once",
+            "linked_entry_id",
+            unique=True,
+            postgresql_where=text("kind = 'void'"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -90,6 +103,12 @@ class PositionEntry(CreatedAtMixin, Base):
     brokerage_brl: Mapped[Decimal] = mapped_column(MONEY, nullable=False)
     executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     linked_entry_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("position_entries.id"))
+    # Etapa 7: novo strike efetivo (ajuste de strike), motivo do estorno, nota e versões.
+    strike_after: Mapped[Decimal | None] = mapped_column(MONEY)
+    void_reason: Mapped[str | None] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)
+    config_version_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("config_versions.id"))
+    engine_version: Mapped[str | None] = mapped_column(Text)
 
 
 class ManualInput(CreatedAtMixin, Base):

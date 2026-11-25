@@ -8,7 +8,11 @@ const PORT = Number(process.env.E2E_PORT ?? 3000);
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  // Um worker: os fluxos compartilham estado global do engine (a configuração vigente). O do ranking
+  // sobe o limiar de edge por alguns segundos, o que deixava o semáforo "Inconclusivo" nos fluxos 2 e 3
+  // quando rodavam ao mesmo tempo (e o registro recebia 409 por versão nova de configuração).
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',

@@ -7,7 +7,7 @@ negócio: a coleta só conhece `MarketDataSources`.
 
 import re
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -48,6 +48,7 @@ class MarketDataSources(Protocol):
     def cotahist_annual(self, year: int) -> Fetched: ...
     def selic(self, start: date, end: date) -> Fetched: ...
     def dividends(self, ticker: str) -> Fetched: ...
+    def dividends_range(self, ticker: str, start: date, end: date) -> Fetched: ...
     def close(self) -> None: ...
 
 
@@ -88,6 +89,17 @@ class LiveSources:
         result = self._client.get(url, max_bytes=MAX_JSON_BYTES)
         return Fetched(result.status, result.content, "json")
 
+    def dividends_range(self, ticker: str, start: date, end: date) -> Fetched:
+        """Proventos de um período passado (cenário de crise, QA-12)."""
+        p1 = int(datetime(start.year, start.month, start.day, tzinfo=UTC).timestamp())
+        p2 = int(datetime(end.year, end.month, end.day, tzinfo=UTC).timestamp()) + 86_400
+        url = (
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{_ticker(ticker)}.SA"
+            f"?period1={p1}&period2={p2}&interval=1d&events=div"
+        )
+        result = self._client.get(url, max_bytes=MAX_JSON_BYTES)
+        return Fetched(result.status, result.content, "json")
+
     def close(self) -> None:
         self._client.close()
 
@@ -120,13 +132,20 @@ class FixtureSources:
             return self._read(f"b3/cotahist/COTAHIST_A{int(year):04d}_recorte.ZIP", "zip")
 
     def selic(self, start: date, end: date) -> Fetched:
-        files = sorted((self.root / "bcb").glob("sgs1178_*.json"))
+        # O arquivo do mês final pedido (episódios de crise); senão, o mais recente (coleta).
+        exact = self.root / "bcb" / f"sgs1178_{end:%Y-%m}.json"
+        if exact.is_file():
+            return self._read(f"bcb/sgs1178_{end:%Y-%m}.json", "json")
+        files = sorted(f for f in (self.root / "bcb").glob("sgs1178_*.json") if f.name >= "sgs1178_2021")
         if not files:
             raise SourceNotFoundError("HTTP 404")
         return self._read(str(files[-1].relative_to(self.root)), "json")
 
     def dividends(self, ticker: str) -> Fetched:
         return self._read(f"yahoo/{_ticker(ticker)}.json", "json")
+
+    def dividends_range(self, ticker: str, start: date, end: date) -> Fetched:
+        return self._read(f"yahoo/{_ticker(ticker)}_{end:%Y}.json", "json")
 
     def close(self) -> None:
         return None

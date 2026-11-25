@@ -3,6 +3,23 @@
 import * as z from 'zod';
 
 /**
+ * AttributionOut
+ */
+export const zAttributionOut = z.object({
+    delta_brl: z.string(),
+    error_flag: z.boolean(),
+    execution_brl: z.string(),
+    gamma_brl: z.string(),
+    market_brl: z.string(),
+    residual_brl: z.string(),
+    stale: z.boolean(),
+    theta_brl: z.string(),
+    total_brl: z.string(),
+    trade_date: z.iso.date(),
+    vega_brl: z.string()
+});
+
+/**
  * ChainSeries
  */
 export const zChainSeries = z.object({
@@ -137,6 +154,102 @@ export const zCostsOut = z.object({
 });
 
 /**
+ * CrisisEpisode
+ */
+export const zCrisisEpisode = z.object({
+    end: z.iso.date(),
+    key: z.string().regex(/^[a-z0-9_]{3,20}$/),
+    label: z.string().min(3).max(40),
+    start: z.iso.date()
+});
+
+/**
+ * CrisisEpisodeOut
+ */
+export const zCrisisEpisodeOut = z.object({
+    end: z.iso.date(),
+    key: z.string(),
+    label: z.string(),
+    start: z.iso.date()
+});
+
+/**
+ * CrisisMeasureOut
+ */
+export const zCrisisMeasureOut = z.object({
+    job_id: z.int().nullable(),
+    queued: z.boolean()
+});
+
+/**
+ * CrisisOut
+ */
+export const zCrisisOut = z.object({
+    dividends_checked: z.boolean().nullish(),
+    episode: z.string(),
+    label: z.string(),
+    measured_at: z.iso.datetime({ offset: true }).nullish(),
+    origin: z.enum(['approximate', 'manual']),
+    price_shock: z.number().nullable(),
+    reason: z.string().nullable(),
+    status: z.enum(['ok', 'unavailable']),
+    ticker: z.string(),
+    vol_after: z.number().nullish(),
+    vol_before: z.number().nullish(),
+    vol_method: z.enum(['atm_iv', 'rv20']).nullish(),
+    vol_shock: z.number().nullable(),
+    window_end: z.iso.date().nullish(),
+    window_start: z.iso.date().nullish(),
+    worst_day: z.iso.date().nullish(),
+    worst_day_return: z.number().nullish()
+});
+
+/**
+ * CrisisOverride
+ *
+ * Choque manual de um ativo num episódio (substitui o medido; origem `manual`).
+ */
+export const zCrisisOverride = z.object({
+    price_shock: z.number().gte(-0.9).lte(0.9),
+    vol_shock: z.number().gte(-0.5).lte(2)
+});
+
+/**
+ * CrisisResponse
+ */
+export const zCrisisResponse = z.object({
+    episodes: z.array(zCrisisEpisodeOut),
+    horizon_bd: z.int(),
+    job: z.enum(['queued', 'running']).nullable(),
+    values: z.array(zCrisisOut)
+});
+
+/**
+ * Cs04Out
+ */
+export const zCs04Out = z.object({
+    error_days: z.int(),
+    ok: z.boolean().nullable(),
+    ratio: z.number().nullable(),
+    target: z.number()
+});
+
+/**
+ * DeltaBandOut
+ */
+export const zDeltaBandOut = z.object({
+    as_of: z.iso.date().nullable(),
+    calibrated: z.boolean(),
+    delta_shares: z.number().nullable(),
+    half_width_shares: z.number(),
+    state: z.enum([
+        'inside',
+        'outside',
+        'unavailable'
+    ])
+});
+
+/**
  * EdgeParams
  *
  * Bloco `edge` (PRD 1.8 §5.6.1; RN-EDG-03/05/07, QA-14). Padrões decididos pelo usuário.
@@ -150,6 +263,44 @@ export const zEdgeParams = z.object({
 });
 
 /**
+ * EntryCreate
+ *
+ * Lançamento (RF-DIA-02/03). Estorno (`void`): só `linked_entry_id`, `void_reason` e a data.
+ */
+export const zEntryCreate = z.object({
+    brokerage_brl: z.union([
+        z.number().gte(0).lte(10000000),
+        z.string()
+    ]).optional().default('0'),
+    executed_at: z.iso.datetime({ offset: true }),
+    fees_brl: z.union([
+        z.number().gte(0).lte(10000000),
+        z.string()
+    ]).optional().default('0'),
+    instrument: z.string().regex(/^[A-Z0-9]{4,12}$/).nullish(),
+    kind: z.enum([
+        'hedge',
+        'strike_adjustment',
+        'exercise',
+        'assignment',
+        'exit',
+        'void'
+    ]),
+    linked_entry_id: z.int().gte(1).nullish(),
+    note: z.string().max(2000).nullish(),
+    price_brl: z.union([
+        z.number().gte(0).lte(10000000),
+        z.string()
+    ]).nullish(),
+    quantity: z.int().gte(-10000000).lte(10000000).nullish(),
+    strike_after_brl: z.union([
+        z.number().gt(0).lte(1000000),
+        z.string()
+    ]).nullish(),
+    void_reason: z.string().min(10).max(2000).nullish()
+});
+
+/**
  * EntryOut
  */
 export const zEntryOut = z.object({
@@ -158,10 +309,24 @@ export const zEntryOut = z.object({
     fees_brl: z.string(),
     id: z.int(),
     instrument: z.string(),
-    kind: z.string(),
+    kind: z.enum([
+        'entry',
+        'hedge',
+        'strike_adjustment',
+        'exercise',
+        'assignment',
+        'exit',
+        'roll',
+        'void'
+    ]),
+    linked_entry_id: z.int().nullable(),
+    note: z.string().nullable(),
     price_brl: z.string(),
     quantity: z.int(),
-    series_id: z.int().nullable()
+    series_id: z.int().nullable(),
+    strike_after_brl: z.string().nullable(),
+    void_reason: z.string().nullable(),
+    voided_by: z.int().nullable()
 });
 
 /**
@@ -376,6 +541,21 @@ export const zExecutedStock = z.object({
 });
 
 /**
+ * ExposureOut
+ */
+export const zExposureOut = z.object({
+    delta_brl: z.number(),
+    delta_shares: z.number(),
+    expiry: z.iso.date().nullish(),
+    gamma: z.number(),
+    gamma_1pct_brl: z.number(),
+    market_value_brl: z.number(),
+    theta_per_bd_brl: z.number(),
+    ticker: z.string().nullish(),
+    vega_per_point_brl: z.number()
+});
+
+/**
  * ForecastParams
  *
  * Bloco `forecast` de `config_versions.params` (PRD 1.7 §5.7; QA-07 e QA-08 resolvidas).
@@ -485,6 +665,15 @@ export const zHealthResponse = z.object({
 });
 
 /**
+ * HoldingOut
+ */
+export const zHoldingOut = z.object({
+    instrument: z.string(),
+    quantity: z.int(),
+    series_id: z.int().nullable()
+});
+
+/**
  * ImpliedParams
  */
 export const zImpliedParams = z.object({
@@ -569,6 +758,16 @@ export const zIvQuality = z.object({
 });
 
 /**
+ * JournalParams
+ *
+ * Bloco `journal` (PRD 1.10 §5.9; CS-04, RS-06).
+ */
+export const zJournalParams = z.object({
+    residual_max_ratio: z.number().gt(0).lte(1).optional().default(0.15),
+    residual_min_brl: z.number().gte(0).lte(1000000000).optional().default(50)
+});
+
+/**
  * LegInput
  */
 export const zLegInput = z.object({
@@ -609,6 +808,39 @@ export const zLegOut = z.object({
     strike: z.number(),
     theta_per_bd: z.number(),
     vega_per_point: z.number()
+});
+
+/**
+ * LimitOut
+ */
+export const zLimitOut = z.object({
+    calibrated: z.boolean().optional().default(false),
+    limit: z.number(),
+    name: z.enum([
+        'stress_loss',
+        'vega_total',
+        'underlying_concentration',
+        'expiry_concentration'
+    ]),
+    reason: z.string().nullish(),
+    scope: z.string().nullable(),
+    state: z.enum([
+        'ok',
+        'breached',
+        'unavailable'
+    ]),
+    usage: z.number().nullable(),
+    value: z.number().nullable()
+});
+
+/**
+ * LimitsParams
+ */
+export const zLimitsParams = z.object({
+    max_abs_vega_fraction: z.number().gt(0).lte(1).optional().default(0.01),
+    max_expiry_share: z.number().gt(0).lte(1).optional().default(0.6),
+    max_stress_loss_fraction: z.number().gt(0).lte(1).optional().default(0.2),
+    max_underlying_share: z.number().gt(0).lte(1).optional().default(0.5)
 });
 
 /**
@@ -680,6 +912,43 @@ export const zManualInputOut = z.object({
     ]),
     observed_at: z.iso.datetime({ offset: true }),
     value_brl: z.string()
+});
+
+/**
+ * MarkLegOut
+ */
+export const zMarkLegOut = z.object({
+    code: z.string(),
+    delta: z.number(),
+    gamma: z.number(),
+    iv: z.number().nullable(),
+    origin: z.enum([
+        'observed',
+        'approximate',
+        'stale',
+        'expired'
+    ]),
+    price_brl: z.string(),
+    quantity: z.int(),
+    theta_per_bd: z.number(),
+    vega_per_point: z.number()
+});
+
+/**
+ * MarkOut
+ */
+export const zMarkOut = z.object({
+    delta_shares: z.number(),
+    gamma: z.number(),
+    legs: z.array(zMarkLegOut),
+    options_value_brl: z.string(),
+    spot_brl: z.string(),
+    stale: z.boolean(),
+    stock_qty: z.int(),
+    stock_value_brl: z.string(),
+    theta_per_bd_brl: z.number(),
+    trade_date: z.iso.date(),
+    vega_per_point_brl: z.number()
 });
 
 /**
@@ -819,77 +1088,32 @@ export const zDistributionOut = z.object({
 });
 
 /**
- * PositionCreate
- *
- * Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,
- * simulação e dimensionamento; o cliente não impõe números calculados (PRD §7).
+ * PnlByExpiry
  */
-export const zPositionCreate = z.object({
-    base_config_version_id: z.int().gte(1),
-    capital_brl: z.union([
-        z.number().gt(0).lte(1000000000000),
-        z.string()
-    ]).nullish(),
-    executed_at: z.iso.datetime({ offset: true }),
-    executed_legs: z.array(zExecutedLeg).min(1).max(2),
-    legs: z.array(zLegInput).min(1).max(2),
-    lots: z.int().gte(1).lte(100000).optional().default(1),
-    manual_spot_at: z.iso.datetime({ offset: true }).nullish(),
-    manual_spot_brl: z.union([
-        z.number().gt(0).lte(1000000),
-        z.string()
-    ]).nullish(),
-    margin_at: z.iso.datetime({ offset: true }).nullish(),
-    margin_per_lot_brl: z.union([
-        z.number().gt(0).lte(1000000),
-        z.string()
-    ]).nullish(),
-    note: z.string().max(2000).nullish(),
-    override_reason: z.string().min(10).max(2000).nullish(),
-    stock: zExecutedStock.nullish(),
-    structure: z.enum([
-        'short_straddle',
-        'short_strangle',
-        'covered_call',
-        'long_straddle',
-        'long_strangle'
-    ]),
-    ticker: z.string().regex(/^[A-Za-z0-9]{4,12}$/)
+export const zPnlByExpiry = z.object({
+    expiry: z.iso.date(),
+    pnl_brl: z.string(),
+    ticker: z.string()
 });
 
 /**
- * PositionOut
+ * PnlByTicker
  */
-export const zPositionOut = z.object({
-    as_of: z.iso.date(),
-    config_version_id: z.int(),
-    created_at: z.iso.datetime({ offset: true }),
-    decision_snapshot: z.record(z.string(), z.unknown()),
-    direction: z.enum(['sell', 'buy']),
-    edge_state: z.enum([
-        'edge',
-        'inconclusive',
-        'no_edge'
-    ]),
-    engine_version: z.string(),
-    entries: z.array(zEntryOut),
-    expiry: z.iso.date(),
-    id: z.int(),
-    lots: z.int(),
-    manual_inputs: z.array(zManualInputOut),
-    model: z.string(),
-    note: z.string().nullable(),
-    overridden: z.boolean(),
-    override_reason: z.string().nullable(),
-    status: z.literal('open').optional().default('open'),
-    structure: z.enum([
-        'short_straddle',
-        'short_strangle',
-        'covered_call',
-        'long_straddle',
-        'long_strangle'
-    ]),
+export const zPnlByTicker = z.object({
+    pnl_brl: z.string(),
     ticker: z.string()
+});
+
+/**
+ * PortfolioResponse
+ */
+export const zPortfolioResponse = z.object({
+    by_expiry: z.array(zExposureOut),
+    by_ticker: z.array(zExposureOut),
+    mark_dates: z.record(z.string(), z.iso.date()),
+    positions_open: z.int(),
+    total: zExposureOut.nullable(),
+    warnings: z.array(z.string())
 });
 
 /**
@@ -898,18 +1122,25 @@ export const zPositionOut = z.object({
 export const zPositionSummary = z.object({
     config_version_id: z.int(),
     created_at: z.iso.datetime({ offset: true }),
+    cs04_ratio: z.number().nullable(),
     direction: z.enum(['sell', 'buy']),
     edge_state: z.enum([
         'edge',
         'inconclusive',
         'no_edge'
     ]),
+    error_days: z.int(),
     expiry: z.iso.date(),
     id: z.int(),
+    last_mark_date: z.iso.date().nullable(),
+    ledger_error: z.string().nullable(),
     lots: z.int(),
     model: z.string(),
     overridden: z.boolean(),
-    status: z.literal('open').optional().default('open'),
+    pending_expiry: z.array(z.string()),
+    pnl_total_brl: z.string().nullable(),
+    rolled_from_position_id: z.int().nullable(),
+    status: z.enum(['open', 'closed']),
     structure: z.enum([
         'short_straddle',
         'short_strangle',
@@ -1071,6 +1302,90 @@ export const zRealizedVolResponse = z.object({
 });
 
 /**
+ * RiskParams
+ *
+ * Bloco `risk` (PRD 1.10 §5.9; RF-RSK-03/04, QA-12). Limites "não calibrados".
+ */
+export const zRiskParams = z.object({
+    crisis_episodes: z.array(zCrisisEpisode).min(1).max(4).optional(),
+    crisis_horizon_bd: z.int().gte(1).lte(20).optional().default(5),
+    crisis_overrides: z.record(z.string(), z.record(z.string(), zCrisisOverride)).optional(),
+    limits: zLimitsParams.optional(),
+    stress_gap: z.number().gt(0).lte(0.5).optional().default(0.1),
+    stress_vol_pts: z.number().gt(0).lte(1).optional().default(0.1)
+});
+
+/**
+ * RollLeg
+ *
+ * Fechamento de uma perna da posição de origem na rolagem (RN-GES-04).
+ */
+export const zRollLeg = z.object({
+    brokerage_brl: z.union([
+        z.number().gte(0).lte(10000000),
+        z.string()
+    ]).optional().default('0'),
+    fees_brl: z.union([
+        z.number().gte(0).lte(10000000),
+        z.string()
+    ]).optional().default('0'),
+    instrument: z.string().regex(/^[A-Z0-9]{4,12}$/),
+    price_brl: z.union([
+        z.number().gte(0).lte(1000000),
+        z.string()
+    ]),
+    quantity: z.int().gte(-10000000).lte(10000000)
+});
+
+/**
+ * RollFrom
+ */
+export const zRollFrom = z.object({
+    legs: z.array(zRollLeg).min(1).max(4),
+    position_id: z.int().gte(1)
+});
+
+/**
+ * PositionCreate
+ *
+ * Registro da entrada (RF-DIA-01). `lots` = lotes executados. O engine recalcula edge, semáforo,
+ * simulação e dimensionamento; o cliente não impõe números calculados (PRD §7).
+ */
+export const zPositionCreate = z.object({
+    base_config_version_id: z.int().gte(1),
+    capital_brl: z.union([
+        z.number().gt(0).lte(1000000000000),
+        z.string()
+    ]).nullish(),
+    executed_at: z.iso.datetime({ offset: true }),
+    executed_legs: z.array(zExecutedLeg).min(1).max(2),
+    legs: z.array(zLegInput).min(1).max(2),
+    lots: z.int().gte(1).lte(100000).optional().default(1),
+    manual_spot_at: z.iso.datetime({ offset: true }).nullish(),
+    manual_spot_brl: z.union([
+        z.number().gt(0).lte(1000000),
+        z.string()
+    ]).nullish(),
+    margin_at: z.iso.datetime({ offset: true }).nullish(),
+    margin_per_lot_brl: z.union([
+        z.number().gt(0).lte(1000000),
+        z.string()
+    ]).nullish(),
+    note: z.string().max(2000).nullish(),
+    override_reason: z.string().min(10).max(2000).nullish(),
+    roll_from: zRollFrom.nullish(),
+    stock: zExecutedStock.nullish(),
+    structure: z.enum([
+        'short_straddle',
+        'short_strangle',
+        'covered_call',
+        'long_straddle',
+        'long_strangle'
+    ]),
+    ticker: z.string().regex(/^[A-Za-z0-9]{4,12}$/)
+});
+
+/**
  * RunSummary
  */
 export const zRunSummary = z.object({
@@ -1153,6 +1468,50 @@ export const zSeriesResponse = z.object({
     as_of: z.iso.date().nullable(),
     series: z.array(zSeriesOut),
     ticker: z.string()
+});
+
+/**
+ * ShockOut
+ */
+export const zShockOut = z.object({
+    spot_shock: z.number(),
+    ticker: z.string(),
+    vol_shock: z.number()
+});
+
+/**
+ * ScenarioOut
+ */
+export const zScenarioOut = z.object({
+    by_expiry: z.array(zPnlByExpiry),
+    by_ticker: z.array(zPnlByTicker),
+    kind: z.enum([
+        'standard',
+        'crisis',
+        'custom'
+    ]),
+    label: z.string(),
+    loss_brl: z.string(),
+    missing_tickers: z.array(z.string()),
+    name: z.string(),
+    origin: z.enum([
+        'estimated',
+        'approximate',
+        'manual'
+    ]),
+    pnl_brl: z.string(),
+    shocks: z.array(zShockOut)
+});
+
+/**
+ * LimitsResponse
+ */
+export const zLimitsResponse = z.object({
+    breached: z.boolean(),
+    capital_brl: z.string().nullable(),
+    limits: z.array(zLimitOut),
+    scenarios: z.array(zScenarioOut),
+    warnings: z.array(z.string())
 });
 
 /**
@@ -1399,6 +1758,7 @@ export const zSizingOut = z.object({
     ]),
     status: z.enum(['ok', 'unavailable']),
     stress: z.array(zStressOut),
+    stress_notes: z.array(z.string()),
     variance_brl2: z.number().nullable()
 });
 
@@ -1406,8 +1766,17 @@ export const zSizingOut = z.object({
  * SizingResponse
  */
 export const zSizingResponse = z.object({
+    limits: zLimitsResponse,
     simulation: zSimulationResponse,
     sizing: zSizingOut
+});
+
+/**
+ * StressRequest
+ */
+export const zStressRequest = z.object({
+    spot_shock: z.number().gte(-0.9).lte(0.9),
+    vol_shock: z.number().gte(-0.5).lte(2)
 });
 
 /**
@@ -1505,6 +1874,68 @@ export const zTermStructureResponse = z.object({
 });
 
 /**
+ * TotalsOut
+ */
+export const zTotalsOut = z.object({
+    delta_brl: z.string(),
+    execution_brl: z.string(),
+    gamma_brl: z.string(),
+    market_brl: z.string(),
+    residual_brl: z.string(),
+    theta_brl: z.string(),
+    total_brl: z.string(),
+    vega_brl: z.string()
+});
+
+/**
+ * PositionOut
+ */
+export const zPositionOut = z.object({
+    as_of: z.iso.date(),
+    attribution: z.array(zAttributionOut),
+    config_version_id: z.int(),
+    created_at: z.iso.datetime({ offset: true }),
+    cs04: zCs04Out,
+    cs04_ratio: z.number().nullable(),
+    decision_snapshot: z.record(z.string(), z.unknown()),
+    delta_band: zDeltaBandOut,
+    direction: z.enum(['sell', 'buy']),
+    edge_state: z.enum([
+        'edge',
+        'inconclusive',
+        'no_edge'
+    ]),
+    engine_version: z.string(),
+    entries: z.array(zEntryOut),
+    error_days: z.int(),
+    expiry: z.iso.date(),
+    holdings: z.array(zHoldingOut),
+    id: z.int(),
+    last_mark_date: z.iso.date().nullable(),
+    ledger_error: z.string().nullable(),
+    lots: z.int(),
+    manual_inputs: z.array(zManualInputOut),
+    marks: z.array(zMarkOut),
+    model: z.string(),
+    note: z.string().nullable(),
+    overridden: z.boolean(),
+    override_reason: z.string().nullable(),
+    pending_expiry: z.array(z.string()),
+    pnl_total_brl: z.string().nullable(),
+    rolled_from_position_id: z.int().nullable(),
+    status: z.enum(['open', 'closed']),
+    structure: z.enum([
+        'short_straddle',
+        'short_strangle',
+        'covered_call',
+        'long_straddle',
+        'long_strangle'
+    ]),
+    ticker: z.string(),
+    totals: zTotalsOut.nullable()
+});
+
+/**
  * UnderlyingCreate
  */
 export const zUnderlyingCreate = z.object({
@@ -1563,6 +1994,8 @@ export const zConfigParamsInput = z.object({
     costs: zCostParams.optional(),
     edge: zEdgeParams.optional(),
     forecast: zForecastParams.optional(),
+    journal: zJournalParams.optional(),
+    risk: zRiskParams.optional(),
     simulation: zSimulationParams.optional(),
     sizing: zSizingParams.optional(),
     vol: zVolParams.optional()
@@ -1587,6 +2020,8 @@ export const zConfigParamsOutput = z.object({
     costs: zCostParams.optional(),
     edge: zEdgeParams.optional(),
     forecast: zForecastParams.optional(),
+    journal: zJournalParams.optional(),
+    risk: zRiskParams.optional(),
     simulation: zSimulationParams.optional(),
     sizing: zSizingParams.optional(),
     vol: zVolParams.optional()
@@ -1753,6 +2188,27 @@ export const zPutModelSelectionBody = zModelSelectionIn;
 export const zPutModelSelectionResponse = zModelSelectionOut;
 
 /**
+ * Successful Response
+ */
+export const zGetPortfolioResponse = zPortfolioResponse;
+
+/**
+ * Successful Response
+ */
+export const zGetLimitsResponse = zLimitsResponse;
+
+export const zPostStressBody = zStressRequest;
+
+/**
+ * Successful Response
+ */
+export const zPostStressResponse = zScenarioOut;
+
+export const zListPositionsQuery = z.object({
+    status: z.enum(['open', 'closed']).nullish()
+});
+
+/**
  * Response List Positions
  *
  * Successful Response
@@ -1775,6 +2231,17 @@ export const zGetPositionPath = z.object({
  */
 export const zGetPositionResponse = zPositionOut;
 
+export const zPostEntryBody = zEntryCreate;
+
+export const zPostEntryPath = z.object({
+    position_id: z.int().gte(1)
+});
+
+/**
+ * Successful Response
+ */
+export const zPostEntryResponse = zPositionOut;
+
 export const zGetRankingQuery = z.object({
     underlying: z.string().min(1).max(12).nullish()
 });
@@ -1783,6 +2250,16 @@ export const zGetRankingQuery = z.object({
  * Successful Response
  */
 export const zGetRankingResponse = zRankingResponse;
+
+/**
+ * Successful Response
+ */
+export const zGetCrisisResponse = zCrisisResponse;
+
+/**
+ * Successful Response
+ */
+export const zPostCrisisMeasureResponse = zCrisisMeasureOut;
 
 export const zPostSimulationBody = zSimulationRequest;
 

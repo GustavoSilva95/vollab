@@ -109,6 +109,11 @@ def run_forecast_job(session: Session, payload: dict[str, Any]) -> None:
         vol=vol_params_from_config(version),
         forecast=forecast_params_from_config(version),
     ).run(list(tickers) if isinstance(tickers, list) else None)
+    # Etapa 7: a marcação D-1 das operações vem depois dos dados do pregão (PRD 1.10 §5.9).
+    from vollab.analytics.journal import enqueue_marks
+
+    enqueue_marks(session, user_id=user_id, position_ids=None, reason="forecast_recompute")
+    session.commit()
 
 
 @dataclass(slots=True)

@@ -6,6 +6,7 @@ from vollab.db.models.costs import OptionSpreadEstimate
 from vollab.db.models.events import Event
 from vollab.db.models.forecast import ForecastEvaluation, ForecastEvaluationPoint, RvForecast
 from vollab.db.models.job import Job, JobStatus
+from vollab.db.models.journal import CrisisMeasurement, DailyMark, PnlAttribution
 from vollab.db.models.market import DailyBar, OptionDailyStat, RawFile, trades
 from vollab.db.models.positions import ManualInput, Position, PositionEntry
 from vollab.db.models.reference import (
@@ -35,7 +36,9 @@ __all__ = [
     "ConfigVersion",
     "ConstantMaturityVol",
     "CorporateAction",
+    "CrisisMeasurement",
     "DailyBar",
+    "DailyMark",
     "Event",
     "ExchangeHoliday",
     "ForecastEvaluation",
@@ -50,6 +53,7 @@ __all__ = [
     "OptionDailyStat",
     "OptionSeries",
     "OptionSpreadEstimate",
+    "PnlAttribution",
     "Position",
     "PositionEntry",
     "RawFile",

@@ -6,10 +6,11 @@ mínima de 80% (BRD 1.3), close-to-close de média zero (PRD 1.5), janela de sin
 constante de 21 dias úteis (QA-03, sugestão do BRD).
 """
 
-from datetime import time
+import re
+from datetime import date, time
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from vollab.db.models import ConfigVersion
 
@@ -234,8 +235,12 @@ class SizingParams(BaseModel):
     es_level: float = Field(
         default=0.99, ge=0.9, le=0.999, description="Nível do expected shortfall (QA-09)."
     )
-    stress_gap: float = Field(default=0.10, gt=0, le=0.5, description="Gap do ativo no stress (±).")
-    stress_vol_pts: float = Field(default=0.10, gt=0, le=1, description="Choque de vol no stress (decimal).")
+    stress_gap: float = Field(
+        default=0.10, gt=0, le=0.5, description="Obsoleto desde a Etapa 7: o teto usa `risk.stress_gap`."
+    )
+    stress_vol_pts: float = Field(
+        default=0.10, gt=0, le=1, description="Obsoleto desde a Etapa 7: o teto usa `risk.stress_vol_pts`."
+    )
     lot_size: int = Field(default=100, ge=1, le=100_000, description="Opções por lote.")
 
 
@@ -245,3 +250,113 @@ def simulation_params_from_config(version: ConfigVersion) -> SimulationParams:
 
 def sizing_params_from_config(version: ConfigVersion) -> SizingParams:
     return SizingParams.model_validate(dict(version.params.get("sizing", {})))
+
+
+class JournalParams(BaseModel):
+    """Bloco `journal` (PRD 1.10 §5.9; CS-04, RS-06)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    residual_max_ratio: float = Field(
+        default=0.15, gt=0, le=1, description="Meta do CS-04: Σ|resíduo| ÷ Σ|Greeks| por operação."
+    )
+    residual_min_brl: float = Field(
+        default=50.0, ge=0, le=1e9, description="Resíduo mínimo em R$ para o sinal de erro (não calibrado)."
+    )
+
+
+_TICKER = re.compile(r"[A-Z0-9]{4,12}")
+
+
+class CrisisEpisode(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str = Field(pattern=r"^[a-z0-9_]{3,20}$")
+    label: str = Field(min_length=3, max_length=40)
+    start: date
+    end: date
+
+    @model_validator(mode="after")
+    def _order(self) -> "CrisisEpisode":
+        if not self.start < self.end:
+            raise ValueError("Episódio de crise: início antes do fim.")
+        if (self.end - self.start).days > 120:
+            raise ValueError("Episódio de crise com no máximo 120 dias corridos.")
+        # COTAHIST anual completo: só anos encerrados, a partir de 2000 (evita baixar o anual corrente
+        # a cada medição e anos inexistentes na B3; revisão de segurança, I-1).
+        if self.start < date(2000, 1, 1) or self.end.year >= date.today().year:  # noqa: DTZ011
+            raise ValueError("Episódio de crise entre 2000 e o ano anterior ao corrente.")
+        return self
+
+
+class CrisisOverride(BaseModel):
+    """Choque manual de um ativo num episódio (substitui o medido; origem `manual`)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    price_shock: float = Field(ge=-0.9, le=0.9, description="Retorno simples (−0,25 = queda de 25%).")
+    vol_shock: float = Field(ge=-0.5, le=2.0, description="Pontos de vol em decimal (0,15 = +15 pontos).")
+
+
+class LimitsParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    max_stress_loss_fraction: float = Field(default=0.20, gt=0, le=1, description="Pior perda ÷ capital.")
+    max_abs_vega_fraction: float = Field(
+        default=0.01, gt=0, le=1, description="|vega por ponto| da carteira ÷ capital."
+    )
+    max_underlying_share: float = Field(
+        default=0.50, gt=0, le=1, description="Perda em stress de um ativo ÷ orçamento de perda."
+    )
+    max_expiry_share: float = Field(
+        default=0.60, gt=0, le=1, description="Perda em stress de um vencimento ÷ orçamento de perda."
+    )
+
+
+def _default_episodes() -> list[CrisisEpisode]:
+    return [
+        CrisisEpisode(key="mai2017", label="mai/2017", start=date(2017, 5, 10), end=date(2017, 5, 31)),
+        CrisisEpisode(key="mar2020", label="mar/2020", start=date(2020, 2, 17), end=date(2020, 3, 31)),
+    ]
+
+
+class RiskParams(BaseModel):
+    """Bloco `risk` (PRD 1.10 §5.9; RF-RSK-03/04, QA-12). Limites "não calibrados"."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    stress_gap: float = Field(
+        default=0.10, gt=0, le=0.5, description="Gap do ativo nos stresses simples (±)."
+    )
+    stress_vol_pts: float = Field(default=0.10, gt=0, le=1, description="Choque de vol (decimal).")
+    crisis_episodes: list[CrisisEpisode] = Field(
+        default_factory=_default_episodes, min_length=1, max_length=4
+    )
+    crisis_horizon_bd: int = Field(default=5, ge=1, le=20, description="Pregões da pior janela do episódio.")
+    crisis_overrides: dict[str, dict[str, CrisisOverride]] = Field(
+        default_factory=dict,
+        max_length=50,
+        description="Por ativo e episódio: {'PETR4': {'mar2020': {...}}}.",
+    )
+    limits: LimitsParams = Field(default_factory=LimitsParams)
+
+    @model_validator(mode="after")
+    def _keys(self) -> "RiskParams":
+        keys = [e.key for e in self.crisis_episodes]
+        if len(set(keys)) != len(keys):
+            raise ValueError("Episódios de crise com chave repetida.")
+        for ticker, by_ep in self.crisis_overrides.items():
+            if not _TICKER.fullmatch(ticker):
+                raise ValueError(f"Ticker inválido no choque manual de crise: {ticker!r}.")
+            unknown = set(by_ep) - set(keys)
+            if unknown:
+                raise ValueError(f"Episódio desconhecido no choque manual: {sorted(unknown)}.")
+        return self
+
+
+def journal_params_from_config(version: ConfigVersion) -> JournalParams:
+    return JournalParams.model_validate(dict(version.params.get("journal", {})))
+
+
+def risk_params_from_config(version: ConfigVersion) -> RiskParams:
+    return RiskParams.model_validate(dict(version.params.get("risk", {})))
