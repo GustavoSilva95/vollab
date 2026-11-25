@@ -87,14 +87,14 @@ def list_alerts(
 
 def management_view(session: Session, position: Position) -> ManagementOut | None:
     row = session.get(PositionManagement, position.id)
+    if row is None:
+        return None
     alerts = session.scalars(
         select(Alert)
-        .where(Alert.position_id == position.id)
+        .where(Alert.user_id == position.user_id, Alert.position_id == position.id)
         .order_by(Alert.triggered_at.desc(), Alert.id.desc())
         .limit(50)
     ).all()
-    if row is None:
-        return None
     pos = {position.id: (position.ticker, position.structure)}
     return ManagementOut(
         as_of=row.as_of,

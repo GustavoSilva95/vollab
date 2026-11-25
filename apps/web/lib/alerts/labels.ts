@@ -157,6 +157,15 @@ export function describeDetails(rule: AlertRule, details: Details): string {
   }
 }
 
+/** Como `describeDetails`, mas um detalhe em formato inesperado não derruba a lista inteira. */
+export function describeSafe(rule: AlertRule, details: Details): string {
+  try {
+    return describeDetails(rule, details);
+  } catch {
+    return 'Detalhe do alerta em formato inesperado.';
+  }
+}
+
 /** O alerta usa algum parâmetro sem calibração por dados (rótulo "não calibrado"). */
 export function uncalibrated(rule: AlertRule): boolean {
   return rule !== 'strike_adjustment_pending' && rule !== 'exit_edge' && rule !== 'roll_suggested';
@@ -171,5 +180,5 @@ export function ruleText(r: Pick<RuleOut, 'rule' | 'state' | 'reason' | 'details
     return r.reason ?? 'Rolagem avaliada: sem edge líquido na direção da posição.';
   }
   if (Object.keys(details).length === 0) return r.reason ?? EMPTY;
-  return describeDetails(r.rule, details) + (r.reason && r.rule !== 'exit_edge' ? ` (${r.reason})` : '');
+  return describeSafe(r.rule, details) + (r.reason && r.rule !== 'exit_edge' ? ` (${r.reason})` : '');
 }

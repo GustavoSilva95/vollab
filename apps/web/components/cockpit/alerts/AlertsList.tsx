@@ -10,13 +10,14 @@ import {
   KIND_LABEL,
   RULE_HELP,
   RULE_LABEL,
-  describeDetails,
+  describeSafe,
   uncalibrated,
 } from '@/lib/alerts/labels';
 import { NOT_CALIBRATED_HELP } from '@/lib/edge/labels';
 import { formatDate } from '@/lib/format';
 import { STRUCTURE_LABEL } from '@/lib/simulator/labels';
 import { problemMessage } from '@/lib/api/problem';
+import { rollHref } from '@/lib/simulator/roll';
 import vol from '../vol/vol.module.css';
 import styles from './alerts.module.css';
 
@@ -75,7 +76,7 @@ export function AlertItem({ alert: a, showPosition }: { alert: AlertOut; showPos
         )}
         {a.position_id == null && <span className={styles.meta}>Carteira</span>}
       </div>
-      <p>{describeDetails(a.rule, details)}</p>
+      <p>{describeSafe(a.rule, details)}</p>
       <p className={styles.meta}>
         Disparado no pregão {formatDate(a.triggered_as_of)}
         {a.last_as_of !== a.triggered_as_of && <> · avaliado até {formatDate(a.last_as_of)}</>} · configuração v
@@ -89,17 +90,16 @@ export function AlertItem({ alert: a, showPosition }: { alert: AlertOut; showPos
           </>
         )}
       </p>
-      {a.rule === 'roll_suggested' && a.position_id != null && typeof details.expiry === 'string' && (
-        <p>
-          <Link
-            className={vol.link}
-            data-testid="alert-roll-link"
-            href={`/app/simulador?ticker=${encodeURIComponent(a.ticker ?? '')}&roll_from=${a.position_id}&expiry=${details.expiry}&structure=${a.structure ?? ''}`}
-          >
-            Abrir a rolagem no simulador
-          </Link>
-        </p>
-      )}
+      {a.rule === 'roll_suggested' && a.position_id != null && (() => {
+        const href = rollHref(a.ticker, a.position_id, details.expiry, a.structure);
+        return href ? (
+          <p>
+            <Link className={vol.link} data-testid="alert-roll-link" href={href}>
+              Abrir a rolagem no simulador
+            </Link>
+          </p>
+        ) : null;
+      })()}
       {a.state !== 'resolved' && (
         <div className={styles.actions}>
           {a.state === 'active' && (

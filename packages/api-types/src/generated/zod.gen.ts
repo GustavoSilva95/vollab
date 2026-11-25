@@ -2251,7 +2251,7 @@ export const zGetAlertsQuery = z.object({
         'resolved',
         'all'
     ]).optional().default('open'),
-    position_id: z.int().gte(1).nullish(),
+    position_id: z.int().gte(1).lte(9223372036854776000).nullish(),
     kind: z.enum([
         'hedge',
         'exit',
@@ -2269,7 +2269,7 @@ export const zGetAlertsResponse = zAlertsResponse;
 export const zPatchAlertBody = zAlertPatch;
 
 export const zPatchAlertPath = z.object({
-    alert_id: z.int().gte(1)
+    alert_id: z.int().gte(1).lte(9223372036854776000)
 });
 
 /**

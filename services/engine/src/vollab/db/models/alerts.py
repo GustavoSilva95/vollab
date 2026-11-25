@@ -19,6 +19,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Identity,
     Index,
     Text,
@@ -70,6 +71,20 @@ class Alert(Base):
             postgresql_where=text("state <> 'resolved'"),
         ),
         Index("ix_alerts_user_state", "user_id", "state"),
+        # Mesmo usuário da posição e das versões de configuração (revisão de segurança, I-1).
+        ForeignKeyConstraint(
+            ["position_id", "user_id"], ["positions.id", "positions.user_id"], name="position_user"
+        ),
+        ForeignKeyConstraint(
+            ["config_version_id", "user_id"],
+            ["config_versions.id", "config_versions.user_id"],
+            name="config_version_user",
+        ),
+        ForeignKeyConstraint(
+            ["evaluated_config_version_id", "user_id"],
+            ["config_versions.id", "config_versions.user_id"],
+            name="evaluated_config_version_user",
+        ),
         Index("ix_alerts_position", "position_id"),
     )
 
@@ -78,7 +93,7 @@ class Alert(Base):
     kind: Mapped[str] = mapped_column(Text, nullable=False)
     rule: Mapped[str] = mapped_column(Text, nullable=False)
     # Nulo nos limites de carteira.
-    position_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("positions.id"))
+    position_id: Mapped[int | None] = mapped_column(BigInteger)
     # Limite e ativo/vencimento, data ex do provento ou série ajustada; "" quando a regra é única.
     scope_key: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     state: Mapped[str] = mapped_column(Text, nullable=False)
@@ -88,12 +103,8 @@ class Alert(Base):
     triggered_as_of: Mapped[date] = mapped_column(Date, nullable=False)
     last_as_of: Mapped[date] = mapped_column(Date, nullable=False)
     details: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
-    config_version_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("config_versions.id"), nullable=False
-    )
-    evaluated_config_version_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("config_versions.id"), nullable=False
-    )
+    config_version_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    evaluated_config_version_id: Mapped[int] = mapped_column(BigInteger, nullable=False)
     engine_version: Mapped[str] = mapped_column(Text, nullable=False)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     resolved_by: Mapped[str | None] = mapped_column(Text)

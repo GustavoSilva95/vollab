@@ -18,7 +18,7 @@ export default function AlertsCard() {
   const [history, setHistory] = useState(false);
   const { data, isPending, isError } = useQuery({
     ...getAlertsOptions({ query: { state: history ? 'resolved' : 'open' } }),
-    refetchInterval: REFRESH_MS,
+    refetchInterval: history ? false : REFRESH_MS, // resolvidos quase não mudam (performance, M-3)
   });
   return (
     <section className={`${vol.card} ${vol.wide}`} aria-labelledby="dash-alerts" data-testid="dash-alerts">

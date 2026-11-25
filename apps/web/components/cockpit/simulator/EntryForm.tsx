@@ -169,7 +169,11 @@ export default function EntryForm({
           </label>
         )}
         <div>
-          <button type="submit" className={styles.button} disabled={save.isPending}>
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={save.isPending || (origin != null && rollLegs.length === 0)}
+          >
             {save.isPending ? 'Registrando…' : origin ? 'Registrar a rolagem' : 'Registrar entrada'}
           </button>
         </div>

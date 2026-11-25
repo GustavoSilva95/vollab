@@ -5,6 +5,7 @@ Dinheiro em texto decimal (`_brl`), vol em decimal, Greeks com a unidade no nome
 """
 
 import re
+import unicodedata
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
@@ -16,9 +17,13 @@ _CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 
 def clean_text(value: str) -> str:
     """Texto livre do usuário: sem espaços nas pontas e sem caracteres de controle (o Postgres recusa
-    NUL; os outros não têm uso aqui). Revisão de segurança da Etapa 7, M-3."""
-    if _CONTROL.search(value):
-        raise ValueError("Texto com caractere de controle.")
+    NUL; os outros não têm uso aqui). Revisão de segurança da Etapa 7, M-3. Etapa 8 (M-6): também sem
+    controles C1 nem caracteres de formatação (Unicode `Cc`/`Cf`, como as marcas bidirecionais, que
+    invertem o texto na tela)."""
+    if _CONTROL.search(value) or any(
+        unicodedata.category(ch) in ("Cc", "Cf") and ch not in "\t\n" for ch in value
+    ):
+        raise ValueError("Texto com caractere de controle ou de formatação.")
     return value.strip()
 
 

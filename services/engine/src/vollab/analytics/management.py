@@ -6,6 +6,7 @@ grava o estado das regras em `position_management` (lido por `GET /positions/{id
 tabela `alerts` (cria, atualiza, resolve). Não recalcula marcações: lê o que o diário já gravou.
 """
 
+import functools
 import math
 import uuid
 from collections.abc import Callable, Sequence
@@ -19,9 +20,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.orm import Session, defer
 
-from vollab.analytics.events import EventContext
 from vollab.analytics.journal import aggregates, load_entries, status_of
-from vollab.analytics.market import load_holidays
 from vollab.analytics.params import (
     ManagementParams,
     SimulationParams,
@@ -31,9 +30,8 @@ from vollab.analytics.params import (
     sizing_params_from_config,
 )
 from vollab.analytics.portfolio import PortfolioComputer
-from vollab.analytics.ranking import RankingComputer
 from vollab.analytics.simulation import SimulationComputer, SimulationInputError, money
-from vollab.api.schemas.simulation import LegInput, SimulationRequest
+from vollab.api.schemas.simulation import ChainResponse, LegInput, SimulationRequest
 from vollab.collection.params import ensure_config_version
 from vollab.db.models import (
     FIXED_USER_ID,
@@ -140,16 +138,21 @@ class AlertsEvaluator:
         self.mg: ManagementParams = management_params_from_config(version)
         self.sim: SimulationParams = simulation_params_from_config(version)
         self.size: SizingParams = sizing_params_from_config(version)
-        self.rk = RankingComputer(session, user_id=user_id)
-        self.holidays = load_holidays(session)
+        # Um só RankingComputer, compartilhado com o simulador da rolagem, com as leituras por
+        # (ativo, pregão) memorizadas na rodada (revisão de performance da Etapa 8, I-1 a I-3).
+        self.sc = SimulationComputer(session, user_id=user_id)
+        self.rk = self.sc.rk
+        for name in ("spread_days", "forecast_value", "normal_spread_value"):
+            setattr(self.rk, name, functools.lru_cache(maxsize=None)(getattr(self.rk, name)))
+        self.holidays = self.rk.holidays
         self.engine_version = get_settings().engine_version
-        self._sc: SimulationComputer | None = None
+        self._chains: dict[tuple[str, date | None], ChainResponse] = {}
 
-    @property
-    def sc(self) -> SimulationComputer:
-        if self._sc is None:
-            self._sc = SimulationComputer(self.session, user_id=self.user_id)
-        return self._sc
+    def chain(self, ticker: str, expiry: date | None) -> ChainResponse:
+        key = (ticker, expiry)
+        if key not in self._chains:
+            self._chains[key] = self.sc.chain(ticker, expiry)
+        return self._chains[key]
 
     # Rodada completa ------------------------------------------------------------------------------
 
@@ -307,7 +310,7 @@ class AlertsEvaluator:
         if sum(weights) <= 0 or vega_unit <= 0:
             return None, "vega da posição nula", None, None
         iv_raw = sum(w * float(leg["iv"]) for w, leg in zip(weights, live, strict=True)) / sum(weights)
-        ctx = EventContext(self.session, user_id=self.user_id, ticker=p.ticker, params=self.rk.p.vol)
+        ctx = self.sc.event_context(p.ticker)
         iv_ex, ex_reason, _ = ctx.ex_event_atm(t, p.expiry, h, iv_raw)
         approximate = iv_ex is None
         iv = iv_raw if iv_ex is None else iv_ex
@@ -473,7 +476,7 @@ class AlertsEvaluator:
         if close_brl is None:
             return base | {"reason": "custo de fechar a posição atual indisponível"}
         try:
-            chain = self.sc.chain(p.ticker, None)
+            chain = self.chain(p.ticker, None)
             if chain.as_of is None:
                 return base | {"reason": "sem pregão para a cadeia de opções"}
             as_of = chain.as_of
@@ -487,7 +490,7 @@ class AlertsEvaluator:
                     "reason": f"sem vencimento depois do atual com ≥ {self.mg.roll_min_dte_bd} du "
                     "e IV de referência"
                 }
-            dchain = self.sc.chain(p.ticker, dest)
+            dchain = self.chain(p.ticker, dest)
             ids = dchain.suggestions.get(p.structure)
             if not ids:
                 return base | {"expiry": dest.isoformat(), "reason": "sem strikes sugeridos para a estrutura"}
@@ -499,8 +502,11 @@ class AlertsEvaluator:
             )
             extra = close_brl / (self.size.lot_size * p.lots)
             se = self.sc.structure_edge(req, extra_cost_brl_unit=extra)
-        except (SimulationInputError, LookupError, ValueError) as exc:
+        except SimulationInputError as exc:
             return base | {"reason": str(exc)[:300]}
+        except (LookupError, ValueError) as exc:  # mensagem interna fica só no log (segurança, M-4)
+            log.warning("alerts.roll_unavailable", position_id=p.id, error=type(exc).__name__)
+            return base | {"reason": "dados insuficientes para avaliar o destino da rolagem"}
         suggested = se.state == EdgeState.EDGE.value and se.signal_direction is Direction(p.direction)
         return {
             "status": "ok",
@@ -590,13 +596,19 @@ class AlertsEvaluator:
         reasons_closed: dict[int, str],
     ) -> None:
         s = self.session
+        # Lock nas linhas: um PATCH concorrente espera o commit do job e decide sobre o estado novo
+        # (sem ele, resolver no meio da rodada fazia o trigger derrubar a rodada; segurança, M-1).
         open_rows = s.scalars(
-            select(Alert).where(Alert.user_id == self.user_id, Alert.state != "resolved")
+            select(Alert)
+            .where(Alert.user_id == self.user_id, Alert.state != "resolved")
+            .order_by(Alert.id)
+            .with_for_update()
         ).all()
         held_rows = s.scalars(
-            select(Alert).where(
-                Alert.user_id == self.user_id, Alert.state == "resolved", Alert.persisting.is_(True)
-            )
+            select(Alert)
+            .where(Alert.user_id == self.user_id, Alert.state == "resolved", Alert.persisting.is_(True))
+            .order_by(Alert.id)
+            .with_for_update()
         ).all()
         plan = reconcile(
             [OpenAlert(a.id, _key(a)) for a in open_rows],

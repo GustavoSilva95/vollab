@@ -6,6 +6,9 @@ PRD 1.11 §5.10 e §6.5 (BRD 1.8 RN-GES-01..07, RS-07):
   trigger `alerts_guard` impede mudar as colunas do disparo e torna o alerta resolvido imutável, exceto
   `persisting` de verdadeiro para falso (a condição que segurava a reabertura sumiu).
 - `position_management`: última avaliação das regras por posição (dado derivado, refeito pelo job).
+- Revisão de segurança da Etapa 8 (I-1): `alerts_insert_guard` só aceita alerta novo como ativo, sem
+  resolução e com a data do disparo do banco; FKs compostas ligam o alerta à posição e às versões de
+  configuração **do mesmo usuário** (unique `(id, user_id)` em `positions` e `config_versions`).
 
 Revision ID: 0009
 Revises: 0008
@@ -61,7 +64,23 @@ $$
 """
 
 
+INSERT_GUARD = """
+CREATE FUNCTION alerts_insert_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.state <> 'active' OR NEW.resolved_at IS NOT NULL OR NEW.resolved_by IS NOT NULL
+        OR NEW.resolution_note IS NOT NULL OR NEW.persisting THEN
+        RAISE EXCEPTION 'alerts: alerta novo nasce ativo, sem resolução';
+    END IF;
+    NEW.triggered_at := now();
+    RETURN NEW;
+END;
+$$
+"""
+
+
 def upgrade() -> None:
+    op.create_unique_constraint(op.f("uq_positions_id_user_id"), "positions", ["id", "user_id"])
+    op.create_unique_constraint(op.f("uq_config_versions_id_user_id"), "config_versions", ["id", "user_id"])
     op.create_table(
         "alerts",
         sa.Column("id", sa.BigInteger(), sa.Identity(always=False), nullable=False),
@@ -96,17 +115,19 @@ def upgrade() -> None:
         ),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], name=op.f("fk_alerts_user_id_users")),
         sa.ForeignKeyConstraint(
-            ["position_id"], ["positions.id"], name=op.f("fk_alerts_position_id_positions")
+            ["position_id", "user_id"],
+            ["positions.id", "positions.user_id"],
+            name=op.f("fk_alerts_position_user"),
         ),
         sa.ForeignKeyConstraint(
-            ["config_version_id"],
-            ["config_versions.id"],
-            name=op.f("fk_alerts_config_version_id_config_versions"),
+            ["config_version_id", "user_id"],
+            ["config_versions.id", "config_versions.user_id"],
+            name=op.f("fk_alerts_config_version_user"),
         ),
         sa.ForeignKeyConstraint(
-            ["evaluated_config_version_id"],
-            ["config_versions.id"],
-            name=op.f("fk_alerts_evaluated_config_version_id_config_versions"),
+            ["evaluated_config_version_id", "user_id"],
+            ["config_versions.id", "config_versions.user_id"],
+            name=op.f("fk_alerts_evaluated_config_version_user"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_alerts")),
     )
@@ -127,6 +148,11 @@ def upgrade() -> None:
     op.execute(
         "CREATE TRIGGER alerts_no_truncate BEFORE TRUNCATE ON alerts "
         "FOR EACH STATEMENT EXECUTE FUNCTION forbid_mutation()"
+    )
+    op.execute(INSERT_GUARD)
+    op.execute(
+        "CREATE TRIGGER alerts_insert_guard BEFORE INSERT ON alerts "
+        "FOR EACH ROW EXECUTE FUNCTION alerts_insert_guard()"
     )
     op.execute(f"REVOKE DELETE, TRUNCATE ON alerts FROM {APP_ROLE}")
 
@@ -157,6 +183,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("position_management")
     op.execute("DROP TRIGGER alerts_no_truncate ON alerts")
+    op.execute("DROP TRIGGER alerts_insert_guard ON alerts")
     op.execute("DROP TRIGGER alerts_guard ON alerts")
+    op.execute("DROP FUNCTION alerts_insert_guard()")
     op.execute("DROP FUNCTION alerts_guard()")
     op.drop_table("alerts")
+    op.drop_constraint(op.f("uq_config_versions_id_user_id"), "config_versions", type_="unique")
+    op.drop_constraint(op.f("uq_positions_id_user_id"), "positions", type_="unique")

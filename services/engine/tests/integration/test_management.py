@@ -509,3 +509,53 @@ def test_alerts_table_guarded_for_app_role(
         owner_session.execute(text("DELETE FROM alerts WHERE id = :i"), {"i": alert.id})
         owner_session.flush()
     owner_session.rollback()
+
+
+def test_insert_guard_and_user_scoped_fks(
+    managed: tuple[Session, Position, Position], api_client: TestClient
+) -> None:
+    """Revisão de segurança da Etapa 8 (I-1, M-2, M-6)."""
+    s, short, _ = managed
+    version = ensure_config_version(s, user_id=FIXED_USER_ID).id
+    base = (
+        "INSERT INTO alerts (user_id, kind, rule, position_id, scope_key, state, triggered_as_of, "
+        "last_as_of, details, config_version_id, evaluated_config_version_id, engine_version{extra}) "
+        "VALUES (:u, 'exit', 'exit_stop', :p, '', :state, '2026-11-19', '2026-11-19', '{{}}', "
+        ":v, :v, 't'{values})"
+    )
+    params = {"u": FIXED_USER_ID, "p": short.id, "v": version}
+    # Alerta forjado já resolvido "pelo usuário" (seguraria a reabertura da chave): recusado.
+    forged = base.format(extra=", resolved_at, resolved_by, persisting", values=", now(), 'user', true")
+    with pytest.raises(DBAPIError):
+        s.execute(text(forged), params | {"state": "resolved"})
+        s.flush()
+    s.rollback()
+    # Disparo com data retroativa: o banco grava a sua própria.
+    s.execute(
+        text(base.format(extra=", triggered_at", values=", '2020-01-01'")), params | {"state": "active"}
+    )
+    s.commit()
+    row = _open(s, "exit_stop", short.id)
+    assert row is not None and row.triggered_at.year == 2026
+    # Outro usuário com a posição deste: a FK composta recusa.
+    other = "00000000-0000-0000-0000-00000000beef"
+    s.execute(
+        text("INSERT INTO users (id, display_name) VALUES (:o, 'outro') ON CONFLICT DO NOTHING"), {"o": other}
+    )
+    s.commit()
+    with pytest.raises(DBAPIError):
+        s.execute(text(base.format(extra="", values="")), params | {"u": other, "state": "active"})
+        s.flush()
+    s.rollback()
+
+    # Ids acima do bigint: 422, não 500.
+    assert api_client.get("/alerts", params={"position_id": 2**63}).status_code == 422
+    assert api_client.patch(f"/alerts/{2**63}", json={"state": "seen"}).status_code == 422
+    # Nota só com espaços = sem nota; marca bidirecional recusada.
+    alert = _open(s, "exit_edge", short.id)
+    assert alert is not None
+    assert (
+        api_client.patch(f"/alerts/{alert.id}", json={"state": "resolved", "note": "a‮b"}).status_code == 422
+    )
+    r = api_client.patch(f"/alerts/{alert.id}", json={"state": "resolved", "note": "   "})
+    assert r.status_code == 200 and r.json()["resolution_note"] is None

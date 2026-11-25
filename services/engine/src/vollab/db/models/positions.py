@@ -20,6 +20,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Text,
+    UniqueConstraint,
     Uuid,
     text,
 )
@@ -43,6 +44,7 @@ class Position(CreatedAtMixin, Base):
         CheckConstraint(f"direction IN {DIRECTIONS}", name="direction"),
         CheckConstraint(f"edge_state IN {EDGE_STATES}", name="edge_state"),
         CheckConstraint("lots > 0", name="lots"),
+        UniqueConstraint("id", "user_id", name="id_user_id"),  # FK composta de `alerts` (Etapa 8)
         Index("ix_positions_user_created", "user_id", "created_at"),
     )
 

@@ -18,6 +18,7 @@ from vollab.db.session import get_session
 
 router = APIRouter(prefix="/alerts", tags=["alertas"])
 SessionDep = Annotated[Session, Depends(get_session)]
+MAX_ID = 2**63 - 1  # bigint: acima disso o banco recusaria com 500 (segurança, M-2)
 
 
 @router.get("", response_model=AlertsResponse, summary="Alertas (padrão: não resolvidos)")
@@ -27,7 +28,7 @@ def get_alerts(
         Literal["open", "active", "seen", "resolved", "all"],
         Query(description="`open` = ativos e vistos (padrão)."),
     ] = "open",
-    position_id: Annotated[int | None, Query(ge=1)] = None,
+    position_id: Annotated[int | None, Query(ge=1, le=MAX_ID)] = None,
     kind: Annotated[AlertKind | None, Query()] = None,
 ) -> AlertsResponse:
     return list_alerts(session, user_id=FIXED_USER_ID, state=state, position_id=position_id, kind=kind)
@@ -43,7 +44,9 @@ def get_alerts(
         422: {"model": ProblemDetails, "description": "Transição inválida."},
     },
 )
-def patch_alert(alert_id: Annotated[int, Path(ge=1)], body: AlertPatch, session: SessionDep) -> AlertOut:
+def patch_alert(
+    alert_id: Annotated[int, Path(ge=1, le=MAX_ID)], body: AlertPatch, session: SessionDep
+) -> AlertOut:
     alert = session.get(Alert, alert_id, with_for_update=True)
     if alert is None or alert.user_id != FIXED_USER_ID:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Alerta inexistente.")

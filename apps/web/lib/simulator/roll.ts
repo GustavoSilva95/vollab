@@ -31,6 +31,20 @@ export function defaultClosePrices(legs: OpenLeg[]): string[] {
   return legs.map((l) => (l.lastPrice != null ? toMoneyInput(l.lastPrice) : ''));
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Link do simulador em modo rolagem, com a query codificada; null se o vencimento não for uma data
+ * ISO (o dado vem do engine, mas o link nunca injeta parâmetros; revisão de segurança, M-3).
+ */
+export function rollHref(ticker: string | null, positionId: number, expiry: unknown, structure: string | null): string | null {
+  if (typeof expiry !== 'string' || !ISO_DATE.test(expiry)) return null;
+  const q = new URLSearchParams({ roll_from: String(positionId), expiry });
+  if (ticker) q.set('ticker', ticker);
+  if (structure) q.set('structure', structure);
+  return `/app/simulador?${q.toString()}`;
+}
+
 /** Monta `roll_from`: cada perna sai inteira (quantidade com o sinal contrário ao em aberto). */
 export function toRollFrom(positionId: number, legs: OpenLeg[], prices: string[], fees: string[]): RollFrom {
   return {

@@ -40,6 +40,7 @@ import {
 import { STRUCTURE_LABEL } from '@/lib/simulator/labels';
 import { problemMessage } from '@/lib/api/problem';
 import { RULE_HELP, RULE_LABEL, RULE_STATE_LABEL, relativeText, ruleText } from '@/lib/alerts/labels';
+import { rollHref } from '@/lib/simulator/roll';
 import AlertsList from '../alerts/AlertsList';
 import alertStyles from '../alerts/alerts.module.css';
 import styles from '../vol/vol.module.css';
@@ -248,12 +249,12 @@ export function Management({ position: p }: { position: PositionOut }) {
           </dd>
         </dl>
       )}
-      {roll?.suggested && roll.expiry && (
+      {roll?.suggested && rollHref(p.ticker, p.id, roll.expiry, p.structure) && (
         <p>
           <Link
             className={styles.link}
             data-testid="op-roll-link"
-            href={`/app/simulador?ticker=${p.ticker}&roll_from=${p.id}&expiry=${roll.expiry}&structure=${p.structure}`}
+            href={rollHref(p.ticker, p.id, roll.expiry, p.structure) as string}
           >
             Rolar para {formatDate(roll.expiry)} no simulador
           </Link>{' '}

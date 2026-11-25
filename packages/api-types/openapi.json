@@ -9346,6 +9346,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maximum": 9223372036854775807,
                   "minimum": 1,
                   "type": "integer"
                 },
@@ -9417,6 +9418,7 @@
             "name": "alert_id",
             "required": true,
             "schema": {
+              "maximum": 9223372036854775807,
               "minimum": 1,
               "title": "Alert Id",
               "type": "integer"

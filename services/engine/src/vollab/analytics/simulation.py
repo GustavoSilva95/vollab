@@ -179,9 +179,19 @@ class SimulationComputer:
         self.size: SizingParams = sizing_params_from_config(version)
         self.risk: RiskParams = risk_params_from_config(version)
         self.holidays = self.rk.holidays
+        self._contexts: dict[str, EventContext] = {}
         self.v = self.rk.v
 
     # Insumos comuns ---------------------------------------------------------------------------
+
+    def event_context(self, ticker: str) -> EventContext:
+        """Um contexto de eventos por ativo na vida do objeto (a avaliação dos alertas reaproveita entre
+        posições do mesmo ativo; revisão de performance da Etapa 8, I-1)."""
+        ctx = self._contexts.get(ticker)
+        if ctx is None:
+            ctx = EventContext(self.session, user_id=self.user_id, ticker=ticker, params=self.rk.p.vol)
+            self._contexts[ticker] = ctx
+        return ctx
 
     def _underlying(self, ticker: str) -> str:
         found = self.session.scalar(
@@ -476,7 +486,7 @@ class SimulationComputer:
 
         # Edge da estrutura (mesmas regras da §5.6.1).
         iv_raw = structure_iv(legs, market)
-        ctx = EventContext(self.session, user_id=self.user_id, ticker=ticker, params=self.rk.p.vol)
+        ctx = self.event_context(ticker)
         iv_ex, ex_reason, removed = ctx.ex_event_atm(as_of, expiry, h, iv_raw)
         approximate = iv_ex is None
         iv_used = iv_raw if iv_ex is None else iv_ex

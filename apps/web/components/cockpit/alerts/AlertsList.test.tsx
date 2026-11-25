@@ -115,8 +115,21 @@ describe('Alertas (PRD 1.11 §8.1; RN-GES-07, PRD-UI-10)', () => {
     renderWith(<AlertsList alerts={[roll]} />);
     expect(screen.getByTestId('alert-roll-link')).toHaveAttribute(
       'href',
-      '/app/simulador?ticker=PETR4&roll_from=7&expiry=2026-12-18&structure=short_straddle',
+      '/app/simulador?roll_from=7&expiry=2026-12-18&ticker=PETR4&structure=short_straddle',
     );
+  });
+
+  it('vencimento fora do formato ISO não gera link (nenhum parâmetro injetado)', () => {
+    const forged: AlertOut = {
+      ...ALERT,
+      id: 14,
+      kind: 'roll',
+      rule: 'roll_suggested',
+      details: { expiry: '2026-12-18&roll_from=99', horizon_bd: 20, legs: [], net_relative_edge: 0.2, close_cost_brl: '2.05' },
+    };
+    renderWith(<AlertsList alerts={[forged]} />);
+    expect(screen.queryByTestId('alert-roll-link')).toBeNull();
+    expect(screen.getByText('Detalhe do alerta em formato inesperado.')).toBeInTheDocument();
   });
 });
 

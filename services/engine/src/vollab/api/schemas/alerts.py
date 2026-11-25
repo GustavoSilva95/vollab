@@ -7,7 +7,7 @@ detalhe de cada regra é um objeto com os números do disparo (chaves com a unid
 from datetime import date, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from vollab.api.schemas.journal import CleanText
 
@@ -57,6 +57,11 @@ class AlertPatch(BaseModel):
 
     state: Literal["seen", "resolved"]
     note: CleanText | None = Field(default=None, max_length=500, description="Nota ao resolver (opcional).")
+
+    @field_validator("note")
+    @classmethod
+    def _empty_is_none(cls, v: str | None) -> str | None:
+        return v or None  # nota só com espaços = sem nota (segurança, M-6)
 
 
 class AlertsResponse(BaseModel):
