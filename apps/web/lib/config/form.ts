@@ -20,7 +20,7 @@ import {
 type Unit = 'percent' | 'points' | 'plain' | 'int';
 
 interface FieldSpec {
-  block: 'costs' | 'edge' | 'vol' | 'forecast' | 'risk' | 'journal';
+  block: 'costs' | 'edge' | 'vol' | 'forecast' | 'risk' | 'journal' | 'management';
   /** Caminho dentro do bloco; `limits.x` para campos aninhados. */
   key: string;
   /** Valor padrão sem calibração por dados (rótulo "não calibrado"). */
@@ -34,6 +34,10 @@ interface FieldSpec {
   nextRecompute?: boolean;
   /** Valor a conferir na tabela vigente da B3. */
   verify?: boolean;
+  /** Vazio = regra desligada (`null` no engine, PRD 1.11 §5.10). */
+  optional?: boolean;
+  /** Aviso fixo junto do campo (ex.: regra G2 no stop). */
+  warning?: string;
 }
 
 export const FIELDS = {
@@ -220,6 +224,71 @@ export const FIELDS = {
     uncalibrated: true,
     help: 'Evita acusar erro de lançamento em dias parados (RS-06).',
   },
+  // Gestão da operação (PRD 1.11 §5.10; QA-11, decisões do usuário em 2026-11-24).
+  exit_dte_bd: {
+    block: 'management',
+    key: 'exit_dte_bd',
+    label: 'Saída: alerta com até N du até o vencimento',
+    unit: 'int',
+    min: 0,
+    max: 63,
+    optional: true,
+    uncalibrated: true,
+    help: 'Vazio desliga o alerta de prazo.',
+  },
+  hedge_alert_interval_bd: {
+    block: 'management',
+    key: 'hedge_interval_bd',
+    label: 'Hedge: alerta depois de N pregões sem hedge',
+    unit: 'int',
+    min: 1,
+    max: 63,
+    optional: true,
+    uncalibrated: true,
+    help: 'Desligado por padrão (vazio): com hedge diário dispararia todo pregão. A banda de delta é a da simulação.',
+  },
+  profit_target_fraction: {
+    block: 'management',
+    key: 'profit_target_fraction',
+    label: 'Saída: meta de lucro (% do P&L esperado na entrada)',
+    unit: 'percent',
+    min: 0.01,
+    max: 5,
+    optional: true,
+    uncalibrated: true,
+    help: 'Vazio = desligada (padrão).',
+  },
+  stop_loss_fraction: {
+    block: 'management',
+    key: 'stop_loss_fraction',
+    label: 'Saída: stop (% da perda máxima do dimensionamento)',
+    unit: 'percent',
+    min: 0.01,
+    max: 5,
+    optional: true,
+    uncalibrated: true,
+    warning: 'Stop por P&L é má ideia (regra G2 da referência): saia quando o edge acabar ou a previsão mudar.',
+    help: 'Vazio = desligado (padrão).',
+  },
+  roll_min_dte_bd: {
+    block: 'management',
+    key: 'roll_min_dte_bd',
+    label: 'Rolagem: destino no 1º vencimento com ≥ N du',
+    unit: 'int',
+    min: 1,
+    max: 126,
+    uncalibrated: true,
+  },
+  dividend_lead_bd: {
+    block: 'management',
+    key: 'dividend_lead_bd',
+    label: 'Proventos: alerta com N du de antecedência da data ex',
+    unit: 'int',
+    min: 0,
+    max: 63,
+    uncalibrated: true,
+    help: '0 desliga o alerta de data ex (o de ajuste de strike sem lançamento continua).',
+  },
 } as const satisfies Record<string, FieldSpec>;
 
 export type FieldName = keyof typeof FIELDS;
@@ -231,6 +300,7 @@ export const BLOCK_LABEL = {
   forecast: 'Previsão',
   risk: 'Risco e limites',
   journal: 'Diário',
+  management: 'Gestão da operação',
 } as const;
 
 function parse(unit: Unit, raw: string): number | null {
@@ -262,6 +332,7 @@ export const configFormSchema = z
   .superRefine((v, ctx) => {
     for (const name of FIELD_NAMES) {
       const spec: FieldSpec = FIELDS[name];
+      if (spec.optional && v[name].trim() === '') continue;
       const value = parse(spec.unit, v[name]);
       if (value == null || value < spec.min || value > spec.max) {
         ctx.addIssue({ code: 'custom', path: [name], message: rangeMessage(spec) });
@@ -299,7 +370,8 @@ export function toFormValues(params: ConfigParamsOutput): ConfigFormValues {
   const out: Record<string, string> = { note: '' };
   for (const name of FIELD_NAMES) {
     const spec: FieldSpec = FIELDS[name];
-    out[name] = toInput(spec.unit, Number(getPath(block(params, spec.block), spec.key)));
+    const raw = getPath(block(params, spec.block), spec.key);
+    out[name] = raw == null && spec.optional ? '' : toInput(spec.unit, Number(raw));
   }
   const bands = (params.costs?.moneyness_bands ?? [0.95, 1.05]) as [number, number];
   out.band_low = toPlainInput(bands[0]);
@@ -314,6 +386,10 @@ export function toConfigParams(values: ConfigFormValues, current: ConfigParamsOu
   const next = structuredClone(current) as Record<string, Block>;
   for (const name of FIELD_NAMES) {
     const spec: FieldSpec = FIELDS[name];
+    if (spec.optional && values[name].trim() === '') {
+      next[spec.block] = setPath(next[spec.block] ?? {}, spec.key, null);
+      continue;
+    }
     const value = parse(spec.unit, values[name]);
     if (value == null) throw new RangeError(`Campo inválido: ${name}.`);
     next[spec.block] = setPath(next[spec.block] ?? {}, spec.key, value);

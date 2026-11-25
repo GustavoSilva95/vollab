@@ -11,6 +11,7 @@ import { STATE_LABEL } from '@/lib/edge/labels';
 import { MODEL_LABEL } from '@/lib/forecast/labels';
 import { entrySchema, overrideReasons, toPositionCreate, type EntryValues } from '@/lib/simulator/form';
 import { RULE_LABEL, STRUCTURE_LABEL } from '@/lib/simulator/labels';
+import { defaultClosePrices, openOptionLegs } from '@/lib/simulator/roll';
 import styles from '../vol/vol.module.css';
 import { problemMessage } from '@/lib/api/problem';
 
@@ -19,8 +20,17 @@ import { problemMessage } from '@/lib/api/problem';
  * recalcula edge, semáforo, simulação e dimensionamento e grava o retrato imutável. Fora da regra
  * (semáforo, direção ou lotes acima do sugerido) a justificativa é obrigatória.
  */
-export default function EntryForm({ request, result }: { request: SizingRequest; result: SizingResponse }) {
+export default function EntryForm({
+  request,
+  result,
+  origin = null,
+}: {
+  request: SizingRequest;
+  result: SizingResponse;
+  origin?: PositionOut | null;
+}) {
   const { simulation: sim, sizing } = result;
+  const rollLegs = origin ? openOptionLegs(origin) : [];
   const queryClient = useQueryClient();
   const form = useForm<EntryValues>({
     resolver: zodResolver(entrySchema),
@@ -32,6 +42,8 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
       executedAt: nowMarketInput(),
       note: '',
       overrideReason: '',
+      rollPrices: defaultClosePrices(rollLegs),
+      rollFees: rollLegs.map(() => ''),
     },
   });
   const lots = Number(useWatch({ control: form.control, name: 'lots' })) || 0;
@@ -40,7 +52,8 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
     ...postPositionMutation(),
     onSuccess: () =>
       queryClient.invalidateQueries({
-        predicate: (q) => ['listPositions'].includes((q.queryKey[0] as { _id?: string } | undefined)?._id ?? ''),
+        predicate: (q) =>
+          ['listPositions', 'getPosition', 'getAlerts'].includes((q.queryKey[0] as { _id?: string } | undefined)?._id ?? ''),
       }),
   });
   const errors = form.formState.errors;
@@ -64,13 +77,14 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
       form.setError('overrideReason', { message: 'Justifique a entrada fora da regra (mín. 10 caracteres).' });
       return;
     }
-    save.mutate({ body: toPositionCreate(request, sim, values) });
+    const roll = origin ? { positionId: origin.id, legs: rollLegs } : null;
+    save.mutate({ body: toPositionCreate(request, sim, values, roll) });
   });
 
   return (
     <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sim-entry">
       <h2 id="sim-entry" className={`${styles.eyebrow} mono`}>
-        Registrar entrada
+        {origin ? `Registrar a rolagem da operação #${origin.id}` : 'Registrar entrada'}
       </h2>
       <p className={styles.muted}>
         Sugerido: {formatNumber(sizing.n_final)} lote(s). O engine recalcula tudo e grava o retrato da decisão com a
@@ -110,6 +124,34 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
             <input className={styles.input} inputMode="decimal" {...form.register('stockPrice')} />
           </label>
         )}
+        {origin && (
+          <fieldset className={styles.form} style={{ gridColumn: '1 / -1' }} data-testid="roll-close">
+            <legend className={`${styles.eyebrow} mono`}>Fechamento da operação #{origin.id}</legend>
+            {rollLegs.length === 0 && <p className={styles.warn}>A operação de origem não tem pernas de opção em aberto.</p>}
+            {rollLegs.map((leg, i) => (
+              <div key={leg.instrument} className={styles.field}>
+                <label htmlFor={`roll-price-${leg.series_id}`}>
+                  Preço de fechamento {leg.instrument} ({formatNumber(-leg.quantity)}) (R$)
+                </label>
+                <input
+                  id={`roll-price-${leg.series_id}`}
+                  className={styles.input}
+                  inputMode="decimal"
+                  {...form.register(`rollPrices.${i}` as const)}
+                />
+                <label htmlFor={`roll-fees-${leg.series_id}`}>Taxas e corretagem do fechamento {leg.instrument} (R$)</label>
+                <input
+                  id={`roll-fees-${leg.series_id}`}
+                  className={styles.input}
+                  inputMode="decimal"
+                  placeholder="0"
+                  {...form.register(`rollFees.${i}` as const)}
+                />
+                {errors.rollPrices?.[i] && <span className={styles.fieldError}>{errors.rollPrices[i]?.message}</span>}
+              </div>
+            ))}
+          </fieldset>
+        )}
         <label className={styles.field}>
           <span>Executado em (Brasília)</span>
           <input className={styles.input} type="datetime-local" {...form.register('executedAt')} />
@@ -128,7 +170,7 @@ export default function EntryForm({ request, result }: { request: SizingRequest;
         )}
         <div>
           <button type="submit" className={styles.button} disabled={save.isPending}>
-            {save.isPending ? 'Registrando…' : 'Registrar entrada'}
+            {save.isPending ? 'Registrando…' : origin ? 'Registrar a rolagem' : 'Registrar entrada'}
           </button>
         </div>
       </form>

@@ -20,6 +20,7 @@ import {
   formatMoney,
   formatNumber,
   formatVol,
+  formatVolPoints,
   nowMarketInput,
 } from '@/lib/format';
 import { STATE_LABEL } from '@/lib/edge/labels';
@@ -38,12 +39,15 @@ import {
 } from '@/lib/journal/labels';
 import { STRUCTURE_LABEL } from '@/lib/simulator/labels';
 import { problemMessage } from '@/lib/api/problem';
+import { RULE_HELP, RULE_LABEL, RULE_STATE_LABEL, relativeText, ruleText } from '@/lib/alerts/labels';
+import AlertsList from '../alerts/AlertsList';
+import alertStyles from '../alerts/alerts.module.css';
 import styles from '../vol/vol.module.css';
 
 /** Consultas que mudam com um lançamento (a operação, o diário e a carteira). */
 function dependsOnEntries(key: readonly unknown[]): boolean {
   const id = (key[0] as { _id?: string } | undefined)?._id ?? '';
-  return ['getPosition', 'listPositions', 'getPortfolio', 'getLimits'].includes(id);
+  return ['getPosition', 'listPositions', 'getPortfolio', 'getLimits', 'getAlerts'].includes(id);
 }
 
 /**
@@ -58,6 +62,7 @@ export default function PositionView({ id }: { id: number }) {
     <div className={styles.grid}>
       <Summary position={data} />
       <RiskFacts position={data} />
+      <Management position={data} />
       <Attribution position={data} />
       <Marks position={data} />
       <Entries position={data} />
@@ -171,6 +176,94 @@ export function RiskFacts({ position: p }: { position: PositionOut }) {
         <dt title={ERROR_FLAG_HELP}>Dias com resíduo alto</dt>
         <dd>{formatNumber(cs?.error_days ?? 0)}</dd>
       </dl>
+    </section>
+  );
+}
+
+/**
+ * Gestão (PRD 1.11 §5.10 e §8.1; RN-GES-01..07): estado de cada regra na última avaliação do worker,
+ * edge da posição aberta com intervalo, rolagem avaliada e os alertas da operação.
+ */
+export function Management({ position: p }: { position: PositionOut }) {
+  const m = p.management;
+  if (m == null) {
+    return (
+      <section className={`${styles.card} ${styles.wide}`} aria-labelledby="op-mgmt" data-testid="op-management">
+        <h2 id="op-mgmt" className={`${styles.eyebrow} mono`}>
+          Gestão
+        </h2>
+        <p className={styles.muted}>
+          {p.status === 'closed'
+            ? 'Operação encerrada: sem regras a avaliar.'
+            : 'Ainda sem avaliação: o worker avalia as regras depois da marcação D-1.'}
+        </p>
+      </section>
+    );
+  }
+  const e = m.edge;
+  const roll = m.roll;
+  return (
+    <section className={`${styles.card} ${styles.wide}`} aria-labelledby="op-mgmt" data-testid="op-management">
+      <h2 id="op-mgmt" className={`${styles.eyebrow} mono`}>
+        Gestão · pregão {formatDate(m.as_of)} · configuração v{m.config_version_id}
+      </h2>
+      <div className={alertStyles.rules}>
+        {m.rules.map((r) => (
+          <div key={`${r.rule}-${r.scope_key}`} style={{ display: 'contents' }} data-testid={`rule-${r.rule}`}>
+            <span className={alertStyles.ruleState} data-state={r.state} title={RULE_HELP[r.rule]}>
+              {RULE_STATE_LABEL[r.state]}
+            </span>
+            <span>
+              <strong title={RULE_HELP[r.rule]}>{RULE_LABEL[r.rule]}</strong> · {ruleText(r)}
+            </span>
+          </div>
+        ))}
+      </div>
+      {e && (
+        <dl className={styles.facts} data-testid="op-position-edge">
+          <dt title={RULE_HELP.exit_edge}>Edge relativo líquido da posição</dt>
+          <dd>
+            {e.net_relative_edge == null ? 'o hedge consome todo o edge' : relativeText(e.net_relative_edge)}
+            {e.net_relative_low != null && e.net_relative_high != null && (
+              <span className={styles.small}>
+                {' '}
+                [{relativeText(e.net_relative_low)}; {relativeText(e.net_relative_high)}]
+              </span>
+            )}
+            {e.origin === 'approximate' && (
+              <span className={styles.tag} title={e.reason ?? 'Previsão ou IV aproximada no prazo da posição.'}>
+                aproximado
+              </span>
+            )}
+          </dd>
+          <dt>IV · RV prevista ({MODEL_LABEL[e.model as keyof typeof MODEL_LABEL] ?? e.model})</dt>
+          <dd>
+            {formatVol(e.iv)} · {formatVol(e.sigma)} [{formatVol(e.sigma_low)}; {formatVol(e.sigma_high)}] em{' '}
+            {formatNumber(e.horizon_bd)} du
+          </dd>
+          <dt>Custos de manter · de fechar</dt>
+          <dd>
+            {e.cost_hold_vol_pts == null ? 'o hedge consome todo o edge' : formatVolPoints(e.cost_hold_vol_pts, 2)} ·{' '}
+            {formatVolPoints(e.cost_close_vol_pts, 2)} ({formatMoney(e.cost_close_brl)})
+          </dd>
+        </dl>
+      )}
+      {roll?.suggested && roll.expiry && (
+        <p>
+          <Link
+            className={styles.link}
+            data-testid="op-roll-link"
+            href={`/app/simulador?ticker=${p.ticker}&roll_from=${p.id}&expiry=${roll.expiry}&structure=${p.structure}`}
+          >
+            Rolar para {formatDate(roll.expiry)} no simulador
+          </Link>{' '}
+          <span className={styles.muted}>(a nova entrada passa pelo semáforo; nada é registrado sozinho)</span>
+        </p>
+      )}
+      <h3 className={`${styles.eyebrow} mono`} style={{ marginTop: 16 }}>
+        Alertas da operação
+      </h3>
+      <AlertsList alerts={m.alerts} showPosition={false} />
     </section>
   );
 }

@@ -29,7 +29,7 @@ import { NOT_CALIBRATED_HELP } from '@/lib/edge/labels';
 import { CRISIS_HELP } from '@/lib/journal/labels';
 import styles from '../vol/vol.module.css';
 
-const BLOCKS = ['costs', 'edge', 'vol', 'forecast', 'risk', 'journal'] as const;
+const BLOCKS = ['costs', 'edge', 'vol', 'forecast', 'risk', 'journal', 'management'] as const;
 
 function problemMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'detail' in error && typeof error.detail === 'string') {
@@ -51,6 +51,7 @@ function dependsOnConfig(key: readonly unknown[]): boolean {
     'getLimits',
     'getCrisis',
     'getPosition',
+    'getAlerts',
   ].includes(id);
 }
 
@@ -131,6 +132,13 @@ export function ConfigForm({
                 {errors.band_high && <span className={styles.fieldError}>{errors.band_high.message}</span>}
               </div>
             )}
+            {b === 'management' && (
+              <p className={`${styles.muted} ${styles.small}`} style={{ gridColumn: '1 / -1' }}>
+                Banda do alerta de hedge = banda de delta da simulação ({formatNumber(current.params.simulation?.delta_band, 2)}{' '}
+                ação por opção, não calibrada), para o alerta seguir a regra simulada na entrada. O alerta &quot;o edge
+                acabou&quot; está sempre ligado (RN-GES-02). Os alertas são reavaliados pelo worker com a versão nova.
+              </p>
+            )}
             {b === 'risk' && (
               <div className={styles.field}>
                 <label htmlFor="cfg-capital">Capital alocado para opções (R$)</label>
@@ -195,7 +203,15 @@ function Field({
           </span>
         )}
       </label>
-      <input id={id} className={styles.input} inputMode="decimal" aria-invalid={error != null} {...form.register(name)} />
+      <input
+        id={id}
+        className={styles.input}
+        inputMode="decimal"
+        placeholder={'optional' in spec && spec.optional ? 'desligado' : undefined}
+        aria-invalid={error != null}
+        {...form.register(name)}
+      />
+      {'warning' in spec && spec.warning && <span className={`${styles.warn} ${styles.small}`}>{spec.warning}</span>}
       {'help' in spec && spec.help && <span className={`${styles.muted} ${styles.small}`}>{spec.help}</span>}
       {error && <span className={styles.fieldError}>{error}</span>}
     </div>

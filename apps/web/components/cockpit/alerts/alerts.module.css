@@ -1,0 +1,111 @@
+.list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  list-style: none;
+  padding: 0;
+}
+
+.item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+}
+
+.item[data-state='active'] {
+  border-left-color: var(--status-warn);
+}
+
+.item[data-state='seen'] {
+  border-left-color: var(--line);
+}
+
+.item[data-state='resolved'] {
+  border-left-color: var(--status-ok);
+  opacity: 0.8;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
+.kind {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.kind[data-kind='exit'],
+.kind[data-kind='limit'] {
+  border-color: var(--status-danger);
+  color: var(--status-danger);
+}
+
+.kind[data-kind='hedge'],
+.kind[data-kind='dividend'] {
+  border-color: var(--status-warn);
+  color: var(--status-warn);
+}
+
+.kind[data-kind='roll'] {
+  border-color: var(--status-ok);
+  color: var(--status-ok);
+}
+
+.rule {
+  font-weight: 500;
+}
+
+.meta {
+  color: var(--fg-muted);
+  font-size: 0.8rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.rules {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin-top: 8px;
+}
+
+.ruleState {
+  display: inline-block;
+  min-width: 7.5em;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.ruleState[data-state='triggered'] {
+  border-color: var(--status-danger);
+  color: var(--status-danger);
+}
+
+.ruleState[data-state='ok'] {
+  border-color: var(--status-ok);
+  color: var(--status-ok);
+}
+
+.ruleState[data-state='disabled'],
+.ruleState[data-state='unavailable'] {
+  color: var(--fg-muted);
+}

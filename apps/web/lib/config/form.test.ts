@@ -41,6 +41,15 @@ const params: ConfigParamsOutput = {
     },
   } as ConfigParamsOutput['risk'],
   journal: { residual_max_ratio: 0.15, residual_min_brl: 50 },
+  simulation: { delta_band: 0.1 } as ConfigParamsOutput['simulation'],
+  management: {
+    hedge_interval_bd: null,
+    exit_dte_bd: 5,
+    profit_target_fraction: null,
+    stop_loss_fraction: null,
+    roll_min_dte_bd: 10,
+    dividend_lead_bd: 5,
+  },
 };
 
 describe('formulário da configuração (PRD 1.8 §8.1)', () => {
@@ -59,6 +68,28 @@ describe('formulário da configuração (PRD 1.8 §8.1)', () => {
     expect(toConfigParams({ ...v, capital: '', note: 'x' }, params).sizing?.capital_brl).toBeNull();
     const bad = configFormSchema.safeParse({ ...v, capital: 'abc', max_underlying_share: '0', note: 'x' });
     expect(bad.success).toBe(false);
+  });
+
+  it('Etapa 8: gestão com regras desligáveis (vazio ↔ null) e meta/stop em %', () => {
+    const v = toFormValues(params);
+    expect(v.hedge_alert_interval_bd).toBe('');
+    expect(v.profit_target_fraction).toBe('');
+    expect(v.stop_loss_fraction).toBe('');
+    expect(v.exit_dte_bd).toBe('5');
+    expect(v.roll_min_dte_bd).toBe('10');
+    expect(configFormSchema.safeParse({ ...v, note: 'x' }).success).toBe(true);
+    const out = toConfigParams({ ...v, stop_loss_fraction: '100', hedge_alert_interval_bd: '3', exit_dte_bd: '', note: 'x' }, params);
+    expect(out.management).toEqual({
+      hedge_interval_bd: 3,
+      exit_dte_bd: null,
+      profit_target_fraction: null,
+      stop_loss_fraction: 1,
+      roll_min_dte_bd: 10,
+      dividend_lead_bd: 5,
+    });
+    expect(out.costs?.hedge_interval_bd).toBe(1); // o intervalo do custo (Leland) é outro campo
+    const bad = configFormSchema.safeParse({ ...v, roll_min_dte_bd: '', stop_loss_fraction: '0', note: 'x' });
+    expect(bad.error?.issues.map((i) => i.path[0])).toEqual(expect.arrayContaining(['roll_min_dte_bd', 'stop_loss_fraction']));
   });
 
   it('mostra % e pontos de vol na unidade da tela, a partir dos decimais da API', () => {

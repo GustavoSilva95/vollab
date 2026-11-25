@@ -2,14 +2,15 @@ import { expect, test } from '@playwright/test';
 import { ensureForecasts } from './helpers';
 
 /**
- * Fluxo 3 (PRD 1.10 §10.3; Etapa 7): registrar a entrada → lançar hedge → marcação D-1 → atribuição
- * com o resíduo visível → indicador de banda de delta (o alerta persistente entra na Etapa 8).
+ * Fluxo 3 (PRD 1.10 e 1.11 §10.3; Etapas 7 e 8): registrar a entrada → lançar hedge → marcação D-1 →
+ * atribuição com o resíduo visível → alerta persistente de banda de delta no painel → marcar como visto
+ * → hedge até a borda → o alerta resolve sozinho depois da nova marcação.
  *
  * Fixtures ("hoje" = 20/11/2026, último pregão 19/11): a entrada é registrada com execução em 17/11
  * (registro de uma operação feita antes) para haver três pregões de marcação (17, 18 e 19/11) com os
  * dados reais já salvos. Pulado contra engine com fonte real.
  */
-test('vida da operação: hedge, marcação D-1, atribuição com resíduo e banda de delta', async ({ page, request }) => {
+test('vida da operação: hedge, marcação D-1, atribuição com resíduo e alerta de banda', async ({ page, request }) => {
   const health = await request.get('/api/engine/health');
   expect(health.ok()).toBeTruthy();
   const { data_source: dataSource } = (await health.json()) as { data_source?: string };
@@ -30,6 +31,8 @@ test('vida da operação: hedge, marcação D-1, atribuição com resíduo e ban
     await expect(page.getByTestId('sim-edge')).toContainText('Edge líquido', { timeout: 30_000 });
     await expect(page.getByTestId('sim-limits')).toContainText('pró-forma');
     const entry = page.getByRole('form', { name: 'Registrar entrada' });
+    // Um lote: o hedge de −50 ações abaixo põe o delta fora da banda (± 0,10 × 100 × 1 = ± 10 ações).
+    await entry.getByLabel('Lotes executados').fill('1');
     await entry.getByLabel('Executado em (Brasília)').fill('2026-11-17T15:00');
     await entry.getByRole('button', { name: 'Registrar entrada' }).click();
     const done = page.getByTestId('sim-registered');
@@ -80,8 +83,43 @@ test('vida da operação: hedge, marcação D-1, atribuição com resíduo e ban
   await expect(attribution).toContainText('19/11/2026');
   await expect(attribution).toContainText('Acumulado');
   await expect(page.getByTestId('op-cs04')).not.toHaveText('—');
-  await expect(page.getByTestId('op-delta-band')).toHaveAttribute('data-state', /^(inside|outside)$/);
-  await expect(page.getByTestId('op-delta-band')).toContainText(/(Dentro|Fora) da banda/);
+  await expect(page.getByTestId('op-delta-band')).toHaveAttribute('data-state', 'outside');
+  await expect(page.getByTestId('op-delta-band')).toContainText('Fora da banda');
+
+  // Etapa 8: o worker abre o alerta persistente de banda (RN-GES-01) depois da marcação.
+  type Alert = { id: number; rule: string; state: string; details: { adjust_shares?: number } };
+  const bandAlert = async (): Promise<Alert | undefined> => {
+    const res = await request.get(`/api/engine/alerts?position_id=${id}&state=all`);
+    return ((await res.json()).alerts as Alert[]).find((a) => a.rule === 'hedge_band');
+  };
+  await expect.poll(async () => (await bandAlert())?.state, { timeout: 60_000 }).toBe('active');
+  const alert = (await bandAlert()) as Alert;
+  const adjust = alert.details.adjust_shares ?? 0;
+  expect(adjust).toBeGreaterThan(0); // delta negativo: comprar ações até a borda
+
+  await page.goto('/app');
+  const card = page.getByTestId('dash-alerts');
+  const item = card.getByTestId('alert-hedge_band').filter({ hasText: `#${id}` });
+  await expect(item).toContainText('Delta fora da banda');
+  await expect(item).toContainText('não calibrado');
+  await expect(item).toContainText(/comprar\s\d+\sações/);
+  await item.getByRole('button', { name: 'Marcar como visto' }).click();
+  await expect(item.getByTestId('alert-state')).toHaveText('Visto');
+
+  // Hedge até a borda, em 19/11, pela tela da operação.
+  await page.goto(`/app/operacoes/${id}`);
+  await expect(page.getByTestId('op-management')).toContainText('Delta fora da banda');
+  const hedge = page.getByRole('form', { name: 'Novo lançamento' });
+  await hedge.getByLabel('Tipo').selectOption('hedge');
+  await hedge.getByLabel('Quantidade (+ compra, − venda)').fill(String(adjust));
+  await hedge.getByLabel('Preço executado (R$)').fill('42,67');
+  await hedge.getByLabel('Executado em (Brasília)').fill('2026-11-19T15:00');
+  await hedge.getByRole('button', { name: 'Lançar' }).click();
+  await expect(page.getByRole('status')).toContainText('Lançamento gravado');
+  await expect.poll(async () => (await bandAlert())?.state, { timeout: 60_000 }).toBe('resolved');
+  await page.reload();
+  await expect(page.getByTestId('rule-hedge_band')).toContainText('OK');
+  await expect(page.getByTestId('op-delta-band')).toHaveAttribute('data-state', 'inside');
 
   // Diário e carteira mostram a operação aberta.
   await page.goto('/app/diario');
