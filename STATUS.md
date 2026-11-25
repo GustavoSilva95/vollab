@@ -1,8 +1,8 @@
 # STATUS
 
 **Atualizado em:** 2026-11-24
-**Etapa atual:** Etapa 7 — Diário, carteira e risco: **implementada (2026-11-24)**; BRD 1.7 / PRD 1.10 aprovados; revisões feitas (bloqueante de segurança corrigido); engine 332 testes, web 110, Playwright 9 verdes localmente. CI verde nos 6 jobs (runs 45511462669 e 45511483977, PR #8). **Concluída (2026-11-24)**: fechamento aprovado pelo usuário; mesclada na `main` (PR #8) (branch `etapa-7-diario-carteira-risco`)
-**Etapa anterior:** Etapa 6 concluída e aprovada (2026-11-23), mesclada na `main` (PR #7)
+**Etapa atual:** Etapa 8 — Gestão da operação: **iniciada (2026-11-24)**; proposta do BRD 1.8 e do PRD 1.11 com as decisões do QA-11, **aguardando aprovação** (branch `etapa-8-gestao-operacao`)
+**Etapa anterior:** Etapa 7 concluída e aprovada (2026-11-24), mesclada na `main` (PR #8)
 
 ## Aprovações
 
@@ -28,6 +28,7 @@
 | BRD 1.6 / PRD 1.9 (§5.8: simulador e dimensionamento; QA-09, QA-10, QA-11 parcial; estruturas compradas) | 1.6 / 1.9 | Aprovado | 2026-11-23 |
 | Fechamento da Etapa 6 (T-REF-07, fluxo 2, CS-01 por construção, revisão de performance sem bloqueantes com I-1/I-2/M-2 corrigidos) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45309490121 e 45311502461, PR #7) | 2026-11-23 |
 | BRD 1.7 / PRD 1.10 (§5.9: diário, marcação D-1, atribuição, carteira, stress, QA-12, limites) | 1.7 / 1.10 | Aprovado | 2026-11-24 |
+| BRD 1.8 / PRD 1.11 (§5.10: gestão da operação, alertas, rolagem, QA-11 resolvida) | 1.8 / 1.11 | **Proposto, aguardando aprovação** | 2026-11-24 |
 | Fechamento da Etapa 7 (T-REF-08, fluxo 3, CS-04 medido, revisão de segurança com B-1 corrigido, revisão de performance sem bloqueantes) | — | Aprovado pelo usuário; CI verde nos 6 jobs (runs 45511462669 e 45511483977, PR #8) | 2026-11-24 |
 
 ## Feito
@@ -206,6 +207,7 @@
 | 2026-11-24 | Marcação D-1 pela IV de referência da série; fallback fechamento oficial ("aproximado") e marcação anterior ("desatualizado") | PRD 1.10 §5.9 |
 | 2026-11-24 | Correção de lançamentos por estorno (`void`) com motivo; nada é apagado | BRD 1.7 RF-DIA-03, RS-06 |
 | 2026-11-24 | Limites padrão não calibrados: stress ≤ 20% do capital, \|vega\| ≤ 1% por ponto, ativo ≤ 50% e vencimento ≤ 60% do orçamento de perda em stress; pró-forma na entrada com `override_reason` | BRD 1.7 RF-RSK-04, PRD 1.10 §5.9 |
+| 2026-11-24 | **QA-11 (Etapa 8, proposta):** hedge pela banda da simulação (0,10 por opção), alerta por tempo desligado; "edge acabou" = edge relativo líquido pontual da posição ≤ 0; stop e meta desligados (regra G2); prazo de 5 du; rolagem para o 1º vencimento com ≥ 10 du só com edge líquido após custos de fechar; proventos com 5 du de antecedência | BRD 1.8 RN-GES-01..07, PRD 1.11 §5.10 |
 
 ## Próximos passos
 
@@ -217,4 +219,5 @@
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
 8. **Etapa 6:** concluída e mesclada na `main` (PR #7). Próxima: Etapa 7 (diário, carteira e risco; QA-12 e o cenário de crise no teto), quando o usuário pedir.
 9. **Etapa 7:** concluída e mesclada na `main` (PR #8). Próxima: Etapa 8 (gestão da operação: alertas de hedge, saída, rolagem, limites e proventos; QA-11 restante), quando o usuário pedir. Backlog não bloqueante das revisões: performance M-2 (`LATERAL … LIMIT 1` na última marcação), M-3 (stress e Greeks vetorizados por ativo; `crisis_values` lido duas vezes no `/sizing`), M-4 (`count_business_days` com índice acumulado), M-5 (INSERT em lote das marcações), M-6 (pedido amplo na fila não absorve os específicos), M-7 (pernas só da última marcação no detalhe); crise: guardar o parsing por ano. Os proventos históricos do Yahoo vêm ajustados por desdobramentos posteriores (BBAS3 2017 com metade do valor): seguem "estimados"; o efeito numa janela de 5 pregões é pequeno.
+10. **Etapa 8:** iniciada em 2026-11-24. Proposta do BRD 1.8 e do PRD 1.11 (§5.10) com as decisões do usuário no QA-11; **aguardando aprovação** para implementar.
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.

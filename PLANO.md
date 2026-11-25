@@ -131,6 +131,9 @@ Situação atual: [STATUS.md](STATUS.md).
 
 **Entregáveis:** alertas de hedge (banda e tempo), saída (edge acabou e opcionais), rolagem só com edge líquido, limites e proventos com posição aberta (RS-07); painel de alertas.
 **Critérios de saída:** testes de cada regra nos limites; alertas gravam `config_version_id`.
+*(BRD 1.8 / PRD 1.11, propostos em 2026-11-24)* Job `alerts_evaluate` depois de cada marcação; regras de hedge (banda da simulação; tempo desligado), saída (edge pontual da posição ≤ 0; prazo de 5 du; meta e stop desligados), rolagem para o primeiro vencimento com ≥ 10 du só com edge líquido depois dos custos de fechar, limites e proventos (data ex em 5 du; ajuste de strike sem lançamento); tabela `alerts` com ciclo de vida ativo/visto/resolvido; painel de alertas, painel "Gestão" na operação, modo rolagem no simulador e bloco `management` nas configurações; Playwright, fluxo 3 com o alerta persistente.
+**Gate de início:** ⏳ aguardando a aprovação do BRD 1.8 e do PRD 1.11 pelo usuário.
+**Revisões:** segurança (`PATCH /alerts` e o formulário de rolagem como entrada do usuário; permissões do papel da aplicação em `alerts`) e performance (`alerts_evaluate` com o edge e a rolagem por posição; leitura do painel).
 
 ---
 
