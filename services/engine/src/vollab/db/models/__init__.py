@@ -1,5 +1,6 @@
 """Modelos SQLAlchemy. Importar aqui registra as tabelas no `Base.metadata` (usado pelo Alembic)."""
 
+from vollab.db.models.alerts import Alert, PositionManagement
 from vollab.db.models.collection import CollectionItem, CollectionRun
 from vollab.db.models.config_version import ConfigVersion
 from vollab.db.models.costs import OptionSpreadEstimate
@@ -30,6 +31,7 @@ from vollab.db.models.vol import (
 
 __all__ = [
     "FIXED_USER_ID",
+    "Alert",
     "AtmTermPoint",
     "CollectionItem",
     "CollectionRun",
@@ -56,6 +58,7 @@ __all__ = [
     "PnlAttribution",
     "Position",
     "PositionEntry",
+    "PositionManagement",
     "RawFile",
     "RealizedVol",
     "RiskFreeRate",

@@ -1,6 +1,248 @@
 {
   "components": {
     "schemas": {
+      "AlertOut": {
+        "properties": {
+          "config_version_id": {
+            "description": "Configuração vigente no disparo.",
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evaluated_config_version_id": {
+            "description": "Configuração da última avaliação.",
+            "title": "Evaluated Config Version Id",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "hedge",
+              "exit",
+              "roll",
+              "limit",
+              "dividend"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "last_as_of": {
+            "format": "date",
+            "title": "Last As Of",
+            "type": "string"
+          },
+          "position_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Id"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "auto",
+                  "user"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "rule": {
+            "enum": [
+              "hedge_band",
+              "hedge_time",
+              "exit_edge",
+              "exit_dte",
+              "exit_profit",
+              "exit_stop",
+              "roll_suggested",
+              "limit_stress",
+              "limit_vega",
+              "limit_underlying",
+              "limit_expiry",
+              "dividend_upcoming",
+              "strike_adjustment_pending"
+            ],
+            "title": "Rule",
+            "type": "string"
+          },
+          "scope_key": {
+            "title": "Scope Key",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "active",
+              "seen",
+              "resolved"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "structure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structure"
+          },
+          "ticker": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ativo da operação; nulo nos limites de carteira.",
+            "title": "Ticker"
+          },
+          "triggered_as_of": {
+            "format": "date",
+            "title": "Triggered As Of",
+            "type": "string"
+          },
+          "triggered_at": {
+            "format": "date-time",
+            "title": "Triggered At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "rule",
+          "position_id",
+          "ticker",
+          "structure",
+          "scope_key",
+          "state",
+          "triggered_at",
+          "triggered_as_of",
+          "last_as_of",
+          "details",
+          "config_version_id",
+          "evaluated_config_version_id",
+          "engine_version",
+          "resolved_at",
+          "resolved_by",
+          "resolution_note"
+        ],
+        "title": "AlertOut",
+        "type": "object"
+      },
+      "AlertPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nota ao resolver (opcional).",
+            "title": "Note"
+          },
+          "state": {
+            "enum": [
+              "seen",
+              "resolved"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "title": "AlertPatch",
+        "type": "object"
+      },
+      "AlertsResponse": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertOut"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Alertas por estado (todos, não só os listados).",
+            "propertyNames": {
+              "enum": [
+                "active",
+                "seen",
+                "resolved"
+              ]
+            },
+            "title": "Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "alerts",
+          "counts"
+        ],
+        "title": "AlertsResponse",
+        "type": "object"
+      },
       "AttributionOut": {
         "properties": {
           "delta_brl": {
@@ -607,6 +849,9 @@
           "journal": {
             "$ref": "#/components/schemas/JournalParams"
           },
+          "management": {
+            "$ref": "#/components/schemas/ManagementParams"
+          },
           "risk": {
             "$ref": "#/components/schemas/RiskParams"
           },
@@ -641,6 +886,9 @@
           },
           "journal": {
             "$ref": "#/components/schemas/JournalParams"
+          },
+          "management": {
+            "$ref": "#/components/schemas/ManagementParams"
           },
           "risk": {
             "$ref": "#/components/schemas/RiskParams"
@@ -4496,6 +4744,158 @@
         "title": "LiquidityOut",
         "type": "object"
       },
+      "ManagementOut": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertOut"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pregão da marcação avaliada; nulo sem marcação D-1.",
+            "title": "As Of"
+          },
+          "config_version_id": {
+            "title": "Config Version Id",
+            "type": "integer"
+          },
+          "edge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PositionEdgeOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "roll": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RollOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "title": "Rules",
+            "type": "array"
+          }
+        },
+        "required": [
+          "as_of",
+          "evaluated_at",
+          "config_version_id",
+          "rules",
+          "edge",
+          "roll",
+          "alerts"
+        ],
+        "title": "ManagementOut",
+        "type": "object"
+      },
+      "ManagementParams": {
+        "additionalProperties": false,
+        "description": "Bloco `management` (PRD 1.11 §5.10; RN-GES-01..07, QA-11). Todos \"não calibrados\".\n\nA banda do alerta de hedge é a da simulação (`simulation.delta_band`). `None` = regra desligada.",
+        "properties": {
+          "dividend_lead_bd": {
+            "default": 5,
+            "description": "Alerta de provento: data ex nos próximos N du.",
+            "maximum": 63.0,
+            "minimum": 0.0,
+            "title": "Dividend Lead Bd",
+            "type": "integer"
+          },
+          "exit_dte_bd": {
+            "anyOf": [
+              {
+                "maximum": 63.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": 5,
+            "description": "Alerta de saída com até N du até o vencimento.",
+            "title": "Exit Dte Bd"
+          },
+          "hedge_interval_bd": {
+            "anyOf": [
+              {
+                "maximum": 63.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Alerta de hedge por tempo: pregões sem hedge (desligado).",
+            "title": "Hedge Interval Bd"
+          },
+          "profit_target_fraction": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 5.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Meta: fração do P&L esperado na entrada (desligada; regra G2).",
+            "title": "Profit Target Fraction"
+          },
+          "roll_min_dte_bd": {
+            "default": 10,
+            "description": "Destino da rolagem: 1º vencimento com ≥ N du.",
+            "maximum": 126.0,
+            "minimum": 1.0,
+            "title": "Roll Min Dte Bd",
+            "type": "integer"
+          },
+          "stop_loss_fraction": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 5.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Stop: fração da perda máxima do retrato (desligado; regra G2).",
+            "title": "Stop Loss Fraction"
+          }
+        },
+        "title": "ManagementParams",
+        "type": "object"
+      },
       "ManualInputOut": {
         "properties": {
           "instrument": {
@@ -5193,6 +5593,160 @@
         "title": "PositionCreate",
         "type": "object"
       },
+      "PositionEdgeOut": {
+        "description": "Edge relativo líquido da posição aberta (RN-GES-02): na direção dela, com os custos de manter\n(hedge por Leland) e de fechar.",
+        "properties": {
+          "as_of": {
+            "format": "date",
+            "title": "As Of",
+            "type": "string"
+          },
+          "cost_close_brl": {
+            "title": "Cost Close Brl",
+            "type": "string"
+          },
+          "cost_close_vol_pts": {
+            "title": "Cost Close Vol Pts",
+            "type": "number"
+          },
+          "cost_hold_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Hold Vol Pts"
+          },
+          "horizon_bd": {
+            "title": "Horizon Bd",
+            "type": "integer"
+          },
+          "iv": {
+            "title": "Iv",
+            "type": "number"
+          },
+          "iv_with_events": {
+            "title": "Iv With Events",
+            "type": "number"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "net_relative_edge": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Relative Edge"
+          },
+          "net_relative_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Relative High"
+          },
+          "net_relative_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Relative Low"
+          },
+          "normal_spread": {
+            "title": "Normal Spread",
+            "type": "number"
+          },
+          "normal_spread_calibrated": {
+            "title": "Normal Spread Calibrated",
+            "type": "boolean"
+          },
+          "origin": {
+            "enum": [
+              "estimated",
+              "approximate"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "premium": {
+            "title": "Premium",
+            "type": "number"
+          },
+          "premium_high": {
+            "title": "Premium High",
+            "type": "number"
+          },
+          "premium_low": {
+            "title": "Premium Low",
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sigma": {
+            "title": "Sigma",
+            "type": "number"
+          },
+          "sigma_high": {
+            "title": "Sigma High",
+            "type": "number"
+          },
+          "sigma_low": {
+            "title": "Sigma Low",
+            "type": "number"
+          }
+        },
+        "required": [
+          "as_of",
+          "horizon_bd",
+          "iv",
+          "iv_with_events",
+          "sigma",
+          "sigma_low",
+          "sigma_high",
+          "normal_spread",
+          "normal_spread_calibrated",
+          "premium",
+          "premium_low",
+          "premium_high",
+          "cost_hold_vol_pts",
+          "cost_close_vol_pts",
+          "cost_close_brl",
+          "net_relative_edge",
+          "net_relative_low",
+          "net_relative_high",
+          "origin",
+          "model",
+          "reason"
+        ],
+        "title": "PositionEdgeOut",
+        "type": "object"
+      },
       "PositionOut": {
         "properties": {
           "as_of": {
@@ -5313,6 +5867,17 @@
           "lots": {
             "title": "Lots",
             "type": "integer"
+          },
+          "management": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ManagementOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Regras de gestão da última avaliação (PRD 1.11 §5.10); nulo antes dela."
           },
           "manual_inputs": {
             "items": {
@@ -6454,6 +7019,343 @@
           "price_brl"
         ],
         "title": "RollLeg",
+        "type": "object"
+      },
+      "RollLegOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "series_id": {
+            "title": "Series Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "series_id",
+          "code"
+        ],
+        "title": "RollLegOut",
+        "type": "object"
+      },
+      "RollOut": {
+        "description": "Rolagem avaliada (RN-GES-04): destino, semáforo com o custo de fechar a posição atual.",
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "close_cost_brl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Cost Brl"
+          },
+          "close_cost_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close Cost Vol Pts"
+          },
+          "cost_buy_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Buy Vol Pts"
+          },
+          "cost_sell_vol_pts": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Sell Vol Pts"
+          },
+          "expiry": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry"
+          },
+          "horizon_bd": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Horizon Bd"
+          },
+          "iv": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iv"
+          },
+          "legs": {
+            "items": {
+              "$ref": "#/components/schemas/RollLegOut"
+            },
+            "title": "Legs",
+            "type": "array"
+          },
+          "lots": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lots"
+          },
+          "min_dte_bd": {
+            "title": "Min Dte Bd",
+            "type": "integer"
+          },
+          "net_relative_edge": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Relative Edge"
+          },
+          "premium": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium"
+          },
+          "premium_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium High"
+          },
+          "premium_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Low"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sigma": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sigma"
+          },
+          "signal_direction": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sell",
+                  "buy"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal Direction"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "enum": [
+                  "edge",
+                  "inconclusive",
+                  "no_edge",
+                  "unavailable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "structure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structure"
+          },
+          "suggested": {
+            "title": "Suggested",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "suggested",
+          "min_dte_bd"
+        ],
+        "title": "RollOut",
+        "type": "object"
+      },
+      "RuleOut": {
+        "properties": {
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "kind": {
+            "enum": [
+              "hedge",
+              "exit",
+              "roll",
+              "limit",
+              "dividend"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rule": {
+            "enum": [
+              "hedge_band",
+              "hedge_time",
+              "exit_edge",
+              "exit_dte",
+              "exit_profit",
+              "exit_stop",
+              "roll_suggested",
+              "limit_stress",
+              "limit_vega",
+              "limit_underlying",
+              "limit_expiry",
+              "dividend_upcoming",
+              "strike_adjustment_pending"
+            ],
+            "title": "Rule",
+            "type": "string"
+          },
+          "scope_key": {
+            "title": "Scope Key",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "ok",
+              "triggered",
+              "disabled",
+              "unavailable"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule",
+          "kind",
+          "state",
+          "scope_key",
+          "reason",
+          "details"
+        ],
+        "title": "RuleOut",
         "type": "object"
       },
       "RunSummary": {
@@ -8410,10 +9312,187 @@
   "info": {
     "description": "API do engine do VolLab. Unidades conforme PRD §5.1; estimativas em EstimatedValue (§5.2).",
     "title": "VolLab Engine",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/alerts": {
+      "get": {
+        "operationId": "get_alerts",
+        "parameters": [
+          {
+            "description": "`open` = ativos e vistos (padrão).",
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "description": "`open` = ativos e vistos (padrão).",
+              "enum": [
+                "open",
+                "active",
+                "seen",
+                "resolved",
+                "all"
+              ],
+              "title": "State",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "position_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 9223372036854775807,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Position Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "hedge",
+                    "exit",
+                    "roll",
+                    "limit",
+                    "dividend"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Alertas (padrão: não resolvidos)",
+        "tags": [
+          "alertas"
+        ]
+      }
+    },
+    "/alerts/{alert_id}": {
+      "patch": {
+        "operationId": "patch_alert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "alert_id",
+            "required": true,
+            "schema": {
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Alert Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Alerta inexistente."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Alerta já resolvido."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Transição inválida."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Erro (RFC 9457)"
+          }
+        },
+        "summary": "Marcar como visto ou resolver",
+        "tags": [
+          "alertas"
+        ]
+      }
+    },
     "/collection/gaps": {
       "get": {
         "operationId": "get_collection_gaps",

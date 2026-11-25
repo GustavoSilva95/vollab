@@ -12,6 +12,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
+from vollab.api.schemas.alerts import ManagementOut
 from vollab.api.schemas.common import EstimatedValue
 from vollab.api.schemas.journal import (
     AttributionOut,
@@ -406,3 +407,6 @@ class PositionOut(PositionSummary):
     totals: TotalsOut | None
     cs04: Cs04Out
     delta_band: DeltaBandOut
+    management: ManagementOut | None = Field(
+        default=None, description="Regras de gestão da última avaliação (PRD 1.11 §5.10); nulo antes dela."
+    )

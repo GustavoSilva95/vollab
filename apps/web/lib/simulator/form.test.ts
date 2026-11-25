@@ -5,7 +5,14 @@
 import { describe, expect, it } from 'vitest';
 import type { SizingResponse } from '@vollab/api-types';
 import fixture from '@/components/cockpit/simulator/__fixtures__/long-straddle-sizing.json';
-import { overrideReasons, simulatorSchema, toPositionCreate, toSizingRequest, type SimulatorValues } from './form';
+import {
+  entrySchema,
+  overrideReasons,
+  simulatorSchema,
+  toPositionCreate,
+  toSizingRequest,
+  type SimulatorValues,
+} from './form';
 
 const data = fixture as unknown as SizingResponse;
 
@@ -76,6 +83,8 @@ describe('toPositionCreate', () => {
       executedAt: '2026-11-19T17:45',
       note: ' teste ',
       overrideReason: '',
+      rollPrices: [],
+      rollFees: [],
     });
     expect(body).toMatchObject({
       ticker: 'PETR4',
@@ -90,5 +99,35 @@ describe('toPositionCreate', () => {
     ]);
     expect(body).not.toHaveProperty('override_reason');
     expect(body).not.toHaveProperty('stock');
+    expect(body).not.toHaveProperty('roll_from');
+  });
+
+  it('rolagem: fecha cada perna em aberto da origem com o sinal contrário (RN-GES-04)', () => {
+    const request = toSizingRequest('PETR4', base);
+    const legs = [
+      { instrument: 'PETRL44', series_id: 1, quantity: -100, lastPrice: '2.40' },
+      { instrument: 'PETRX44', series_id: 2, quantity: -100, lastPrice: null },
+    ];
+    const values = {
+      lots: '1',
+      prices: ['1,55', '1,02'],
+      fees: ['', ''],
+      stockPrice: '',
+      executedAt: '2026-11-19T17:45',
+      note: '',
+      overrideReason: '',
+      rollPrices: ['2,10', '0'],
+      rollFees: ['0,15', ''],
+    };
+    expect(entrySchema.safeParse(values).success).toBe(true);
+    expect(entrySchema.safeParse({ ...values, rollPrices: ['abc', '0'] }).success).toBe(false);
+    const body = toPositionCreate(request, data.simulation, values, { positionId: 7, legs });
+    expect(body.roll_from).toEqual({
+      position_id: 7,
+      legs: [
+        { instrument: 'PETRL44', quantity: 100, price_brl: '2.10', fees_brl: '0.15' },
+        { instrument: 'PETRX44', quantity: 100, price_brl: '0', fees_brl: '0' },
+      ],
+    });
   });
 });

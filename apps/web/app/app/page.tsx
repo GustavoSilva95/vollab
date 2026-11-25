@@ -1,16 +1,14 @@
 import type { Metadata } from 'next';
 import EngineStatus from '@/components/cockpit/EngineStatus';
 import CollectionPendingCard from '@/components/cockpit/collection/CollectionPendingCard';
+import AlertsCard from '@/components/cockpit/alerts/AlertsCard';
 import styles from './page.module.css';
 
 export const metadata: Metadata = { title: 'Painel' };
 
-const UPCOMING = [
-  { title: 'Alertas', text: 'Hedge, saída, rolagem, limites e proventos com posição aberta.', stage: 8 },
-  { title: 'Resumo da carteira', text: 'Greeks agregados e exposição por vencimento.', stage: 7 },
-];
+const UPCOMING = [{ title: 'Resumo da carteira', text: 'Greeks agregados e exposição por vencimento.', stage: 7 }];
 
-/** Painel (PRD §8.1): estado do engine e pendências de coleta (Etapa 2). */
+/** Painel (PRD §8.1): estado do engine, pendências de coleta (Etapa 2) e alertas (Etapa 8, PRD-UI-10). */
 export default function DashboardPage() {
   return (
     <>
@@ -20,6 +18,7 @@ export default function DashboardPage() {
       </header>
 
       <div className={styles.grid}>
+        <AlertsCard />
         <CollectionPendingCard />
         <EngineStatus />
         {UPCOMING.map((item) => (

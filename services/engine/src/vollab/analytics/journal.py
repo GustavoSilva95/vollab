@@ -23,6 +23,7 @@ import structlog
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session, defer
 
+from vollab.analytics.alerts_view import management_view
 from vollab.analytics.market import DividendInfo, load_dividends, load_holidays, load_rates
 from vollab.analytics.params import (
     JournalParams,
@@ -158,6 +159,11 @@ def run_marks_job(session: Session, payload: dict[str, Any]) -> None:
     user_id = uuid.UUID(str(payload.get("user_id") or FIXED_USER_ID))
     ids = payload.get("position_ids")
     MarksComputer(session, user_id=user_id).run(list(ids) if isinstance(ids, list) else None)
+    # Etapa 8 (PRD 1.11 §5.10): as regras de gestão são avaliadas sobre a marcação nova.
+    from vollab.analytics.management import enqueue_alerts
+
+    enqueue_alerts(session, user_id=user_id, reason="marks_recompute")
+    session.commit()
 
 
 # --- Marcação ------------------------------------------------------------------------------------
@@ -817,4 +823,5 @@ def position_view(session: Session, p: Position) -> PositionOut:
             error_days=agg.error_days if agg is not None else 0,
         ),
         delta_band=band,
+        management=management_view(session, p),
     )

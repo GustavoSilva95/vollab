@@ -62,6 +62,7 @@ def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
         EdgeParams,
         ForecastParams,
         JournalParams,
+        ManagementParams,
         RiskParams,
         SimulationParams,
         SizingParams,
@@ -105,6 +106,11 @@ def _default_blocks() -> dict[str, tuple[dict[str, Any], str]]:
             RiskParams().model_dump(mode="json"),
             "risco (stress ±10% e +10 pontos; crise mai/2017 e mar/2020 em 5 pregões; limites não "
             "calibrados: stress 20%, vega 1% por ponto, ativo 50% e vencimento 60% do orçamento)",
+        ),
+        "management": (
+            ManagementParams().model_dump(mode="json"),
+            "gestão (hedge pela banda da simulação, por tempo desligado; prazo 5 du; meta e stop "
+            "desligados; rolagem para vencimento ≥ 10 du; proventos com 5 du; não calibrados)",
         ),
     }
 

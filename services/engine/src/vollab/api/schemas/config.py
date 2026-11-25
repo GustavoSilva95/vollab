@@ -10,6 +10,7 @@ from vollab.analytics.params import (
     EdgeParams,
     ForecastParams,
     JournalParams,
+    ManagementParams,
     RiskParams,
     SimulationParams,
     SizingParams,
@@ -32,6 +33,7 @@ class ConfigParams(BaseModel):
     sizing: SizingParams = Field(default_factory=SizingParams)
     journal: JournalParams = Field(default_factory=JournalParams)
     risk: RiskParams = Field(default_factory=RiskParams)
+    management: ManagementParams = Field(default_factory=ManagementParams)
 
 
 class ConfigVersionOut(BaseModel):

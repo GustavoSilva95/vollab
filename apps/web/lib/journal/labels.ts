@@ -44,7 +44,7 @@ export const ERROR_FLAG_HELP =
   'Dia com resíduo acima de 15% da soma dos módulos dos Greeks e acima do mínimo em R$ (não calibrado): confira os lançamentos (RS-06).';
 
 export const DELTA_BAND_HELP =
-  'Delta da última marcação contra a banda da simulação (não calibrada). É um indicador; o alerta persistente vem na Etapa 8.';
+  'Delta da última marcação contra a banda da simulação (não calibrada). Fora dela, o worker abre o alerta de hedge (RN-GES-01), que aparece no painel.';
 
 export const LIMIT_LABEL: Record<LimitOut['name'], string> = {
   stress_loss: 'Pior perda em stress ÷ capital',

@@ -5,11 +5,17 @@ import Link from 'next/link';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type { ChainResponse, SizingRequest, SizingResponse } from '@vollab/api-types';
-import { getChainOptions, listUnderlyingsOptions, postSizingMutation } from '@vollab/api-types/react-query';
+import type { ChainResponse, PositionOut, SizingRequest, SizingResponse } from '@vollab/api-types';
+import {
+  getChainOptions,
+  getPositionOptions,
+  listUnderlyingsOptions,
+  postSizingMutation,
+} from '@vollab/api-types/react-query';
 import { formatBusinessDays, formatDate, formatMoney, formatNumber, formatVol, nowMarketInput } from '@/lib/format';
 import { needsPut, simulatorSchema, toSizingRequest, type SimulatorValues } from '@/lib/simulator/form';
-import { STRUCTURES, type StructureName } from '@/lib/simulator/labels';
+import { STRUCTURES, STRUCTURE_LABEL, type StructureName } from '@/lib/simulator/labels';
+import { openOptionLegs } from '@/lib/simulator/roll';
 import { problemMessage } from '@/lib/api/problem';
 import styles from '../vol/vol.module.css';
 import EntryForm from './EntryForm';
@@ -21,12 +27,30 @@ import SimulationResult from './SimulationResult';
  * aceita preços manuais, simula a distribuição do P&L, dimensiona e registra a entrada.
  * Nada é gravado antes de "Registrar entrada" (PRD §7).
  */
-export default function SimulatorView({ initialTicker }: { initialTicker: string | null }) {
+export interface RollParams {
+  positionId: number;
+  expiry: string | null;
+  structure: StructureName | null;
+}
+
+export default function SimulatorView({
+  initialTicker,
+  roll = null,
+}: {
+  initialTicker: string | null;
+  roll?: RollParams | null;
+}) {
   const underlyings = useQuery(listUnderlyingsOptions());
+  const origin = useQuery({
+    ...getPositionOptions({ path: { position_id: roll?.positionId ?? 0 } }),
+    enabled: roll != null,
+  });
   const tickers = (underlyings.data ?? []).filter((u) => u.active).map((u) => u.ticker);
   const [chosenTicker, setTicker] = useState<string | null>(initialTicker);
-  const [expiry, setExpiry] = useState<string | null>(null);
-  const ticker = chosenTicker ?? tickers[0] ?? null;
+  const [expiry, setExpiry] = useState<string | null>(roll?.expiry ?? null);
+  // Rolagem: o ativo é o da operação de origem (RN-GES-04: mesma estrutura, mesmo ativo).
+  const ticker = origin.data?.ticker ?? chosenTicker ?? tickers[0] ?? null;
+  const rollOrigin = roll != null ? (origin.data ?? null) : null;
 
   const chain = useQuery({
     ...getChainOptions({ path: { ticker: ticker ?? '' }, query: expiry ? { expiry } : undefined }),
@@ -34,8 +58,13 @@ export default function SimulatorView({ initialTicker }: { initialTicker: string
   });
 
   if (underlyings.isError) return <p className={styles.error}>Não foi possível ler os ativos. O engine está no ar?</p>;
+  if (roll != null && origin.isError) {
+    return <p className={styles.error}>Operação de origem da rolagem não encontrada.</p>;
+  }
+  if (roll != null && origin.isPending) return <p className={styles.muted}>Carregando a operação de origem…</p>;
   return (
     <div className={styles.grid}>
+      {rollOrigin && <RollOrigin origin={rollOrigin} />}
       <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sim-input">
         <h2 id="sim-input" className={`${styles.eyebrow} mono`}>
           Estrutura
@@ -46,6 +75,7 @@ export default function SimulatorView({ initialTicker }: { initialTicker: string
             <select
               className={styles.select}
               value={ticker ?? ''}
+              disabled={rollOrigin != null}
               onChange={(e) => {
                 setTicker(e.target.value);
                 setExpiry(null);
@@ -88,15 +118,55 @@ export default function SimulatorView({ initialTicker }: { initialTicker: string
           <p className={styles.muted}>Sem séries de opção no último pregão: rode a coleta.</p>
         )}
         {chain.data && ticker && chain.data.series.length > 0 && (
-          <SimulatorForm key={`${ticker}-${chain.data.expiry}`} ticker={ticker} chain={chain.data} />
+          <SimulatorForm
+            key={`${ticker}-${chain.data.expiry}`}
+            ticker={ticker}
+            chain={chain.data}
+            initialStructure={roll?.structure ?? (rollOrigin?.structure as StructureName | undefined) ?? null}
+            origin={rollOrigin}
+          />
         )}
       </section>
     </div>
   );
 }
 
-function SimulatorForm({ ticker, chain }: { ticker: string; chain: ChainResponse }) {
-  const first: StructureName = 'short_straddle';
+function RollOrigin({ origin }: { origin: PositionOut }) {
+  const legs = openOptionLegs(origin);
+  return (
+    <section className={`${styles.card} ${styles.wide}`} aria-labelledby="sim-roll" data-testid="sim-roll-origin">
+      <h2 id="sim-roll" className={`${styles.eyebrow} mono`}>
+        Rolagem da operação #{origin.id}
+      </h2>
+      <p>
+        {STRUCTURE_LABEL[origin.structure]} {origin.ticker} · vencimento {formatDate(origin.expiry)} ·{' '}
+        {formatNumber(origin.lots)} lote(s).{' '}
+        <Link className={styles.link} href={`/app/operacoes/${origin.id}`}>
+          Abrir a operação
+        </Link>
+      </p>
+      <p className={styles.muted}>
+        Rolagem = fechamento + nova abertura (RN-GES-04). Simule o destino abaixo; o registro fecha as pernas em aberto (
+        {legs.map((l) => `${l.instrument} ${formatNumber(l.quantity)}`).join(', ') || 'nenhuma'}) e grava a nova entrada,
+        que passa pelo semáforo como qualquer entrada (CS-01). O hedge em ações não é rolado: feche-o na operação de
+        origem.
+      </p>
+    </section>
+  );
+}
+
+function SimulatorForm({
+  ticker,
+  chain,
+  initialStructure = null,
+  origin = null,
+}: {
+  ticker: string;
+  chain: ChainResponse;
+  initialStructure?: StructureName | null;
+  origin?: PositionOut | null;
+}) {
+  const first: StructureName = initialStructure ?? 'short_straddle';
   const suggest = (s: StructureName) => {
     const ids = chain.suggestions[s] ?? [];
     const byId = new Map(chain.series.map((x) => [x.series_id, x]));
@@ -244,7 +314,7 @@ function SimulatorForm({ ticker, chain }: { ticker: string; chain: ChainResponse
       {result && request && (
         <div className={styles.grid} style={{ marginTop: 16 }}>
           <SimulationResult sim={result.simulation} sizing={result.sizing} limits={result.limits} />
-          <EntryForm key={JSON.stringify(request)} request={request} result={result} />
+          <EntryForm key={JSON.stringify(request)} request={request} result={result} origin={origin} />
         </div>
       )}
     </>

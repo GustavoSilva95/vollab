@@ -87,7 +87,7 @@ def make_session(migrated_engine: Engine, app_engine: Engine) -> Iterator[sessio
                 "raw_files, intraday_bars, intraday_sessions, realized_vols, implied_vols, "
                 "option_daily_quotes, atm_term_structure, constant_maturity_vols, events, rv_forecasts, "
                 "forecast_evaluations, forecast_evaluation_points, option_spread_estimates, positions, "
-                "position_entries, manual_inputs "
+                "position_entries, manual_inputs, alerts, position_management "
                 "RESTART IDENTITY CASCADE"
             )
         )

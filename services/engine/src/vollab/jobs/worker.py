@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session, sessionmaker
 import vollab.analytics.crisis  # registra a medição dos cenários de crise (Etapa 7)
 import vollab.analytics.forecasting  # registra o job de previsão (Etapa 4)
 import vollab.analytics.journal  # registra a marcação D-1 e a atribuição (Etapa 7)
+import vollab.analytics.management  # registra a avaliação das regras de gestão (Etapa 8)
 import vollab.analytics.recompute  # registra o job de recálculo de volatilidade
 import vollab.collection.runner  # noqa: F401  (registra o job de coleta)
 from vollab.db.session import get_sessionmaker

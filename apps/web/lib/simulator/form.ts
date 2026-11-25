@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { LimitsResponse, PositionCreate, SimulationResponse, SizingOut, SizingRequest } from '@vollab/api-types';
-import { marketInputToIso, parseMoneyInput } from '@/lib/format';
+import { marketInputToIso, parseMoneyInput, parseMoneyOrZeroInput } from '@/lib/format';
+import { toRollFrom, type OpenLeg } from './roll';
 import { STRUCTURES, type StructureName } from './labels';
 
 /**
@@ -93,6 +94,9 @@ export const entrySchema = z.object({
   executedAt: datetime,
   note: z.string().max(2000),
   overrideReason: z.string().max(2000),
+  /** Rolagem (RN-GES-04): preço e custos de fechamento de cada perna em aberto da origem (zero aceito). */
+  rollPrices: z.array(z.string().trim().refine((v) => parseMoneyOrZeroInput(v) != null, 'Preço em R$ (0 se vencida sem valor).')),
+  rollFees: z.array(money(true)),
 });
 
 export type EntryValues = z.infer<typeof entrySchema>;
@@ -102,6 +106,7 @@ export function toPositionCreate(
   request: SizingRequest,
   sim: SimulationResponse,
   v: EntryValues,
+  roll: { positionId: number; legs: OpenLeg[] } | null = null,
 ): PositionCreate {
   const lots = Number(v.lots);
   const stock =
@@ -124,5 +129,6 @@ export function toPositionCreate(
     executed_at: marketInputToIso(v.executedAt) as string,
     ...(v.note.trim() ? { note: v.note.trim() } : {}),
     ...(v.overrideReason.trim() ? { override_reason: v.overrideReason.trim() } : {}),
+    ...(roll ? { roll_from: toRollFrom(roll.positionId, roll.legs, v.rollPrices, v.rollFees) } : {}),
   };
 }

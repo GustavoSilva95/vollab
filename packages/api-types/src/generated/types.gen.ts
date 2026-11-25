@@ -5,6 +5,126 @@ export type ClientOptions = {
 };
 
 /**
+ * AlertOut
+ */
+export type AlertOut = {
+    /**
+     * Config Version Id
+     *
+     * Configuração vigente no disparo.
+     */
+    config_version_id: number;
+    /**
+     * Details
+     */
+    details: {
+        [key: string]: unknown;
+    };
+    /**
+     * Engine Version
+     */
+    engine_version: string;
+    /**
+     * Evaluated Config Version Id
+     *
+     * Configuração da última avaliação.
+     */
+    evaluated_config_version_id: number;
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Kind
+     */
+    kind: 'hedge' | 'exit' | 'roll' | 'limit' | 'dividend';
+    /**
+     * Last As Of
+     */
+    last_as_of: string;
+    /**
+     * Position Id
+     */
+    position_id: number | null;
+    /**
+     * Resolution Note
+     */
+    resolution_note: string | null;
+    /**
+     * Resolved At
+     */
+    resolved_at: string | null;
+    /**
+     * Resolved By
+     */
+    resolved_by: 'auto' | 'user' | null;
+    /**
+     * Rule
+     */
+    rule: 'hedge_band' | 'hedge_time' | 'exit_edge' | 'exit_dte' | 'exit_profit' | 'exit_stop' | 'roll_suggested' | 'limit_stress' | 'limit_vega' | 'limit_underlying' | 'limit_expiry' | 'dividend_upcoming' | 'strike_adjustment_pending';
+    /**
+     * Scope Key
+     */
+    scope_key: string;
+    /**
+     * State
+     */
+    state: 'active' | 'seen' | 'resolved';
+    /**
+     * Structure
+     */
+    structure: string | null;
+    /**
+     * Ticker
+     *
+     * Ativo da operação; nulo nos limites de carteira.
+     */
+    ticker: string | null;
+    /**
+     * Triggered As Of
+     */
+    triggered_as_of: string;
+    /**
+     * Triggered At
+     */
+    triggered_at: string;
+};
+
+/**
+ * AlertPatch
+ */
+export type AlertPatch = {
+    /**
+     * Note
+     *
+     * Nota ao resolver (opcional).
+     */
+    note?: string | null;
+    /**
+     * State
+     */
+    state: 'seen' | 'resolved';
+};
+
+/**
+ * AlertsResponse
+ */
+export type AlertsResponse = {
+    /**
+     * Alerts
+     */
+    alerts: Array<AlertOut>;
+    /**
+     * Counts
+     *
+     * Alertas por estado (todos, não só os listados).
+     */
+    counts: {
+        [key: string]: number;
+    };
+};
+
+/**
  * AttributionOut
  */
 export type AttributionOut = {
@@ -382,6 +502,7 @@ export type ConfigParamsInput = {
     edge?: EdgeParams;
     forecast?: ForecastParams;
     journal?: JournalParams;
+    management?: ManagementParams;
     risk?: RiskParams;
     simulation?: SimulationParams;
     sizing?: SizingParams;
@@ -399,6 +520,7 @@ export type ConfigParamsOutput = {
     edge?: EdgeParams;
     forecast?: ForecastParams;
     journal?: JournalParams;
+    management?: ManagementParams;
     risk?: RiskParams;
     simulation?: SimulationParams;
     sizing?: SizingParams;
@@ -2551,6 +2673,82 @@ export type LiquidityOut = {
 };
 
 /**
+ * ManagementOut
+ */
+export type ManagementOut = {
+    /**
+     * Alerts
+     */
+    alerts: Array<AlertOut>;
+    /**
+     * As Of
+     *
+     * Pregão da marcação avaliada; nulo sem marcação D-1.
+     */
+    as_of: string | null;
+    /**
+     * Config Version Id
+     */
+    config_version_id: number;
+    edge: PositionEdgeOut | null;
+    /**
+     * Evaluated At
+     */
+    evaluated_at: string;
+    roll: RollOut | null;
+    /**
+     * Rules
+     */
+    rules: Array<RuleOut>;
+};
+
+/**
+ * ManagementParams
+ *
+ * Bloco `management` (PRD 1.11 §5.10; RN-GES-01..07, QA-11). Todos "não calibrados".
+ *
+ * A banda do alerta de hedge é a da simulação (`simulation.delta_band`). `None` = regra desligada.
+ */
+export type ManagementParams = {
+    /**
+     * Dividend Lead Bd
+     *
+     * Alerta de provento: data ex nos próximos N du.
+     */
+    dividend_lead_bd?: number;
+    /**
+     * Exit Dte Bd
+     *
+     * Alerta de saída com até N du até o vencimento.
+     */
+    exit_dte_bd?: number | null;
+    /**
+     * Hedge Interval Bd
+     *
+     * Alerta de hedge por tempo: pregões sem hedge (desligado).
+     */
+    hedge_interval_bd?: number | null;
+    /**
+     * Profit Target Fraction
+     *
+     * Meta: fração do P&L esperado na entrada (desligada; regra G2).
+     */
+    profit_target_fraction?: number | null;
+    /**
+     * Roll Min Dte Bd
+     *
+     * Destino da rolagem: 1º vencimento com ≥ N du.
+     */
+    roll_min_dte_bd?: number;
+    /**
+     * Stop Loss Fraction
+     *
+     * Stop: fração da perda máxima do retrato (desligado; regra G2).
+     */
+    stop_loss_fraction?: number | null;
+};
+
+/**
  * ManualInputOut
  */
 export type ManualInputOut = {
@@ -2950,6 +3148,99 @@ export type PositionCreate = {
 };
 
 /**
+ * PositionEdgeOut
+ *
+ * Edge relativo líquido da posição aberta (RN-GES-02): na direção dela, com os custos de manter
+ * (hedge por Leland) e de fechar.
+ */
+export type PositionEdgeOut = {
+    /**
+     * As Of
+     */
+    as_of: string;
+    /**
+     * Cost Close Brl
+     */
+    cost_close_brl: string;
+    /**
+     * Cost Close Vol Pts
+     */
+    cost_close_vol_pts: number;
+    /**
+     * Cost Hold Vol Pts
+     */
+    cost_hold_vol_pts: number | null;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd: number;
+    /**
+     * Iv
+     */
+    iv: number;
+    /**
+     * Iv With Events
+     */
+    iv_with_events: number;
+    /**
+     * Model
+     */
+    model: string;
+    /**
+     * Net Relative Edge
+     */
+    net_relative_edge: number | null;
+    /**
+     * Net Relative High
+     */
+    net_relative_high: number | null;
+    /**
+     * Net Relative Low
+     */
+    net_relative_low: number | null;
+    /**
+     * Normal Spread
+     */
+    normal_spread: number;
+    /**
+     * Normal Spread Calibrated
+     */
+    normal_spread_calibrated: boolean;
+    /**
+     * Origin
+     */
+    origin: 'estimated' | 'approximate';
+    /**
+     * Premium
+     */
+    premium: number;
+    /**
+     * Premium High
+     */
+    premium_high: number;
+    /**
+     * Premium Low
+     */
+    premium_low: number;
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Sigma
+     */
+    sigma: number;
+    /**
+     * Sigma High
+     */
+    sigma_high: number;
+    /**
+     * Sigma Low
+     */
+    sigma_low: number;
+};
+
+/**
  * PositionOut
  */
 export type PositionOut = {
@@ -3027,6 +3318,10 @@ export type PositionOut = {
      * Lots
      */
     lots: number;
+    /**
+     * Regras de gestão da última avaliação (PRD 1.11 §5.10); nulo antes dela.
+     */
+    management?: ManagementOut | null;
     /**
      * Manual Inputs
      */
@@ -3664,6 +3959,148 @@ export type RollLeg = {
      * Com sinal: reduz a perna até zero.
      */
     quantity: number;
+};
+
+/**
+ * RollLegOut
+ */
+export type RollLegOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Series Id
+     */
+    series_id: number;
+};
+
+/**
+ * RollOut
+ *
+ * Rolagem avaliada (RN-GES-04): destino, semáforo com o custo de fechar a posição atual.
+ */
+export type RollOut = {
+    /**
+     * As Of
+     */
+    as_of?: string | null;
+    /**
+     * Close Cost Brl
+     */
+    close_cost_brl?: string | null;
+    /**
+     * Close Cost Vol Pts
+     */
+    close_cost_vol_pts?: number | null;
+    /**
+     * Cost Buy Vol Pts
+     */
+    cost_buy_vol_pts?: number | null;
+    /**
+     * Cost Sell Vol Pts
+     */
+    cost_sell_vol_pts?: number | null;
+    /**
+     * Expiry
+     */
+    expiry?: string | null;
+    /**
+     * Horizon Bd
+     */
+    horizon_bd?: number | null;
+    /**
+     * Iv
+     */
+    iv?: number | null;
+    /**
+     * Legs
+     */
+    legs?: Array<RollLegOut>;
+    /**
+     * Lots
+     */
+    lots?: number | null;
+    /**
+     * Min Dte Bd
+     */
+    min_dte_bd: number;
+    /**
+     * Net Relative Edge
+     */
+    net_relative_edge?: number | null;
+    /**
+     * Premium
+     */
+    premium?: number | null;
+    /**
+     * Premium High
+     */
+    premium_high?: number | null;
+    /**
+     * Premium Low
+     */
+    premium_low?: number | null;
+    /**
+     * Reason
+     */
+    reason?: string | null;
+    /**
+     * Sigma
+     */
+    sigma?: number | null;
+    /**
+     * Signal Direction
+     */
+    signal_direction?: 'sell' | 'buy' | null;
+    /**
+     * State
+     */
+    state?: 'edge' | 'inconclusive' | 'no_edge' | 'unavailable' | null;
+    /**
+     * Status
+     */
+    status: 'ok' | 'unavailable';
+    /**
+     * Structure
+     */
+    structure?: string | null;
+    /**
+     * Suggested
+     */
+    suggested: boolean;
+};
+
+/**
+ * RuleOut
+ */
+export type RuleOut = {
+    /**
+     * Details
+     */
+    details: {
+        [key: string]: unknown;
+    };
+    /**
+     * Kind
+     */
+    kind: 'hedge' | 'exit' | 'roll' | 'limit' | 'dividend';
+    /**
+     * Reason
+     */
+    reason: string | null;
+    /**
+     * Rule
+     */
+    rule: 'hedge_band' | 'hedge_time' | 'exit_edge' | 'exit_dte' | 'exit_profit' | 'exit_stop' | 'roll_suggested' | 'limit_stress' | 'limit_vega' | 'limit_underlying' | 'limit_expiry' | 'dividend_upcoming' | 'strike_adjustment_pending';
+    /**
+     * Scope Key
+     */
+    scope_key: string;
+    /**
+     * State
+     */
+    state: 'ok' | 'triggered' | 'disabled' | 'unavailable';
 };
 
 /**
@@ -4710,6 +5147,88 @@ export type VolParams = {
      */
     windows_bd?: Array<number>;
 };
+
+export type GetAlertsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * State
+         *
+         * `open` = ativos e vistos (padrão).
+         */
+        state?: 'open' | 'active' | 'seen' | 'resolved' | 'all';
+        /**
+         * Position Id
+         */
+        position_id?: number | null;
+        /**
+         * Kind
+         */
+        kind?: 'hedge' | 'exit' | 'roll' | 'limit' | 'dividend' | null;
+    };
+    url: '/alerts';
+};
+
+export type GetAlertsErrors = {
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type GetAlertsError = GetAlertsErrors[keyof GetAlertsErrors];
+
+export type GetAlertsResponses = {
+    /**
+     * Successful Response
+     */
+    200: AlertsResponse;
+};
+
+export type GetAlertsResponse = GetAlertsResponses[keyof GetAlertsResponses];
+
+export type PatchAlertData = {
+    body: AlertPatch;
+    path: {
+        /**
+         * Alert Id
+         */
+        alert_id: number;
+    };
+    query?: never;
+    url: '/alerts/{alert_id}';
+};
+
+export type PatchAlertErrors = {
+    /**
+     * Alerta inexistente.
+     */
+    404: ProblemDetails;
+    /**
+     * Alerta já resolvido.
+     */
+    409: ProblemDetails;
+    /**
+     * Transição inválida.
+     */
+    422: ProblemDetails;
+    /**
+     * Erro (RFC 9457)
+     */
+    default: ProblemDetails;
+};
+
+export type PatchAlertError = PatchAlertErrors[keyof PatchAlertErrors];
+
+export type PatchAlertResponses = {
+    /**
+     * Successful Response
+     */
+    200: AlertOut;
+};
+
+export type PatchAlertResponse = PatchAlertResponses[keyof PatchAlertResponses];
 
 export type GetCollectionGapsData = {
     body?: never;

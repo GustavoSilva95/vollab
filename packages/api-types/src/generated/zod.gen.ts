@@ -3,6 +3,70 @@
 import * as z from 'zod';
 
 /**
+ * AlertOut
+ */
+export const zAlertOut = z.object({
+    config_version_id: z.int(),
+    details: z.record(z.string(), z.unknown()),
+    engine_version: z.string(),
+    evaluated_config_version_id: z.int(),
+    id: z.int(),
+    kind: z.enum([
+        'hedge',
+        'exit',
+        'roll',
+        'limit',
+        'dividend'
+    ]),
+    last_as_of: z.iso.date(),
+    position_id: z.int().nullable(),
+    resolution_note: z.string().nullable(),
+    resolved_at: z.iso.datetime({ offset: true }).nullable(),
+    resolved_by: z.enum(['auto', 'user']).nullable(),
+    rule: z.enum([
+        'hedge_band',
+        'hedge_time',
+        'exit_edge',
+        'exit_dte',
+        'exit_profit',
+        'exit_stop',
+        'roll_suggested',
+        'limit_stress',
+        'limit_vega',
+        'limit_underlying',
+        'limit_expiry',
+        'dividend_upcoming',
+        'strike_adjustment_pending'
+    ]),
+    scope_key: z.string(),
+    state: z.enum([
+        'active',
+        'seen',
+        'resolved'
+    ]),
+    structure: z.string().nullable(),
+    ticker: z.string().nullable(),
+    triggered_as_of: z.iso.date(),
+    triggered_at: z.iso.datetime({ offset: true })
+});
+
+/**
+ * AlertPatch
+ */
+export const zAlertPatch = z.object({
+    note: z.string().max(500).nullish(),
+    state: z.enum(['seen', 'resolved'])
+});
+
+/**
+ * AlertsResponse
+ */
+export const zAlertsResponse = z.object({
+    alerts: z.array(zAlertOut),
+    counts: z.record(z.string(), z.int())
+});
+
+/**
  * AttributionOut
  */
 export const zAttributionOut = z.object({
@@ -901,6 +965,22 @@ export const zLiquidityOut = z.object({
 });
 
 /**
+ * ManagementParams
+ *
+ * Bloco `management` (PRD 1.11 §5.10; RN-GES-01..07, QA-11). Todos "não calibrados".
+ *
+ * A banda do alerta de hedge é a da simulação (`simulation.delta_band`). `None` = regra desligada.
+ */
+export const zManagementParams = z.object({
+    dividend_lead_bd: z.int().gte(0).lte(63).optional().default(5),
+    exit_dte_bd: z.int().gte(0).lte(63).nullish().default(5),
+    hedge_interval_bd: z.int().gte(1).lte(63).nullish(),
+    profit_target_fraction: z.number().gt(0).lte(5).nullish(),
+    roll_min_dte_bd: z.int().gte(1).lte(126).optional().default(10),
+    stop_loss_fraction: z.number().gt(0).lte(5).nullish()
+});
+
+/**
  * ManualInputOut
  */
 export const zManualInputOut = z.object({
@@ -1114,6 +1194,36 @@ export const zPortfolioResponse = z.object({
     positions_open: z.int(),
     total: zExposureOut.nullable(),
     warnings: z.array(z.string())
+});
+
+/**
+ * PositionEdgeOut
+ *
+ * Edge relativo líquido da posição aberta (RN-GES-02): na direção dela, com os custos de manter
+ * (hedge por Leland) e de fechar.
+ */
+export const zPositionEdgeOut = z.object({
+    as_of: z.iso.date(),
+    cost_close_brl: z.string(),
+    cost_close_vol_pts: z.number(),
+    cost_hold_vol_pts: z.number().nullable(),
+    horizon_bd: z.int(),
+    iv: z.number(),
+    iv_with_events: z.number(),
+    model: z.string(),
+    net_relative_edge: z.number().nullable(),
+    net_relative_high: z.number().nullable(),
+    net_relative_low: z.number().nullable(),
+    normal_spread: z.number(),
+    normal_spread_calibrated: z.boolean(),
+    origin: z.enum(['estimated', 'approximate']),
+    premium: z.number(),
+    premium_high: z.number(),
+    premium_low: z.number(),
+    reason: z.string().nullable(),
+    sigma: z.number(),
+    sigma_high: z.number(),
+    sigma_low: z.number()
 });
 
 /**
@@ -1383,6 +1493,99 @@ export const zPositionCreate = z.object({
         'long_strangle'
     ]),
     ticker: z.string().regex(/^[A-Za-z0-9]{4,12}$/)
+});
+
+/**
+ * RollLegOut
+ */
+export const zRollLegOut = z.object({
+    code: z.string(),
+    series_id: z.int()
+});
+
+/**
+ * RollOut
+ *
+ * Rolagem avaliada (RN-GES-04): destino, semáforo com o custo de fechar a posição atual.
+ */
+export const zRollOut = z.object({
+    as_of: z.iso.date().nullish(),
+    close_cost_brl: z.string().nullish(),
+    close_cost_vol_pts: z.number().nullish(),
+    cost_buy_vol_pts: z.number().nullish(),
+    cost_sell_vol_pts: z.number().nullish(),
+    expiry: z.iso.date().nullish(),
+    horizon_bd: z.int().nullish(),
+    iv: z.number().nullish(),
+    legs: z.array(zRollLegOut).optional(),
+    lots: z.int().nullish(),
+    min_dte_bd: z.int(),
+    net_relative_edge: z.number().nullish(),
+    premium: z.number().nullish(),
+    premium_high: z.number().nullish(),
+    premium_low: z.number().nullish(),
+    reason: z.string().nullish(),
+    sigma: z.number().nullish(),
+    signal_direction: z.enum(['sell', 'buy']).nullish(),
+    state: z.enum([
+        'edge',
+        'inconclusive',
+        'no_edge',
+        'unavailable'
+    ]).nullish(),
+    status: z.enum(['ok', 'unavailable']),
+    structure: z.string().nullish(),
+    suggested: z.boolean()
+});
+
+/**
+ * RuleOut
+ */
+export const zRuleOut = z.object({
+    details: z.record(z.string(), z.unknown()),
+    kind: z.enum([
+        'hedge',
+        'exit',
+        'roll',
+        'limit',
+        'dividend'
+    ]),
+    reason: z.string().nullable(),
+    rule: z.enum([
+        'hedge_band',
+        'hedge_time',
+        'exit_edge',
+        'exit_dte',
+        'exit_profit',
+        'exit_stop',
+        'roll_suggested',
+        'limit_stress',
+        'limit_vega',
+        'limit_underlying',
+        'limit_expiry',
+        'dividend_upcoming',
+        'strike_adjustment_pending'
+    ]),
+    scope_key: z.string(),
+    state: z.enum([
+        'ok',
+        'triggered',
+        'disabled',
+        'unavailable'
+    ])
+});
+
+/**
+ * ManagementOut
+ */
+export const zManagementOut = z.object({
+    alerts: z.array(zAlertOut),
+    as_of: z.iso.date().nullable(),
+    config_version_id: z.int(),
+    edge: zPositionEdgeOut.nullable(),
+    evaluated_at: z.iso.datetime({ offset: true }),
+    roll: zRollOut.nullable(),
+    rules: z.array(zRuleOut)
 });
 
 /**
@@ -1914,6 +2117,7 @@ export const zPositionOut = z.object({
     last_mark_date: z.iso.date().nullable(),
     ledger_error: z.string().nullable(),
     lots: z.int(),
+    management: zManagementOut.nullish(),
     manual_inputs: z.array(zManualInputOut),
     marks: z.array(zMarkOut),
     model: z.string(),
@@ -1995,6 +2199,7 @@ export const zConfigParamsInput = z.object({
     edge: zEdgeParams.optional(),
     forecast: zForecastParams.optional(),
     journal: zJournalParams.optional(),
+    management: zManagementParams.optional(),
     risk: zRiskParams.optional(),
     simulation: zSimulationParams.optional(),
     sizing: zSizingParams.optional(),
@@ -2021,6 +2226,7 @@ export const zConfigParamsOutput = z.object({
     edge: zEdgeParams.optional(),
     forecast: zForecastParams.optional(),
     journal: zJournalParams.optional(),
+    management: zManagementParams.optional(),
     risk: zRiskParams.optional(),
     simulation: zSimulationParams.optional(),
     sizing: zSizingParams.optional(),
@@ -2036,6 +2242,40 @@ export const zConfigVersionOut = z.object({
     note: z.string().nullable(),
     params: zConfigParamsOutput
 });
+
+export const zGetAlertsQuery = z.object({
+    state: z.enum([
+        'open',
+        'active',
+        'seen',
+        'resolved',
+        'all'
+    ]).optional().default('open'),
+    position_id: z.int().gte(1).lte(9223372036854776000).nullish(),
+    kind: z.enum([
+        'hedge',
+        'exit',
+        'roll',
+        'limit',
+        'dividend'
+    ]).nullish()
+});
+
+/**
+ * Successful Response
+ */
+export const zGetAlertsResponse = zAlertsResponse;
+
+export const zPatchAlertBody = zAlertPatch;
+
+export const zPatchAlertPath = z.object({
+    alert_id: z.int().gte(1).lte(9223372036854776000)
+});
+
+/**
+ * Successful Response
+ */
+export const zPatchAlertResponse = zAlertOut;
 
 export const zGetCollectionGapsQuery = z.object({
     limit: z.int().gte(1).lte(2000).optional().default(300)
