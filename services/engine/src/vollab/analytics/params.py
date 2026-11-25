@@ -354,6 +354,37 @@ class RiskParams(BaseModel):
         return self
 
 
+class ManagementParams(BaseModel):
+    """Bloco `management` (PRD 1.11 §5.10; RN-GES-01..07, QA-11). Todos "não calibrados".
+
+    A banda do alerta de hedge é a da simulação (`simulation.delta_band`). `None` = regra desligada."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    hedge_interval_bd: int | None = Field(
+        default=None, ge=1, le=63, description="Alerta de hedge por tempo: pregões sem hedge (desligado)."
+    )
+    exit_dte_bd: int | None = Field(
+        default=5, ge=0, le=63, description="Alerta de saída com até N du até o vencimento."
+    )
+    profit_target_fraction: float | None = Field(
+        default=None, gt=0, le=5, description="Meta: fração do P&L esperado na entrada (desligada; regra G2)."
+    )
+    stop_loss_fraction: float | None = Field(
+        default=None, gt=0, le=5, description="Stop: fração da perda máxima do retrato (desligado; regra G2)."
+    )
+    roll_min_dte_bd: int = Field(
+        default=10, ge=1, le=126, description="Destino da rolagem: 1º vencimento com ≥ N du."
+    )
+    dividend_lead_bd: int = Field(
+        default=5, ge=0, le=63, description="Alerta de provento: data ex nos próximos N du."
+    )
+
+
+def management_params_from_config(version: ConfigVersion) -> ManagementParams:
+    return ManagementParams.model_validate(dict(version.params.get("management", {})))
+
+
 def journal_params_from_config(version: ConfigVersion) -> JournalParams:
     return JournalParams.model_validate(dict(version.params.get("journal", {})))
 

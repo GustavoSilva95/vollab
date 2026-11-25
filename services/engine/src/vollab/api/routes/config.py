@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from vollab.analytics.management import enqueue_alerts
 from vollab.api.schemas.common import ProblemDetails
 from vollab.api.schemas.config import (
     ConfigCreate,
@@ -67,6 +68,8 @@ def post_config(body: ConfigCreate, session: SessionDep) -> ConfigCreateOut:
         session.commit()
         return ConfigCreateOut(id=current.id, created=False)
     created = create_config_version(session, user_id=FIXED_USER_ID, params=params, note=body.note)
+    # Regras de gestão reavaliadas com a configuração nova (PRD 1.11 §5.10).
+    enqueue_alerts(session, user_id=FIXED_USER_ID, reason="configuração")
     session.commit()
     return ConfigCreateOut(id=created.id, created=True)
 

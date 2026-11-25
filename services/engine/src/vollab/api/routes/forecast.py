@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from vollab.analytics.forecasting import forecast_interval, vol_from_state
+from vollab.analytics.management import enqueue_alerts
 from vollab.analytics.market import load_holidays
 from vollab.analytics.params import (
     ForecastParams,
@@ -471,5 +472,6 @@ def put_model_selection(body: ModelSelectionIn, session: SessionDep) -> ModelSel
     created = create_config_version(
         session, user_id=FIXED_USER_ID, params=new_params, note=f"Modelo do edge: {body.model} (RF-PRV-04)."
     )
+    enqueue_alerts(session, user_id=FIXED_USER_ID, reason="modelo do edge")  # PRD 1.11 §5.10
     session.commit()
     return ModelSelectionOut(selected_model=body.model, config_version_id=created.id, created=True)

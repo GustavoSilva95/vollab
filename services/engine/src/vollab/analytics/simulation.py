@@ -143,6 +143,30 @@ class Computed:
     cost_buy: float | None
 
 
+@dataclass(frozen=True, slots=True)
+class StructureEdge:
+    """Só o edge e o semáforo de uma estrutura, sem distribuição, stress e payoff (rolagem, §5.10)."""
+
+    as_of: date
+    expiry: date
+    horizon_bd: int
+    state: str
+    signal_direction: Direction | None
+    direction_match: bool
+    reason: str | None
+    iv: float
+    sigma: float | None
+    premium: float | None
+    p_low: float | None
+    p_high: float | None
+    cost_sell: float | None
+    cost_buy: float | None
+    extra_cost_vol_pts: float | None
+    net_relative: float | None
+    vega_unit: float
+    legs: list[tuple[int, str]]
+
+
 class SimulationComputer:
     def __init__(self, session: Session, *, user_id: uuid.UUID) -> None:
         self.session = session
@@ -348,6 +372,18 @@ class SimulationComputer:
     # Simulação ---------------------------------------------------------------------------------
 
     def compute(self, req: SimulationRequest) -> Computed:
+        return cast(Computed, self._compute(req, extra_cost_brl_unit=0.0, edge_only=False))
+
+    def structure_edge(self, req: SimulationRequest, *, extra_cost_brl_unit: float = 0.0) -> StructureEdge:
+        """Edge e semáforo da estrutura (§5.8), somando aos custos um valor extra em R$ por unidade
+        (rolagem: custo de fechar a posição atual ÷ opções da nova, PRD 1.11 §5.10)."""
+        return cast(
+            StructureEdge, self._compute(req, extra_cost_brl_unit=extra_cost_brl_unit, edge_only=True)
+        )
+
+    def _compute(
+        self, req: SimulationRequest, *, extra_cost_brl_unit: float, edge_only: bool
+    ) -> Computed | StructureEdge:
         ticker = req.ticker.upper()
         structure = Structure(req.structure)
         direction = STRUCTURE_DIRECTION[structure]
@@ -505,6 +541,8 @@ class SimulationComputer:
                 )
                 stock_brl = stock_qty * (und_spread * spot + 2.0 * c.underlying_fee_rate * spot)
                 opt_pts = (spread_brl + fees_brl + brok_brl + stock_brl) / vega_unit
+                extra_pts = extra_cost_brl_unit / vega_unit
+                opt_pts += extra_pts
                 hedge = hedge_cost(
                     sigma,
                     underlying_rel_spread=und_spread,
@@ -556,6 +594,28 @@ class SimulationComputer:
                 reason,
                 f"o sinal é de {'compra' if signal_dir is Direction.BUY else 'venda'} de vol e a "
                 f"estrutura é de {'venda' if direction is Direction.SELL else 'compra'}",
+            )
+
+        if edge_only:
+            return StructureEdge(
+                as_of=as_of,
+                expiry=expiry,
+                horizon_bd=h,
+                state=state,
+                signal_direction=signal_dir,
+                direction_match=direction_match,
+                reason=reason,
+                iv=iv_used,
+                sigma=sigma,
+                premium=None if prem_ev.value is None else float(prem_ev.value),
+                p_low=p_lo,
+                p_high=p_hi,
+                cost_sell=cost_sell,
+                cost_buy=cost_buy,
+                extra_cost_vol_pts=None if costs_out is None else extra_cost_brl_unit / vega_unit,
+                net_relative=net_relative,
+                vega_unit=vega_unit,
+                legs=[(info[0].series.id, info[0].series.code) for info in leg_info],
             )
 
         # Distribuição simulada (QA-10).

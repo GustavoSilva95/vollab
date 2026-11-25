@@ -3,8 +3,8 @@
 import { type InfiniteData, infiniteQueryOptions, queryOptions, type UseMutationOptions } from '@tanstack/react-query';
 
 import { client } from '../client.gen';
-import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getChain, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getCrisis, getEventJumps, getForecasts, getHealth, getLimits, getModelsEvaluation, getModelsEvaluationPoints, getPortfolio, getPosition, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listPositions, listUnderlyings, type Options, postConfig, postCrisisMeasure, postEntry, postPosition, postSimulation, postSizing, postStress, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
-import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetChainData, GetChainError, GetChainResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetCrisisData, GetCrisisError, GetCrisisResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetLimitsData, GetLimitsError, GetLimitsResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPortfolioData, GetPortfolioError, GetPortfolioResponse, GetPositionData, GetPositionError, GetPositionResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListPositionsData, ListPositionsError, ListPositionsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PostConfigData, PostConfigError, PostConfigResponse, PostCrisisMeasureData, PostCrisisMeasureError, PostCrisisMeasureResponse, PostEntryData, PostEntryError, PostEntryResponse, PostPositionData, PostPositionError, PostPositionResponse, PostSimulationData, PostSimulationError, PostSimulationResponse, PostSizingData, PostSizingError, PostSizingResponse, PostStressData, PostStressError, PostStressResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
+import { createCollectionRun, createEvent, createUnderlying, deleteEvent, getAlerts, getChain, getCollectionGaps, getCollectionPending, getCollectionRun, getConfig, getConfigVersion, getConstantMaturity, getCrisis, getEventJumps, getForecasts, getHealth, getLimits, getModelsEvaluation, getModelsEvaluationPoints, getPortfolio, getPosition, getPriceHistory, getRanking, getRealizedVol, getSmile, getSpreads, getTermStructure, getUnderlyingSeries, getUnderlyingSummary, listConfigVersions, listEvents, listPositions, listUnderlyings, type Options, patchAlert, postConfig, postCrisisMeasure, postEntry, postPosition, postSimulation, postSizing, postStress, putModelSelection, updateEvent, updateUnderlying } from '../sdk.gen';
+import type { CreateCollectionRunData, CreateCollectionRunError, CreateCollectionRunResponse, CreateEventData, CreateEventError, CreateEventResponse, CreateUnderlyingData, CreateUnderlyingError, CreateUnderlyingResponse, DeleteEventData, DeleteEventError, DeleteEventResponse, GetAlertsData, GetAlertsError, GetAlertsResponse, GetChainData, GetChainError, GetChainResponse, GetCollectionGapsData, GetCollectionGapsError, GetCollectionGapsResponse, GetCollectionPendingData, GetCollectionPendingError, GetCollectionPendingResponse, GetCollectionRunData, GetCollectionRunError, GetCollectionRunResponse, GetConfigData, GetConfigError, GetConfigResponse, GetConfigVersionData, GetConfigVersionError, GetConfigVersionResponse, GetConstantMaturityData, GetConstantMaturityError, GetConstantMaturityResponse, GetCrisisData, GetCrisisError, GetCrisisResponse, GetEventJumpsData, GetEventJumpsError, GetEventJumpsResponse, GetForecastsData, GetForecastsError, GetForecastsResponse, GetHealthData, GetHealthError, GetHealthResponse, GetLimitsData, GetLimitsError, GetLimitsResponse, GetModelsEvaluationData, GetModelsEvaluationError, GetModelsEvaluationPointsData, GetModelsEvaluationPointsError, GetModelsEvaluationPointsResponse, GetModelsEvaluationResponse, GetPortfolioData, GetPortfolioError, GetPortfolioResponse, GetPositionData, GetPositionError, GetPositionResponse, GetPriceHistoryData, GetPriceHistoryError, GetPriceHistoryResponse, GetRankingData, GetRankingError, GetRankingResponse, GetRealizedVolData, GetRealizedVolError, GetRealizedVolResponse, GetSmileData, GetSmileError, GetSmileResponse, GetSpreadsData, GetSpreadsError, GetSpreadsResponse, GetTermStructureData, GetTermStructureError, GetTermStructureResponse, GetUnderlyingSeriesData, GetUnderlyingSeriesError, GetUnderlyingSeriesResponse, GetUnderlyingSummaryData, GetUnderlyingSummaryError, GetUnderlyingSummaryResponse, ListConfigVersionsData, ListConfigVersionsError, ListConfigVersionsResponse, ListEventsData, ListEventsError, ListEventsResponse, ListPositionsData, ListPositionsError, ListPositionsResponse, ListUnderlyingsData, ListUnderlyingsError, ListUnderlyingsResponse, PatchAlertData, PatchAlertError, PatchAlertResponse, PostConfigData, PostConfigError, PostConfigResponse, PostCrisisMeasureData, PostCrisisMeasureError, PostCrisisMeasureResponse, PostEntryData, PostEntryError, PostEntryResponse, PostPositionData, PostPositionError, PostPositionResponse, PostSimulationData, PostSimulationError, PostSimulationResponse, PostSizingData, PostSizingError, PostSizingResponse, PostStressData, PostStressError, PostStressResponse, PutModelSelectionData, PutModelSelectionError, PutModelSelectionResponse, UpdateEventData, UpdateEventError, UpdateEventResponse, UpdateUnderlyingData, UpdateUnderlyingError, UpdateUnderlyingResponse } from '../types.gen';
 
 export type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -37,6 +37,41 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
         params.query = options.query;
     }
     return [params];
+};
+
+export const getAlertsQueryKey = (options?: Options<GetAlertsData>) => createQueryKey('getAlerts', options);
+
+/**
+ * Alertas (padrão: não resolvidos)
+ */
+export const getAlertsOptions = (options?: Options<GetAlertsData>) => queryOptions<GetAlertsResponse, GetAlertsError, GetAlertsResponse, ReturnType<typeof getAlertsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getAlerts({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getAlertsQueryKey(options)
+});
+
+/**
+ * Marcar como visto ou resolver
+ */
+export const patchAlertMutation = (options?: Partial<Options<PatchAlertData>>): UseMutationOptions<PatchAlertResponse, PatchAlertError, Options<PatchAlertData>> => {
+    const mutationOptions: UseMutationOptions<PatchAlertResponse, PatchAlertError, Options<PatchAlertData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await patchAlert({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
 };
 
 export const getCollectionGapsQueryKey = (options?: Options<GetCollectionGapsData>) => createQueryKey('getCollectionGaps', options);
