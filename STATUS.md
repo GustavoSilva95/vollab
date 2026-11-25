@@ -1,7 +1,7 @@
 # STATUS
 
 **Atualizado em:** 2026-11-24
-**Etapa atual:** Etapa 8 — Gestão da operação: **iniciada (2026-11-24)**; BRD 1.8 / PRD 1.11 **aprovados (2026-11-24)**; implementação em andamento (branch `etapa-8-gestao-operacao`)
+**Etapa atual:** Etapa 8 — Gestão da operação: **implementada (2026-11-24)**; BRD 1.8 / PRD 1.11 aprovados; engine 364 testes, web 124, Playwright 10 verdes localmente; revisões de segurança e performance em andamento (branch `etapa-8-gestao-operacao`)
 **Etapa anterior:** Etapa 7 concluída e aprovada (2026-11-24), mesclada na `main` (PR #8)
 
 ## Aprovações
@@ -208,6 +208,7 @@
 | 2026-11-24 | Correção de lançamentos por estorno (`void`) com motivo; nada é apagado | BRD 1.7 RF-DIA-03, RS-06 |
 | 2026-11-24 | Limites padrão não calibrados: stress ≤ 20% do capital, \|vega\| ≤ 1% por ponto, ativo ≤ 50% e vencimento ≤ 60% do orçamento de perda em stress; pró-forma na entrada com `override_reason` | BRD 1.7 RF-RSK-04, PRD 1.10 §5.9 |
 | 2026-11-24 | **QA-11 (Etapa 8):** hedge pela banda da simulação (0,10 por opção), alerta por tempo desligado; "edge acabou" = edge relativo líquido pontual da posição ≤ 0; stop e meta desligados (regra G2); prazo de 5 du; rolagem para o 1º vencimento com ≥ 10 du só com edge líquido após custos de fechar; proventos com 5 du de antecedência | BRD 1.8 RN-GES-01..07, PRD 1.11 §5.10 |
+| 2026-11-24 | Rolagem para o 1º vencimento **depois do atual** com ≥ 10 du; só pernas de opção (o hedge em ações fica na origem); resolução pelo usuário segura a reabertura por `alerts.persisting`; estado das regras em `position_management` | PRD 1.11 §5.10 (ajustes na implementação) |
 
 ## Próximos passos
 
@@ -219,5 +220,5 @@
 6. Etapa 5 concluída e mesclada na `main` (CI verde nos 6 jobs). Próxima: Etapa 6 (simulador e dimensionamento; QA-09, QA-10 e o resto do QA-11), quando o usuário pedir. Na primeira carga real, o recálculo inicial depois da 0006 refaz a IV do histórico uma vez (~1 min com 3 ativos).
 8. **Etapa 6:** concluída e mesclada na `main` (PR #7). Próxima: Etapa 7 (diário, carteira e risco; QA-12 e o cenário de crise no teto), quando o usuário pedir.
 9. **Etapa 7:** concluída e mesclada na `main` (PR #8). Próxima: Etapa 8 (gestão da operação: alertas de hedge, saída, rolagem, limites e proventos; QA-11 restante), quando o usuário pedir. Backlog não bloqueante das revisões: performance M-2 (`LATERAL … LIMIT 1` na última marcação), M-3 (stress e Greeks vetorizados por ativo; `crisis_values` lido duas vezes no `/sizing`), M-4 (`count_business_days` com índice acumulado), M-5 (INSERT em lote das marcações), M-6 (pedido amplo na fila não absorve os específicos), M-7 (pernas só da última marcação no detalhe); crise: guardar o parsing por ano. Os proventos históricos do Yahoo vêm ajustados por desdobramentos posteriores (BBAS3 2017 com metade do valor): seguem "estimados"; o efeito numa janela de 5 pregões é pequeno.
-10. **Etapa 8:** iniciada em 2026-11-24. BRD 1.8 e PRD 1.11 (§5.10) aprovados pelo usuário em 2026-11-24; implementação em andamento.
+10. **Etapa 8:** implementada em 2026-11-24 (branch `etapa-8-gestao-operacao`). Engine: regras puras em `quant/management.py` (testadas nos limites), job `alerts_evaluate` depois de cada marcação, de `POST /config` e de `PUT /models/selection`, migration 0009 (`alerts` sem DELETE para o papel da aplicação, trigger protegendo o disparo; `position_management`), `GET/PATCH /alerts`, gestão em `GET /positions/{id}`, contrato 0.8.0. Web: alertas no painel, painel "Gestão" na operação, modo rolagem no simulador, bloco `management` nas configurações. Testes: engine 364 (eram 332), web 124 (eram 110), Playwright 10 (fluxo 3 com o alerta persistente de banda e a rolagem ponta a ponta). Pendente: revisões de segurança e performance, CI no PR e aprovação do fechamento.
 7. Tarifas da B3 (0,1340% opções PF; 0,03% ações): **mantidas por enquanto por decisão do usuário (2026-11-23)**; seguem rotuladas "a conferir" na tela de configurações até a conferência com a tabela vigente.

@@ -483,6 +483,13 @@ Decisões do usuário (2026-11-24, QA-11): banda de hedge = **banda da simulaç�
 
 **Configuração nova (§5.3):** `management` {`hedge_interval_bd` `null`, `exit_dte_bd` 5, `profit_target_fraction` `null`, `stop_loss_fraction` `null`, `roll_min_dte_bd` 10, `dividend_lead_bd` 5}. Versão nova criada automaticamente com os padrões, como nas etapas anteriores. A banda de hedge continua em `simulation.delta_band`.
 
+*(Ajustes na implementação, 2026-11-24, sem mudança de escopo)*
+- **Reabertura depois da resolução pelo usuário:** a coluna `alerts.persisting` marca o alerta resolvido pelo usuário com a condição ainda valendo; o job a passa para falso quando a condição some (única mudança permitida num alerta resolvido, verdadeiro → falso). Assim a regra "não reabre até a condição sumir e voltar" não precisa de tabela à parte.
+- **Estado das regras por posição:** `position_management` (derivada, uma linha por posição aberta, refeita pelo job e apagada quando a posição encerra) guarda regras, edge e rolagem da última avaliação, para `GET /positions/{id}` mostrar o estado sem avaliar regras na leitura.
+- **Destino da rolagem:** o primeiro vencimento com ≥ `roll_min_dte_bd` du **posterior ao vencimento atual** da posição (rolar para o mesmo vencimento não é rolagem). Só as pernas de opção são roladas (regra da §5.9); o hedge em ações continua na origem e é fechado com `exit`.
+- **Gatilhos do job:** além de `marks_recompute` e `POST /config`, também `PUT /models/selection` (troca o modelo do edge, que muda o edge da posição).
+- **Rolagem sem preço sugerido:** sem marcação D-1 na origem, o preço de fechamento de cada perna fica em branco no simulador e é obrigatório.
+
 ---
 
 ## 6. Modelo de dados (lógico)
